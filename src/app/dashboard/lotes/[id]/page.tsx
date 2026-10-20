@@ -9,7 +9,7 @@ import {
 } from "@/lib/inventory/validation";
 import { dateTime, money, quantity, shortDate } from "@/lib/inventory/format";
 import type { SearchParams } from "@/lib/inventory/types";
-import { MovementForm, StatusForm } from "@/components/inventory/forms";
+import { MovementForm } from "@/components/inventory/forms";
 import {
   DataNotice,
   LotBadge,
@@ -124,7 +124,7 @@ export default async function LotPage({
           </p>
         </div>
       </Panel>
-      <div className="grid gap-6 mt-6 xl:grid-cols-2">
+      <div className="mt-6">
         <Panel
           title="Registrar saída ou perda"
           description="O saldo é validado no momento da gravação."
@@ -134,18 +134,6 @@ export default async function LotPage({
               lot={lot}
               requestId={crypto.randomUUID()}
               now={now}
-              today={today}
-            />
-          </div>
-        </Panel>
-        <Panel
-          title="Conferir situação do lote"
-          description="Registre a liberação, o bloqueio ou o retorno à quarentena."
-        >
-          <div className="p-5 sm:p-6">
-            <StatusForm
-              lot={lot}
-              requestId={crypto.randomUUID()}
               today={today}
             />
           </div>

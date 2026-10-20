@@ -114,14 +114,13 @@ Todos os cadastros devem permitir inclusão e edição futura.
 - Estoque de frutas.
 - Estoque de insumos, embalagens, produtos de limpeza e demais materiais, com separação física por categoria.
 - Produção.
-- Quarentena.
 - Freezer 1.
 - Freezer 2.
 - Freezer 3.
 
 O módulo terá uma visão virtual global de todo o estoque da Frutalize, indicando em cada saldo onde o item está fisicamente. Cada freezer será um local separado, e a mesma apresentação de polpa poderá ficar em mais de um freezer. Inicialmente somente um freezer será usado, mas os três já existirão no cadastro. O controle de capacidade máxima dos freezers será uma evolução futura.
 
-Descarte será um tipo de movimento de saída, não um local com saldo disponível. A localização física prevista para a quarentena, próxima à área de higienização de utensílios, ainda deverá ser validada pelo responsável técnico e pelas exigências sanitárias.
+Descarte será um tipo de movimento de saída, não um local com saldo disponível. Em 20/10/2026, o local físico “Quarentena” foi retirado dos cadastros ativos e preservado apenas como registro arquivado para manter vínculos históricos. Sua eventual reativação deverá ser validada pelo responsável técnico e pelas exigências sanitárias.
 
 ### Cadastro de itens
 
@@ -177,14 +176,14 @@ Cada recebimento deverá registrar:
 - O custo da entrada deverá ficar pronto para alimentar o módulo financeiro.
 - O sistema permitirá fotografar a nota fiscal com a câmera do celular. Na primeira versão, a imagem será armazenada para consulta, sem extração automática obrigatória de dados.
 - A validade poderá ser informada pelo fornecedor ou definida internamente no recebimento, registrando a origem dessa informação.
-- Somente gestor ou administrador poderá liberar um lote em quarentena.
+- Nesta fase, o lote recebido fica disponível imediatamente no estoque. O fluxo manual de situação `em quarentena`, `liberado` e `bloqueado` foi adiado e poderá ser reavaliado futuramente.
 - O lote interno seguirá um padrão simples baseado no produto, na data e em uma sequência. O mesmo código poderá ser usado no datador da envasadora e nas embalagens.
 
 ### Pendente
 
 - Critérios e resultados possíveis da inspeção de qualidade.
 - Padrão definitivo do lote interno e validação do comprimento/caracteres aceitos pelo datador da envasadora.
-- Tratamento de itens rejeitados, deteriorados ou colocados em quarentena.
+- Tratamento de itens rejeitados, deteriorados ou que futuramente exijam segregação/quarentena.
 - Destino e reaproveitamento de subprodutos, como cascas, sem tratar material impróprio como reaproveitável.
 - Confirmação sanitária e contábil do processo de descarte e reaproveitamento.
 

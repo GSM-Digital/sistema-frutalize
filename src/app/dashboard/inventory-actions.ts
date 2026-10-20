@@ -9,7 +9,6 @@ import {
   enumField,
   operationalDateField,
   receiptInput,
-  statusInput,
   textField,
   uuidField,
   ValidationError,
@@ -98,9 +97,7 @@ export async function receiveLot(
     return failure(error, data);
   }
   return {
-    ...saved(
-      "Recebimento registrado. O lote está em quarentena para conferência.",
-    ),
+    ...saved("Recebimento registrado e disponível no estoque."),
     lotId,
   };
 }
@@ -121,9 +118,7 @@ export async function receiveDelivery(
     return failure(error, data);
   }
   return {
-    ...saved(
-      "Recebimento registrado. Os itens estão em quarentena para conferência.",
-    ),
+    ...saved("Recebimento registrado e itens disponíveis no estoque."),
     receiptId,
   };
 }
@@ -146,17 +141,4 @@ export async function moveStock(
     return failure(error, data);
   }
   return saved("Movimentação registrada.");
-}
-export async function changeLotStatus(
-  _previous: ActionState,
-  data: FormData,
-): Promise<ActionState> {
-  const { supabase } = await requireStaff();
-  try {
-    const { error } = await supabase.rpc("set_lot_status", statusInput(data));
-    if (error) return failure(error, data);
-  } catch (error) {
-    return failure(error, data);
-  }
-  return saved("Situação atualizada e registrada no histórico.");
 }

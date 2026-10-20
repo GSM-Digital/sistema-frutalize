@@ -203,14 +203,14 @@ export default async function DashboardPage() {
       href: "/dashboard/lotes",
     },
     {
-      label: "Em quarentena",
-      value: stats.quarantine_count,
-      href: "/dashboard/lotes?status=quarantine",
-    },
-    {
       label: "Vencem em 30 dias",
       value: stats.expiring_count,
       href: "/dashboard/lotes?validade=proximos",
+    },
+    {
+      label: "Lotes vencidos",
+      value: stats.expired_count,
+      href: "/dashboard/lotes?validade=vencidos",
     },
   ];
 

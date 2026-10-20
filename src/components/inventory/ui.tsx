@@ -4,7 +4,7 @@ import type {
   InventoryMovement,
   SearchParams,
 } from "@/lib/inventory/types";
-import { movementKinds, statuses } from "@/lib/inventory/types";
+import { movementKinds } from "@/lib/inventory/types";
 import { dateTime, quantity, shortDate } from "@/lib/inventory/format";
 
 export function PageHeading({
@@ -101,19 +101,13 @@ export function LotBadge({
   lot,
   today,
 }: {
-  lot: Pick<InventoryLot, "quantity" | "expires_on" | "status">;
+  lot: Pick<InventoryLot, "quantity" | "expires_on">;
   today: string;
 }) {
   if (lot.quantity === 0) return <span className="badge">Sem saldo</span>;
   if (lot.expires_on && lot.expires_on < today)
     return <span className="badge badge-danger">Vencido</span>;
-  return (
-    <span
-      className={`badge ${lot.status === "released" ? "badge-green" : lot.status === "blocked" ? "badge-danger" : "badge-amber"}`}
-    >
-      {statuses[lot.status]}
-    </span>
-  );
+  return null;
 }
 export function LotsTable({
   lots,
@@ -134,7 +128,6 @@ export function LotsTable({
             <th>Local</th>
             <th>Saldo</th>
             <th>Validade</th>
-            <th>Situação</th>
             <th>
               <span className="sr-only">Ações</span>
             </th>
@@ -160,9 +153,9 @@ export function LotsTable({
               </td>
               <td className="whitespace-nowrap">
                 {lot.expires_on ? shortDate(lot.expires_on) : "Não se aplica"}
-              </td>
-              <td>
-                <LotBadge lot={lot} today={today} />
+                <span className="table-sub">
+                  <LotBadge lot={lot} today={today} />
+                </span>
               </td>
               <td>
                 <Link

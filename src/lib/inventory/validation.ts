@@ -1,5 +1,4 @@
 import {
-  statuses,
   units,
   type CatalogEntity,
   type Json,
@@ -391,18 +390,6 @@ export function deliveryInput(data: FormData) {
       received_at: received,
       items,
     },
-  };
-}
-export function statusInput(data: FormData) {
-  return {
-    p_request_id: uuidField(data, "request_id"),
-    p_lot_id: uuidField(data, "lot_id"),
-    p_status: enumField(
-      data,
-      "status",
-      Object.keys(statuses) as (keyof typeof statuses)[],
-    ),
-    p_reason: textField(data, "reason", "Motivo", 3, 240),
   };
 }
 export function safeReturnPath(value: unknown) {

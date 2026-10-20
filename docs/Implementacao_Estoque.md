@@ -10,14 +10,14 @@ Esta implementação segue os [requisitos consolidados](Requisitos_Sistema_Fruta
 | Produtos        | Produto principal, categoria e obrigatoriedade de validade                                                                                                             |
 | Apresentações   | Cadastro separado, SKU editável e peso unitário conhecido opcional                                                                                                     |
 | Categorias      | Nove categorias iniciais confirmadas; inclusão, edição e arquivamento                                                                                                  |
-| Locais          | Sete locais confirmados, incluindo os três freezers; inclusão, edição e arquivamento                                                                                   |
+| Locais          | Seis locais ativos, incluindo os três freezers; o antigo local “Quarentena” permanece arquivado para preservar o histórico                                             |
 | Fornecedores    | Nome, CNPJ opcional, telefone, endereço e pessoa de contato                                                                                                            |
 | Recebimento     | Apresentação, fornecedor, referência/NF, lote interno e do fornecedor, local físico, data/hora operacional, fabricação, validade e sua origem, inspeção em texto livre |
 | Quantidades     | Unidade por recebimento: kg, g, l, un, pct ou cx; peso líquido independente quando informado                                                                           |
 | Custo           | Preço total da entrada e custo unitário calculado no PostgreSQL, preservados no lote para integração financeira futura                                                 |
-| Conferência     | Recebimento integral em quarentena; liberação, bloqueio e retorno à quarentena com justificativa                                                                       |
+| Conferência     | Observação de inspeção obrigatória; o lote recebido fica disponível imediatamente, respeitando saldo e validade                                                        |
 | Saídas e perdas | Movimentações por lote com quantidade, data operacional, motivo e responsável                                                                                          |
-| Consulta        | Busca por produto, SKU, lote, fornecedor e local; filtros por situação e validade; paginação no servidor                                                               |
+| Consulta        | Busca por produto, SKU, lote, fornecedor e local; filtros por validade e saldo; paginação no servidor                                                                  |
 | Histórico       | Livro imutável de movimentos e auditoria de criação, edição e arquivamento de cadastros, com antes/depois                                                              |
 | Acesso          | Sessão verificada no servidor; vínculo e papel em tabela protegida; apenas administrador ativo habilitado nesta fase                                                   |
 | Login           | Estado de envio, retorno seguro ao caminho solicitado e integração opcional com Turnstile validada no servidor                                                         |
@@ -32,10 +32,11 @@ Esta implementação segue os [requisitos consolidados](Requisitos_Sistema_Fruta
 - O peso conhecido e o custo são preservados no recebimento. Alterar o peso padrão de uma apresentação não modifica o peso de entradas antigas. O peso remanescente mostrado é proporcional ao peso inicial, não uma nova pesagem.
 - O código interno automático usa `SKU-AAAAMMDD-sequência`. É uma convenção provisória e editável no recebimento; ainda precisa ser validada para o datador. Não é uma definição final de código de produção.
 - Uma mesma identificação de lote pode existir em apresentações ou locais diferentes. Um lançamento é único por apresentação, código e local.
-- A quarentena é uma situação de qualidade. O local físico continua explícito e independente dela. A localização sanitária da área denominada Quarentena continua sujeita à validação técnica.
-- Os critérios finais de inspeção estão pendentes; por isso, há observações obrigatórias e liberação explícita, sem aprovação automática por temperatura, tempo ou produto químico.
+- Em 20/10/2026, o fluxo manual de situação `em quarentena`, `liberado` e `bloqueado` foi retirado desta fase. O lote recebido fica disponível imediatamente, e a possibilidade de reintroduzir esse controle permanece como evolução futura.
+- O antigo local físico “Quarentena” foi arquivado, não apagado, para preservar vínculos históricos. Sua eventual reativação continua sujeita à validação técnica e sanitária.
+- Os critérios finais de inspeção estão pendentes; por isso, há observações obrigatórias, sem aprovação automática por temperatura, tempo ou produto químico.
 - A observação de inspeção começa vazia e precisa ser preenchida após a conferência. O sistema não presume a ausência de avarias.
-- Saídas exigem situação liberada, saldo suficiente e validade atual. Perdas e descartes admitem lotes bloqueados ou vencidos, com motivo. A destinação sanitária não é presumida pelo sistema.
+- Saídas exigem saldo suficiente e validade atual. Perdas e descartes admitem lotes vencidos, com motivo. A destinação sanitária não é presumida pelo sistema.
 - O alerta de 30 dias é um filtro operacional desta entrega e não define validade ou vida de prateleira.
 - Retroatividade preserva a data real de criação. A data da saída pode ser anterior ao registro, mas não ao recebimento do lote, nem futura. O saldo é validado contra a posição atual; ainda não há reconstrução de saldo histórico por data operacional.
 - Nenhum registro operacional pode ser apagado ou alterado diretamente pelo cliente. Cadastros são arquivados. Estornos, ajustes positivos e correções de recebimentos exigem um fluxo compensatório específico, ainda pendente.
@@ -51,6 +52,8 @@ Estado confirmado do ambiente publicado:
 - `202610200001_inventory.sql`: schema, RLS, funções, views, nove categorias e sete locais;
 - `202610200002_bootstrap_admin.sql`: etapa portátil de bootstrap, sem e-mail ou UUID de ambiente; o vínculo administrativo já existente permanece no banco publicado;
 - `202610200003_harden_inventory_rpcs.sql`: implementações privilegiadas isoladas no schema privado e RPCs públicas sem `SECURITY DEFINER`;
+- `202610200004_simplify_receiving.sql`: recebimento agrupado, item padrão e regras de entrada simplificadas;
+- `20261020221100_remove_lot_status_workflow.sql`: remove as situações manuais dos lotes, preserva movimentos antigos como registros históricos e arquiva o local físico “Quarentena”;
 - cadastro público desabilitado globalmente, mantendo o provedor de e-mail ativo para login das contas criadas pelo administrador;
 - senha mínima de oito caracteres, exigindo maiúscula, minúscula, número e símbolo;
 - URLs autorizadas para `https://sistema-frutalize.vercel.app/**` e `http://localhost:3000/**`;
@@ -123,14 +126,13 @@ A CI também inicia o build e executa `scripts/check-http.mjs` por HTTP: verific
 
 1. Entrar com o administrador vinculado e confirmar a ausência de saldos fictícios.
 2. Cadastrar um fornecedor, um produto e uma apresentação. Para uma apresentação conhecida de 500 g, informar peso unitário de 0,5 kg.
-3. Receber duas unidades, com referência, custo, validade, local e inspeção. Verificar quarentena, peso de 1 kg, custo por unidade e responsável no histórico.
-4. Tentar saída antes da liberação e conferir a recusa; liberar com justificativa.
-5. Registrar uma saída e verificar saldo, motivo, data operacional, data real e responsável. Tentar consumir mais do que o saldo e verificar a recusa.
-6. Arquivar fornecedor, produto, apresentação ou local e conferir que o histórico permanece e o cadastro não aceita novos recebimentos.
-7. Editar um cadastro com motivo e verificar os valores antes/depois no histórico.
-8. Confirmar busca, filtros, paginação, navegação por teclado e acesso a todas as operações em celular e computador.
-9. Com Turnstile configurado, validar sucesso, falha e expiração; verificar que o login funciona após uma tentativa recusada.
-10. Com outro usuário Auth, sem vínculo ou com perfil futuro, confirmar a negação do estoque inclusive pela Data API.
+3. Receber duas unidades, com referência, custo, validade, local e inspeção. Verificar disponibilidade imediata, peso de 1 kg, custo por unidade e responsável no histórico.
+4. Registrar uma saída e verificar saldo, motivo, data operacional, data real e responsável. Tentar consumir mais do que o saldo e verificar a recusa.
+5. Arquivar fornecedor, produto, apresentação ou local e conferir que o histórico permanece e o cadastro não aceita novos recebimentos.
+6. Editar um cadastro com motivo e verificar os valores antes/depois no histórico.
+7. Confirmar busca, filtros, paginação, navegação por teclado e acesso a todas as operações em celular e computador.
+8. Com Turnstile configurado, validar sucesso, falha e expiração; verificar que o login funciona após uma tentativa recusada.
+9. Com outro usuário Auth, sem vínculo ou com perfil futuro, confirmar a negação do estoque inclusive pela Data API.
 
 ## Próximas entregas necessárias
 
@@ -141,12 +143,12 @@ A CI também inicia o build e executa `scripts/check-http.mjs` por HTTP: verific
 | Bloqueio com revogação de todas as sessões Auth         | Pendente. Vínculo inativo já impede leitura e operações no banco imediatamente; isso não encerra as sessões Auth existentes |
 | Permissões de gestor e colaborador                      | Perfis modelados e negados nesta fase; matriz e ativação pendentes                                                          |
 | Anexo/foto de nota fiscal                               | Pendente: bucket privado, políticas, limites, captura e consulta segura                                                     |
-| Tipos de movimento configuráveis                        | Pendente; esta fatia usa recebimento, saída, perda/descarte e mudanças de situação                                          |
+| Tipos de movimento configuráveis                        | Pendente; esta fatia usa recebimento, saída e perda/descarte; mudanças antigas de situação permanecem apenas como histórico |
 | Ajustes, estorno, devolução e correção de recebimentos  | Pendentes; não oferecer edição silenciosa de movimentos concluídos                                                          |
 | Transferência de saldo entre locais/freezers            | Pendente: operação atômica entre posições, preservando lote e auditoria                                                     |
 | Produção, consumo de matérias-primas e vínculo de lotes | Pendente: ordem de produção e genealogia entre entrada e produto acabado                                                    |
 | Quantidade por caixa/pacote                             | Sem conversão automática; regras pendentes de aprovação                                                                     |
-| Inspeção estruturada e critérios de qualidade           | Texto e liberação explícita disponíveis; critérios finais pendentes                                                         |
+| Inspeção estruturada e critérios de qualidade           | Texto obrigatório disponível; critérios finais e eventual fluxo de situação permanecem pendentes                            |
 | Estoque mínimo                                          | Não exigido neste MVP; configuração futura pendente                                                                         |
 | Contagens/inventário físico e correções                 | Pendente                                                                                                                    |
 | Presença, apontamento e remuneração de colaboradores    | Pendente de definição e implementação                                                                                       |

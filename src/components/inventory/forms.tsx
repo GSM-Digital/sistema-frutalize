@@ -3,14 +3,12 @@ import { useActionState, useId, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  changeLotStatus,
   moveStock,
   receiveDelivery,
   saveCatalog,
 } from "@/app/dashboard/inventory-actions";
 import { money } from "@/lib/inventory/format";
 import {
-  statuses,
   units,
   type ActionState,
   type CatalogEntity,
@@ -1040,8 +1038,7 @@ export function MovementForm({
     requestId,
   );
   const v = (key: string, fallback = "") => state.values?.[key] ?? fallback;
-  const canDispatch =
-    lot.status === "released" && (!lot.expires_on || lot.expires_on >= today);
+  const canDispatch = !lot.expires_on || lot.expires_on >= today;
   return (
     <form
       key={state.successId ?? "initial"}
@@ -1093,80 +1090,13 @@ export function MovementForm({
       </fieldset>
       {!canDispatch && (
         <p className="muted text-sm">
-          Saídas exigem um lote liberado e dentro da validade. Perdas e
-          descartes exigem justificativa.
+          Lotes vencidos não podem registrar saída. Perdas e descartes exigem
+          justificativa.
         </p>
       )}
       <Result state={state} />
       <SaveButton pending={pending} disabled={lot.quantity === 0}>
         Registrar movimentação
-      </SaveButton>
-    </form>
-  );
-}
-export function StatusForm({
-  lot,
-  requestId,
-  today,
-}: {
-  lot: InventoryLot;
-  requestId: string;
-  today: string;
-}) {
-  const { state, action, pending, operationId } = useStockAction(
-    changeLotStatus,
-    requestId,
-  );
-  const v = (key: string, fallback = "") => state.values?.[key] ?? fallback;
-  return (
-    <form
-      key={state.successId ?? "initial"}
-      action={action}
-      className="inventory-form"
-    >
-      <input
-        type="hidden"
-        name="request_id"
-        value={v("request_id", operationId)}
-      />
-      <input type="hidden" name="lot_id" value={lot.id} />
-      <fieldset disabled={pending || lot.quantity === 0}>
-        <legend className="sr-only">Alterar situação do lote</legend>
-        <div className="form-grid">
-          <Field
-            label="Nova situação"
-            name="status"
-            required
-            value={v("status")}
-          >
-            <option value="">Selecione</option>
-            {Object.entries(statuses)
-              .filter(([key]) => key !== lot.status)
-              .map(([key, label]) => (
-                <option
-                  key={key}
-                  value={key}
-                  disabled={
-                    key === "released" &&
-                    Boolean(lot.expires_on && lot.expires_on < today)
-                  }
-                >
-                  {label}
-                </option>
-              ))}
-          </Field>
-          <Field
-            label="Justificativa da conferência"
-            name="reason"
-            required
-            maxLength={240}
-            value={v("reason")}
-          />
-        </div>
-      </fieldset>
-      <Result state={state} />
-      <SaveButton pending={pending} disabled={lot.quantity === 0}>
-        Atualizar situação
       </SaveButton>
     </form>
   );

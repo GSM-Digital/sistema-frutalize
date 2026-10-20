@@ -21,6 +21,7 @@ test("inventory migration and database authorization", async (t) => {
     "202610200002_bootstrap_admin.sql",
     "202610200003_harden_inventory_rpcs.sql",
     "202610200004_simplify_receiving.sql",
+    "20261020221100_remove_lot_status_workflow.sql",
   ]) {
     const migration = await readFile(
       new URL(`../supabase/migrations/${file}`, import.meta.url),
@@ -98,17 +99,6 @@ test("inventory migration and database authorization", async (t) => {
         ...overrides,
       }),
     ]);
-  const status = (
-    newStatus: string,
-    reason = "Conferência aprovada",
-    requestId = randomUUID(),
-  ) =>
-    scalar("select set_lot_status($1,$2,$3,$4)", [
-      requestId,
-      lot,
-      newStatus,
-      reason,
-    ]);
   const move = (
     kind: string,
     qty: number,
@@ -126,14 +116,34 @@ test("inventory migration and database authorization", async (t) => {
     ]);
 
   await t.test(
-    "seeds only confirmed categories and seven locations",
+    "seeds confirmed categories and keeps the former quarantine location archived",
     async () => {
       assert.equal(Number(await scalar("select count(*) from categories")), 9);
       assert.equal(
         Number(await scalar("select count(*) from storage_locations")),
         7,
       );
+      assert.equal(
+        Number(
+          await scalar(
+            "select count(*) from storage_locations where active = true",
+          ),
+        ),
+        6,
+      );
+      assert.equal(
+        await scalar(
+          "select active::text from storage_locations where name = 'Quarentena'",
+        ),
+        "false",
+      );
       assert.equal(Number(await scalar("select count(*) from lots")), 0);
+      assert.equal(
+        await scalar(
+          "select to_regprocedure('public.set_lot_status(uuid,uuid,text,text)') is null",
+        ),
+        true,
+      );
     },
   );
   await t.test(
@@ -347,7 +357,7 @@ test("inventory migration and database authorization", async (t) => {
     },
   );
   await t.test(
-    "receiving is atomic, quarantined and idempotent with computed cost/weight",
+    "receiving is atomic, immediately available and idempotent with computed cost/weight",
     async () => {
       const requestId = randomUUID();
       lot = await receipt({}, requestId);
@@ -356,12 +366,10 @@ test("inventory migration and database authorization", async (t) => {
         quantity: string;
         initial_weight_kg: string;
         unit_cost: string;
-        status: string;
       }>("select * from lots where id = $1", [lot]);
       assert.equal(Number(rows[0].quantity), 10);
       assert.equal(Number(rows[0].initial_weight_kg), 5);
       assert.equal(Number(rows[0].unit_cost), 2.5);
-      assert.equal(rows[0].status, "quarantine");
       assert.equal(
         Number(
           await scalar(
@@ -371,7 +379,6 @@ test("inventory migration and database authorization", async (t) => {
         ),
         1,
       );
-      await assert.rejects(move("dispatch", 1), /liberado/);
     },
   );
   await t.test("failed writes roll back both balance and ledger", async () => {
@@ -392,11 +399,8 @@ test("inventory migration and database authorization", async (t) => {
     );
   });
   await t.test(
-    "release, dispatch and status retries leave one audit trail each",
+    "dispatch is immediately available and retries leave one audit trail",
     async () => {
-      const releaseId = randomUUID();
-      const release = await status("released", "Conferido", releaseId);
-      assert.equal(await status("released", "Conferido", releaseId), release);
       const requestId = randomUUID();
       const movement = await move("dispatch", 3, "Uso em produção", requestId);
       assert.equal(
@@ -450,12 +454,9 @@ test("inventory migration and database authorization", async (t) => {
     },
   );
   await t.test(
-    "blocked and expired lots cannot dispatch, but allow justified disposal",
+    "expired lots cannot dispatch, but allow justified disposal",
     async () => {
-      await status("blocked");
-      await assert.rejects(move("dispatch", 1), /liberado/);
       await move("loss", 1);
-      await status("released");
       // Advance this fixture into the past through the trusted database owner.
       await db.exec("reset role");
       await db.query(
@@ -464,8 +465,6 @@ test("inventory migration and database authorization", async (t) => {
       );
       await user(admin);
       await assert.rejects(move("dispatch", 1), /validade/);
-      await status("blocked");
-      await assert.rejects(status("released"), /vencidos/);
       await move("loss", 1);
       assert.equal(
         Number(await scalar("select quantity from lots where id = $1", [lot])),

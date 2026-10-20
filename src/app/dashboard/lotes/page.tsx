@@ -1,11 +1,7 @@
 import Link from "next/link";
 import { getAccess } from "@/lib/auth";
 import { addDays, businessDate, listParams } from "@/lib/inventory/validation";
-import {
-  statuses,
-  type LotStatus,
-  type SearchParams,
-} from "@/lib/inventory/types";
+import type { SearchParams } from "@/lib/inventory/types";
 import {
   DataNotice,
   EmptyState,
@@ -25,10 +21,6 @@ export default async function LotsPage({
   const search = await searchParams;
   const { q, page, from, to, pattern } = listParams(search);
   const today = businessDate();
-  const status =
-    typeof search.status === "string" && Object.hasOwn(statuses, search.status)
-      ? (search.status as LotStatus)
-      : "";
   const expiry =
     search.validade === "proximos" || search.validade === "vencidos"
       ? search.validade
@@ -42,7 +34,6 @@ export default async function LotsPage({
     .order("id")
     .range(from, to);
   if (q) query = query.ilike("search_text", pattern);
-  if (status) query = query.eq("status", status);
   if (!includeEmpty) query = query.gt("quantity", 0);
   if (expiry === "proximos")
     query = query
@@ -85,19 +76,6 @@ export default async function LotsPage({
             />
           </div>
           <div>
-            <label htmlFor="lot-status" className="sr-only">
-              Situação
-            </label>
-            <select name="status" id="lot-status" defaultValue={status}>
-              <option value="">Todas as situações</option>
-              {Object.entries(statuses).map(([key, label]) => (
-                <option key={key} value={key}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
             <label htmlFor="lot-expiry" className="sr-only">
               Validade
             </label>
@@ -119,7 +97,7 @@ export default async function LotsPage({
           <button className="btn btn-secondary" type="submit">
             Filtrar
           </button>
-          {(q || status || expiry || includeEmpty) && (
+          {(q || expiry || includeEmpty) && (
             <Link className="text-link text-sm" href="/dashboard/lotes">
               Limpar
             </Link>

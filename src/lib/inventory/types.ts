@@ -14,19 +14,11 @@ export const units = {
   cx: "Caixa (cx)",
 } as const;
 export type Unit = keyof typeof units;
-export const statuses = {
-  quarantine: "Em quarentena",
-  released: "Liberado",
-  blocked: "Bloqueado",
-} as const;
-export type LotStatus = keyof typeof statuses;
 export const movementKinds = {
   receipt: "Recebimento",
   dispatch: "Saída",
   loss: "Perda / descarte",
-  release: "Liberação",
-  block: "Bloqueio",
-  quarantine: "Quarentena",
+  note: "Registro histórico",
 } as const;
 export type MovementKind = keyof typeof movementKinds;
 type BaseCatalog = {
@@ -82,7 +74,6 @@ export type Lot = {
   total_cost: number;
   unit_cost: number;
   quantity: number;
-  status: LotStatus;
   inspection_notes: string;
   created_by: string;
   created_at: string;
@@ -137,7 +128,6 @@ export type InventoryMovement = Movement & {
 export type Overview = {
   products_count: number;
   lots_count: number;
-  quarantine_count: number;
   expiring_count: number;
   expired_count: number;
 };
@@ -237,15 +227,6 @@ export type Database = {
           p_quantity: number;
           p_reason: string;
           p_operated_at: string;
-        };
-        Returns: string;
-      };
-      set_lot_status: {
-        Args: {
-          p_request_id: string;
-          p_lot_id: string;
-          p_status: LotStatus;
-          p_reason: string;
         };
         Returns: string;
       };

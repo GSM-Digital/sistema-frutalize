@@ -2,16 +2,11 @@ export function turnstileConfiguration() {
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
   const secret = process.env.TURNSTILE_SECRET_KEY ?? "";
   const hostname = process.env.TURNSTILE_EXPECTED_HOSTNAME ?? "";
-  const required =
-    process.env.TURNSTILE_REQUIRED === "true" ||
-    process.env.NODE_ENV === "production" ||
-    process.env.VERCEL_ENV === "production";
   return {
     siteKey,
     secret,
     hostname,
-    required,
-    enabled: required || Boolean(siteKey || secret || hostname),
+    enabled: Boolean(siteKey || secret || hostname),
     ready: Boolean(siteKey && secret && hostname),
   };
 }

@@ -44,7 +44,6 @@ A aplicação ficará disponível em `http://localhost:3000`.
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-TURNSTILE_REQUIRED=false
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=
 TURNSTILE_SECRET_KEY=
 TURNSTILE_EXPECTED_HOSTNAME=
@@ -52,7 +51,7 @@ TURNSTILE_EXPECTED_HOSTNAME=
 
 Nunca adicione chaves secretas do Supabase a variáveis prefixadas com `NEXT_PUBLIC_`.
 
-O login usa Cloudflare Turnstile em produção. Configure a site key, o segredo e o hostname esperado juntos, como descrito no guia. Produção falha de modo fechado: sem a configuração completa, o formulário informa a indisponibilidade e não permite entrar. Em homologação, use `TURNSTILE_REQUIRED=true`; em desenvolvimento local, `false` permite trabalhar sem as três chaves.
+O login está preparado para Cloudflare Turnstile opcional. Sem as três variáveis, o acesso por e-mail e senha continua funcionando normalmente. Para ativar a proteção no futuro, configure a site key, o segredo e o hostname esperado juntos, como descrito no guia; uma configuração parcial bloqueia o envio para evitar uma falsa sensação de proteção.
 
 ## Verificações
 

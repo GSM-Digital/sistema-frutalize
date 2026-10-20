@@ -20,7 +20,7 @@ Esta implementação segue os [requisitos consolidados](Requisitos_Sistema_Fruta
 | Consulta        | Busca por produto, SKU, lote, fornecedor e local; filtros por situação e validade; paginação no servidor                                                               |
 | Histórico       | Livro imutável de movimentos e auditoria de criação, edição e arquivamento de cadastros, com antes/depois                                                              |
 | Acesso          | Sessão verificada no servidor; vínculo e papel em tabela protegida; apenas administrador ativo habilitado nesta fase                                                   |
-| Login           | Estado de envio, retorno seguro ao caminho solicitado e Turnstile obrigatório em produção, validado no servidor e com falha fechada                                    |
+| Login           | Estado de envio, retorno seguro ao caminho solicitado e integração opcional com Turnstile validada no servidor                                                         |
 | Qualidade       | TypeScript, lint, formatação, testes de validação e PostgreSQL embarcado; CI em pull requests e na main                                                                |
 
 ## Decisões desta primeira fatia
@@ -84,16 +84,15 @@ A migração inclui as nove categorias e sete locais confirmados. Não inclui pr
 
 ## Turnstile
 
-Para ativar a proteção, configure juntos:
+Para ativar a proteção opcional, configure juntos:
 
-- `TURNSTILE_REQUIRED=true`: torna a proteção obrigatória também em homologação; desenvolvimento local pode usar `false`;
 - `NEXT_PUBLIC_TURNSTILE_SITE_KEY`: chave pública do widget;
 - `TURNSTILE_SECRET_KEY`: segredo somente no servidor;
 - `TURNSTILE_EXPECTED_HOSTNAME`: hostname exato do ambiente, sem protocolo nem caminho.
 
-O login verifica `success`, a ação `login` e o hostname no Siteverify. Token ausente, vencido/recusado, configuração incompleta ou indisponibilidade de validação impedem o login quando a proteção está habilitada. Em `NODE_ENV=production`, `VERCEL_ENV=production` ou com `TURNSTILE_REQUIRED=true`, a proteção é obrigatória e configuração ausente ou parcial bloqueia o formulário. O segredo não é enviado ao widget. Cada ambiente precisa de hostname permitido e configuração compatível.
+O login verifica `success`, a ação `login` e o hostname no Siteverify. Token ausente, vencido/recusado, configuração incompleta ou indisponibilidade de validação impedem o login quando a proteção está habilitada. O segredo não é enviado ao widget. Cada ambiente precisa de hostname permitido e configuração compatível.
 
-Somente em desenvolvimento, com `TURNSTILE_REQUIRED=false` e com as três variáveis vazias, a proteção fica desabilitada. Homologação deve usar suas próprias chaves e hostname. Não configure o captcha nativo do Supabase simultaneamente sem adaptar o envio de token: esta implementação valida o Turnstile na Server Action.
+Com as três variáveis vazias, a proteção fica desabilitada e o login por e-mail e senha permanece disponível em qualquer ambiente. Não configure apenas parte dos valores. Não configure o captcha nativo do Supabase simultaneamente sem adaptar o envio de token: esta implementação valida o Turnstile na Server Action.
 
 Referências: [validação no servidor](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/) e [widget](https://developers.cloudflare.com/turnstile/get-started/client-side-rendering/).
 

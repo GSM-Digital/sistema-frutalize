@@ -52,6 +52,13 @@ console.log("PASS security headers: CSP and browser policies applied");
 const html = await login.text();
 assert.ok(html.includes("Bem-vindo de volta"));
 assert.ok(html.includes('name="email"') && html.includes('name="password"'));
+const loginButton = html.match(/<button[^>]*>Entrar no sistema<\/button>/)?.[0];
+assert.ok(loginButton, "The login submit button must be rendered");
+assert.doesNotMatch(
+  loginButton,
+  /\sdisabled(?:=|\s|>)/,
+  "Login must remain available when Turnstile is not configured",
+);
 console.log("PASS /login: login form rendered");
 const health = await fetch(`${base}/api/health`);
 assert.ok([200, 503].includes(health.status));

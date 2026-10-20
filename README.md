@@ -61,3 +61,7 @@ npm run build
 ```
 
 Os testes executam as regras de estoque e acesso em PostgreSQL embarcado, sem credenciais de produção. A integração com Supabase, a responsividade e o fluxo completo devem passar pelo aceite em homologação documentado antes de publicar em produção.
+
+## Licença
+
+Este é um software proprietário da Frutalize. Todos os direitos são reservados, e sua reprodução ou utilização sem autorização prévia e expressa é proibida. Consulte o arquivo [LICENSE](LICENSE) para os termos completos.

@@ -1286,8 +1286,7 @@ tbody tr:hover {
     min-height: calc(58px + env(safe-area-inset-top));
     padding: calc(0.65rem + env(safe-area-inset-top)) 1rem 0.65rem;
     border-bottom: 1px solid #dfe6dc;
-    background: rgba(252, 253, 251, 0.96);
-    backdrop-filter: blur(16px);
+    background: #fcfdfb;
   }
   .brand {
     padding: 0;

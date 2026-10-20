@@ -44,7 +44,8 @@ export default async function NewReceiptPage() {
                 Prepare os cadastros antes de receber
               </h2>
               <p className="muted mt-2 text-sm leading-6">
-                É preciso ter produto, apresentação, fornecedor e local ativos.
+                É preciso ter produto, tamanho/embalagem, fornecedor e local
+                ativos.
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
                 <Link
@@ -57,7 +58,7 @@ export default async function NewReceiptPage() {
                   className="btn btn-secondary"
                   href="/dashboard/cadastros/apresentacoes?novo=1"
                 >
-                  Cadastrar apresentação
+                  Cadastrar tamanho/embalagem
                 </Link>
                 <Link
                   className="btn btn-secondary"

@@ -55,11 +55,16 @@ export default async function LotsPage({
     <>
       <PageHeading
         title="Estoque e lotes"
-        description="Saldos por apresentação e local. Os lotes com menor validade aparecem primeiro."
+        description="Saldos por tamanho/embalagem e local. Os lotes com menor validade aparecem primeiro."
       >
-        <Link className="btn btn-primary" href="/dashboard/recebimentos/novo">
-          ＋ Novo recebimento
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link className="btn btn-secondary" href="/dashboard/movimentacoes">
+            Ver movimentações
+          </Link>
+          <Link className="btn btn-primary" href="/dashboard/recebimentos/novo">
+            ＋ Novo recebimento
+          </Link>
+        </div>
       </PageHeading>
       <Panel
         title="Posição do estoque"

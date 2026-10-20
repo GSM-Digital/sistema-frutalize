@@ -349,7 +349,7 @@ export function ReceiptForm({
         <legend>Identificação do recebimento</legend>
         <div className="form-grid">
           <Field
-            label="Produto e apresentação"
+            label="Produto, tamanho e embalagem"
             name="variant_id"
             required
             value={v("variant_id")}

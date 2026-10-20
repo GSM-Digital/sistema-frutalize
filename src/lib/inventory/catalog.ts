@@ -10,9 +10,10 @@ export const catalogs = {
   apresentacoes: {
     entity: "variants",
     table: "item_variants",
-    title: "Apresentações",
-    singular: "apresentação",
-    description: "Identificação e embalagem de cada item que entra no estoque.",
+    title: "Tamanhos e embalagens",
+    singular: "variação",
+    description:
+      "Defina o peso, a unidade e a embalagem de cada produto controlado no estoque.",
   },
   fornecedores: {
     entity: "suppliers",

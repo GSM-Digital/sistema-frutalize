@@ -71,9 +71,19 @@ export default async function CatalogPage({
         title={config.title}
         description={config.description}
       >
-        <Link href={`${path}?novo=1`} className="btn btn-primary">
-          ＋ Novo cadastro
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          {tipo === "produtos" && (
+            <Link
+              href="/dashboard/cadastros/apresentacoes"
+              className="btn btn-secondary"
+            >
+              Tamanhos e embalagens
+            </Link>
+          )}
+          <Link href={`${path}?novo=1`} className="btn btn-primary">
+            ＋ Novo cadastro
+          </Link>
+        </div>
       </PageHeading>
       {showForm && (
         <div className="mb-6">

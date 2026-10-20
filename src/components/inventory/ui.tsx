@@ -126,7 +126,7 @@ export function LotsTable({
     <div className="table-scroll">
       <table>
         <caption className="sr-only">
-          Lotes por apresentação e local de armazenamento
+          Lotes por tamanho/embalagem e local de armazenamento
         </caption>
         <thead>
           <tr>

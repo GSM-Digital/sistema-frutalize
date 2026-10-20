@@ -47,7 +47,6 @@ export default async function DashboardLayout({
             Frutalize<small>Gestão da fábrica</small>
           </span>
         </Link>
-        <p className="sidebar-label">OPERAÇÃO</p>
         <Navigation />
         <div className="sidebar-footer">
           <span className="badge badge-green">Uso interno</span>

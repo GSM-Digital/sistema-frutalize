@@ -14,7 +14,7 @@ export const instant = false;
 const entities: Record<string, string> = {
   categories: "Categoria",
   products: "Produto",
-  item_variants: "Apresentação",
+  item_variants: "Tamanho/embalagem",
   suppliers: "Fornecedor",
   storage_locations: "Local de estoque",
 };

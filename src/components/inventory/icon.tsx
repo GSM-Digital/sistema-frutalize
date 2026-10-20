@@ -31,14 +31,28 @@ const paths = {
     "M3 19h.01",
   ],
   history: ["M3 11a9 9 0 1 1 3 8", "M3 3v8h8", "M12 7v5l3 2"],
+  receive: ["M4 9h16v11H4z", "M8 4h8", "M12 3v11", "M9 11l3 3 3-3"],
+  production: [
+    "M9.5 3h5l.8 2.1 2 .8 2.1-.8 2.5 4.3-1.7 1.4.3 2.1 1.7 1.4-2.5 4.3-2.1-.8-2 .8-.8 2.1h-5l-.8-2.1-2-.8-2.1.8-2.5-4.3 1.7-1.4-.3-2.1L3.1 9.4l2.5-4.3 2.1.8 2-.8z",
+    "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6",
+  ],
+  finance: ["M3 6h18v13H3z", "M3 10h18", "M7 15h4"],
+  sale: ["M5 8h14l-1 13H6z", "M8 10V7a4 4 0 0 1 8 0v3"],
+  users: [
+    "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2",
+    "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8",
+    "M22 21v-2a4 4 0 0 0-3-3.87",
+    "M16 3.13a4 4 0 0 1 0 7.75",
+  ],
+  catalog: ["M4 4h6v6H4z", "M14 4h6v6h-6z", "M4 14h6v6H4z", "M14 14h6v6h-6z"],
 } as const;
 export type IconName = keyof typeof paths;
-export function Icon({ name }: { name: IconName }) {
+export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
   return (
     <svg
       aria-hidden="true"
-      width="18"
-      height="18"
+      width={size}
+      height={size}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

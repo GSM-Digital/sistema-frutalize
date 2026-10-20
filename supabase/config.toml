@@ -14,4 +14,4 @@ minimum_password_length = 8
 password_requirements = "lower_upper_letters_digits_symbols"
 
 [auth.email]
-enable_signup = false
+enable_signup = true

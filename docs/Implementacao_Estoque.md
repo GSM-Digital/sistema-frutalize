@@ -50,7 +50,7 @@ Estado confirmado do ambiente publicado:
 - `202610200001_inventory.sql`: schema, RLS, funções, views, nove categorias e sete locais;
 - `202610200002_bootstrap_admin.sql`: vínculo do usuário Auth existente ao perfil interno `admin` ativo;
 - `202610200003_harden_inventory_rpcs.sql`: implementações privilegiadas isoladas no schema privado e RPCs públicas sem `SECURITY DEFINER`;
-- cadastro público desabilitado globalmente e no provedor de e-mail;
+- cadastro público desabilitado globalmente, mantendo o provedor de e-mail ativo para login das contas criadas pelo administrador;
 - senha mínima de oito caracteres, exigindo maiúscula, minúscula, número e símbolo;
 - URLs autorizadas para `https://sistema-frutalize.vercel.app/**` e `http://localhost:3000/**`;
 - lint do banco sem erros; advisor sem alertas das funções de estoque. Permanece apenas o aviso de proteção contra senhas vazadas, recurso disponível no plano Pro.

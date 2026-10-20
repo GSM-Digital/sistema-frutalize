@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getAccess } from "@/lib/auth";
 import { catalogOptions } from "@/lib/inventory/queries";
 import { businessDate, businessDateTime } from "@/lib/inventory/validation";
-import { ReceiptForm } from "@/components/inventory/forms";
+import { ReceiptForm, ReceiptSetup } from "@/components/inventory/forms";
 import { DataNotice, PageHeading, Panel } from "@/components/inventory/ui";
 export const instant = false;
 export default async function NewReceiptPage() {
@@ -10,12 +10,20 @@ export default async function NewReceiptPage() {
   if (access.status !== "ready") return null;
   const options = await catalogOptions(access.supabase).catch(() => null);
   if (!options) return <DataNotice />;
-  const ready =
-    options.variants.some(
-      (x) => x.active && x.product_active && x.category_active,
-    ) &&
-    options.suppliers.some((x) => x.active) &&
-    options.locations.some((x) => x.active);
+  const hasItems = options.variants.some(
+    (x) =>
+      x.active &&
+      x.product_active &&
+      x.category_active &&
+      ((x.has_variants && !x.is_default) || (!x.has_variants && x.is_default)),
+  );
+  const hasSuppliers = options.suppliers.some((x) => x.active);
+  const hasLocations = options.locations.some((x) => x.active);
+  const missing = [
+    !hasItems && "ao menos um item ativo",
+    !hasSuppliers && "ao menos um fornecedor ativo",
+    !hasLocations && "ao menos um local físico ativo",
+  ].filter(Boolean) as string[];
   return (
     <>
       <PageHeading
@@ -28,53 +36,28 @@ export default async function NewReceiptPage() {
       </PageHeading>
       <Panel
         title="Dados da entrada"
-        description="Campos com * são obrigatórios. Quantidades aceitam até três casas decimais."
+        description="Uma entrega pode incluir frutas, embalagens, uniformes, limpeza e outros itens."
       >
         <div className="p-5 sm:p-7">
-          {ready ? (
-            <ReceiptForm
-              options={options}
-              requestId={crypto.randomUUID()}
-              now={businessDateTime()}
-              today={businessDate()}
-            />
-          ) : (
+          <ReceiptSetup options={options} />
+          {missing.length > 0 && (
             <div className="notice">
               <h2 className="font-semibold">
-                Prepare os cadastros antes de receber
+                Falta preparar {missing.join(" e ")}
               </h2>
               <p className="muted mt-2 text-sm leading-6">
-                É preciso ter produto, tamanho/embalagem, fornecedor e local
-                ativos.
+                Cadastre o item ou fornecedor acima. Os locais físicos da
+                fábrica ficam configurados no sistema e indicam onde cada lote
+                será guardado.
               </p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Link
-                  className="btn btn-secondary"
-                  href="/dashboard/cadastros/produtos?novo=1"
-                >
-                  Cadastrar produto
-                </Link>
-                <Link
-                  className="btn btn-secondary"
-                  href="/dashboard/cadastros/apresentacoes?novo=1"
-                >
-                  Cadastrar tamanho/embalagem
-                </Link>
-                <Link
-                  className="btn btn-secondary"
-                  href="/dashboard/cadastros/fornecedores?novo=1"
-                >
-                  Cadastrar fornecedor
-                </Link>
-                <Link
-                  className="btn btn-secondary"
-                  href="/dashboard/cadastros/locais"
-                >
-                  Consultar locais
-                </Link>
-              </div>
             </div>
           )}
+          <ReceiptForm
+            options={options}
+            requestId={crypto.randomUUID()}
+            now={businessDateTime()}
+            today={businessDate()}
+          />
         </div>
       </Panel>
     </>

@@ -3,9 +3,10 @@ export const catalogs = {
   produtos: {
     entity: "products",
     table: "products",
-    title: "Produtos",
-    singular: "produto",
-    description: "O produto principal, separado dos tamanhos e das embalagens.",
+    title: "Itens de estoque",
+    singular: "item",
+    description:
+      "Cadastre tudo o que entra na fábrica: frutas, embalagens, limpeza, uniformes e produtos prontos.",
   },
   apresentacoes: {
     entity: "variants",
@@ -13,7 +14,7 @@ export const catalogs = {
     title: "Tamanhos e embalagens",
     singular: "variação",
     description:
-      "Defina o peso, a unidade e a embalagem de cada produto controlado no estoque.",
+      "Use somente quando tamanhos ou embalagens precisam ter saldos separados, como polpa de 500 g e 1 kg.",
   },
   fornecedores: {
     entity: "suppliers",

@@ -130,7 +130,7 @@ export function LotsTable({
         </caption>
         <thead>
           <tr>
-            <th>Produto / lote</th>
+            <th>Item / lote</th>
             <th>Local</th>
             <th>Saldo</th>
             <th>Validade</th>
@@ -147,9 +147,11 @@ export function LotsTable({
                 <Link className="text-link" href={`/dashboard/lotes/${lot.id}`}>
                   {lot.product_name}
                 </Link>
-                <span className="table-sub">
-                  {lot.variant_name} · {lot.sku}
-                </span>
+                {!lot.is_default && (
+                  <span className="table-sub">
+                    {lot.variant_name} · {lot.sku}
+                  </span>
+                )}
                 <span className="table-sub font-mono">{lot.code}</span>
               </td>
               <td>{lot.location_name}</td>
@@ -192,7 +194,7 @@ export function MovementsTable({
         <thead>
           <tr>
             <th>Movimentação</th>
-            <th>Produto / lote</th>
+            <th>Item / lote</th>
             <th>Quantidade</th>
             <th>Responsável</th>
             <th>Registro</th>
@@ -217,7 +219,8 @@ export function MovementsTable({
                   {m.product_name}
                 </Link>
                 <span className="table-sub">
-                  {m.variant_name} · {m.lot_code}
+                  {!m.is_default && `${m.variant_name} · `}
+                  {m.lot_code}
                 </span>
               </td>
               <td className="whitespace-nowrap tabular-nums">

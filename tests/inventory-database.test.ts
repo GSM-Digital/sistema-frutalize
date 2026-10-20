@@ -16,14 +16,17 @@ test("inventory migration and database authorization", async (t) => {
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
     grant usage on schema public,auth to anon,authenticated;
     grant execute on function auth.uid() to anon,authenticated;`);
-  const migration = await readFile(
-    new URL(
-      "../supabase/migrations/202610200001_inventory.sql",
-      import.meta.url,
-    ),
-    "utf8",
-  );
-  await db.exec(migration);
+  for (const file of [
+    "202610200001_inventory.sql",
+    "202610200003_harden_inventory_rpcs.sql",
+    "202610200004_simplify_receiving.sql",
+  ]) {
+    const migration = await readFile(
+      new URL(`../supabase/migrations/${file}`, import.meta.url),
+      "utf8",
+    );
+    await db.exec(migration);
+  }
   await db.query("insert into auth.users(id) values ($1),($2),($3),($4)", [
     admin,
     outsider,
@@ -158,6 +161,7 @@ test("inventory migration and database authorization", async (t) => {
         name: "Polpa de maracujá",
         category_id: category,
         requires_expiry: true,
+        has_variants: true,
       });
       variant = await save("variants", null, {
         name: "500 g",
@@ -189,6 +193,119 @@ test("inventory migration and database authorization", async (t) => {
       assert.equal(rows[0].before_data.name, "Polpa de maracujá");
       assert.equal(rows[0].after_data.name, "Polpa de maracujá revisada");
       assert.equal(rows[0].actor_name, "Admin Teste");
+    },
+  );
+  await t.test(
+    "common items receive directly and one delivery commits all items atomically",
+    async () => {
+      const commonProduct = await save("products", null, {
+        name: "Maracujá in natura",
+        category_id: category,
+        requires_expiry: false,
+        has_variants: false,
+      });
+      const commonVariant = await scalar(
+        "select id from item_variants where product_id = $1 and is_default",
+        [commonProduct],
+      );
+      assert.equal(
+        await scalar("select name from item_variants where id = $1", [
+          commonVariant,
+        ]),
+        "Padrão",
+      );
+
+      const requestId = randomUUID();
+      const deliveryData = JSON.stringify({
+        supplier_id: supplier,
+        reference: "NF-ENTREGA-002",
+        received_at: yesterday,
+        items: [
+          {
+            variant_id: commonVariant,
+            location_id: location,
+            code: "",
+            supplier_lot: "FORN-01",
+            manufactured_on: "",
+            expires_on: "",
+            expiry_source: "not_applicable",
+            unit: "un",
+            quantity: 10,
+            net_weight_kg: 3.2,
+            total_cost: 20,
+            inspection_notes: "Frutas recebidas sem avarias aparentes.",
+          },
+          {
+            variant_id: commonVariant,
+            location_id: location,
+            code: "",
+            supplier_lot: "FORN-02",
+            manufactured_on: "",
+            expires_on: "",
+            expiry_source: "not_applicable",
+            unit: "kg",
+            quantity: 5,
+            net_weight_kg: "",
+            total_cost: 15,
+            inspection_notes: "Frutas recebidas e pesadas na entrada.",
+          },
+        ],
+      });
+      const deliveryId = await scalar("select receive_delivery($1,$2)", [
+        requestId,
+        deliveryData,
+      ]);
+      assert.equal(
+        await scalar("select receive_delivery($1,$2)", [
+          requestId,
+          deliveryData,
+        ]),
+        deliveryId,
+      );
+      const { rows } = await db.query<{
+        item_count: number;
+        total_cost: string;
+      }>("select item_count,total_cost from receipts where id = $1", [
+        deliveryId,
+      ]);
+      assert.equal(rows[0].item_count, 2);
+      assert.equal(Number(rows[0].total_cost), 35);
+      assert.equal(
+        Number(
+          await scalar("select count(*) from lots where receipt_id = $1", [
+            deliveryId,
+          ]),
+        ),
+        2,
+      );
+      assert.equal(
+        Number(
+          await scalar(
+            "select count(*) from stock_movements m join lots l on l.id = m.lot_id where l.receipt_id = $1",
+            [deliveryId],
+          ),
+        ),
+        2,
+      );
+
+      const failedRequest = randomUUID();
+      const invalid = JSON.parse(deliveryData);
+      invalid.items[1].quantity = -1;
+      await assert.rejects(
+        db.query("select receive_delivery($1,$2)", [
+          failedRequest,
+          JSON.stringify(invalid),
+        ]),
+        /Quantidade ou unidade inválida/,
+      );
+      assert.equal(
+        Number(
+          await scalar("select count(*) from receipts where request_id = $1", [
+            failedRequest,
+          ]),
+        ),
+        0,
+      );
     },
   );
   await t.test(
@@ -429,6 +546,7 @@ test("inventory migration and database authorization", async (t) => {
         name: "Caixa de transporte",
         category_id: category,
         requires_expiry: false,
+        has_variants: true,
       });
       const nonperishableVariant = await save("variants", null, {
         name: "Padrão",

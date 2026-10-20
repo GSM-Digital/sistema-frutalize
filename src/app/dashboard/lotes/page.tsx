@@ -73,7 +73,7 @@ export default async function LotsPage({
         <form className="filter-bar" action="/dashboard/lotes" method="get">
           <div className="filter-search">
             <label htmlFor="lot-search" className="sr-only">
-              Buscar produto, SKU, lote, fornecedor ou local
+              Buscar item, SKU, lote, fornecedor ou local
             </label>
             <input
               id="lot-search"

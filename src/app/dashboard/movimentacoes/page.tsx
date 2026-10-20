@@ -59,7 +59,7 @@ export default async function MovementsPage({
         >
           <div className="filter-search">
             <label className="sr-only" htmlFor="movement-search">
-              Buscar produto, lote, responsável ou motivo
+              Buscar item, lote, responsável ou motivo
             </label>
             <input
               type="search"

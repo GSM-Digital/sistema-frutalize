@@ -36,6 +36,8 @@ export default async function CatalogPage({
     .order("name")
     .order("id")
     .range(from, to);
+  if (config.entity === "variants")
+    query = query.eq("is_default" as never, false);
   if (q) query = query.ilike("name", pattern);
   const [result, optionsResult] = await Promise.all([
     query,
@@ -166,6 +168,9 @@ export default async function CatalogPage({
                             {row.requires_expiry
                               ? "Exige validade"
                               : "Validade opcional"}
+                            {row.has_variants
+                              ? " · tamanhos separados"
+                              : " · entrada direta"}
                           </span>
                         </>
                       ) : config.entity === "variants" ? (

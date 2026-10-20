@@ -88,7 +88,7 @@ const modules: HomeCard[] = [
   },
   {
     title: "Cadastros",
-    description: "Produtos, tamanhos, embalagens, fornecedores e locais.",
+    description: "Itens, tamanhos, embalagens, fornecedores e locais.",
     icon: "catalog",
     href: "/dashboard/cadastros",
     status: "Disponível",
@@ -193,7 +193,7 @@ export default async function DashboardPage() {
   const firstName = access.member.display_name.trim().split(/\s+/)[0];
   const stockStats = [
     {
-      label: "Produtos ativos",
+      label: "Itens ativos",
       value: stats.products_count,
       href: "/dashboard/cadastros/produtos",
     },

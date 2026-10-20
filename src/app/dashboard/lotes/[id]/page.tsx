@@ -52,7 +52,9 @@ export default async function LotPage({
   const today = businessDate();
   const now = businessDateTime();
   const details = [
-    ["Tamanho/embalagem", `${lot.variant_name} · ${lot.sku}`],
+    ...(lot.is_default
+      ? []
+      : [["Tamanho/embalagem", `${lot.variant_name} · ${lot.sku}`]]),
     ["Local físico", lot.location_name],
     ["Fornecedor", lot.supplier_name],
     ["Documento", lot.reference],

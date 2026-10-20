@@ -978,6 +978,66 @@ tbody tr:hover {
   color: #35672d;
   border: 1px solid #d4e5ca;
 }
+.receipt-setup {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.receipt-setup details {
+  border: 1px solid #dce4d9;
+  border-radius: 0.75rem;
+  background: #f9fbf7;
+}
+.receipt-setup summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.9rem 1rem;
+  color: var(--brand-dark);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+.receipt-setup summary::-webkit-details-marker {
+  display: none;
+}
+.compact-form {
+  border-top: 1px solid #e5eae2;
+  padding: 1rem;
+}
+.receipt-items {
+  display: grid;
+  gap: 1rem;
+}
+.receipt-item {
+  border: 1px solid #dce4d9 !important;
+  border-radius: 0.85rem;
+  background: #fbfcfa;
+  padding: 1.2rem !important;
+}
+.receipt-item legend {
+  padding: 0 0.35rem;
+  color: var(--brand-dark);
+}
+.receipt-item-heading,
+.receipt-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.receipt-item-heading {
+  margin: -0.4rem 0 1rem;
+}
+.receipt-notes {
+  grid-column: 1 / -1;
+}
+.receipt-summary {
+  border-radius: 0.7rem;
+  background: #eff5eb;
+  padding: 1rem 1.15rem;
+  color: #40503a;
+  font-size: 0.8rem;
+}
 .lot-summary {
   display: flex;
   align-items: center;
@@ -1237,6 +1297,17 @@ tbody tr:hover {
   }
   .form-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .receipt-setup {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .receipt-item {
+    padding: 1rem !important;
+  }
+  .receipt-item-heading,
+  .receipt-summary {
+    align-items: flex-start;
+    flex-direction: column;
   }
   .field input,
   .field select,

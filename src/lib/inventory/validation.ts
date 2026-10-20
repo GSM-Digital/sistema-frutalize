@@ -138,6 +138,7 @@ export function catalogInput(entity: CatalogEntity, data: FormData): Json {
   if (entity === "products") {
     values.category_id = uuidField(data, "category_id");
     values.requires_expiry = data.get("requires_expiry") === "true";
+    values.has_variants = data.get("has_variants") === "true";
   }
   if (entity === "variants") {
     values.product_id = uuidField(data, "product_id");
@@ -234,6 +235,161 @@ export function receiptInput(data: FormData) {
         3,
         1000,
       ),
+    },
+  };
+}
+
+function objectText(
+  value: Record<string, unknown>,
+  key: string,
+  label: string,
+  min: number,
+  max: number,
+) {
+  const raw = value[key];
+  const text = typeof raw === "string" ? raw.trim() : "";
+  if (text.length < min || text.length > max)
+    throw new ValidationError(
+      `${label}: informe entre ${min} e ${max} caracteres.`,
+    );
+  return text;
+}
+
+function objectUuid(value: Record<string, unknown>, key: string) {
+  const id = value[key];
+  if (!isUuid(id)) throw new ValidationError("Selecione uma opção válida.");
+  return id;
+}
+
+function objectDecimal(
+  value: Record<string, unknown>,
+  key: string,
+  decimals = 3,
+  allowZero = false,
+  optional = false,
+) {
+  const rawValue = value[key];
+  const raw =
+    typeof rawValue === "string" || typeof rawValue === "number"
+      ? String(rawValue).trim().replace(",", ".")
+      : "";
+  if (optional && !raw) return null;
+  if (!new RegExp(`^\\d+(?:\\.\\d{1,${decimals}})?$`).test(raw))
+    throw new ValidationError(
+      `Informe até ${decimals} casas decimais, sem separador de milhar.`,
+    );
+  const parsed = Number(raw);
+  if (
+    !Number.isFinite(parsed) ||
+    parsed > 999999999 ||
+    (allowZero ? parsed < 0 : parsed <= 0)
+  )
+    throw new ValidationError(
+      "Quantidade ou valor fora do intervalo permitido.",
+    );
+  return parsed;
+}
+
+function objectDate(
+  value: Record<string, unknown>,
+  key: string,
+  optional = false,
+) {
+  const text = objectText(value, key, "Data", optional ? 0 : 10, 10);
+  if (!text && optional) return null;
+  const holder = new FormData();
+  holder.set("date", text);
+  return dateField(holder, "date");
+}
+
+export function deliveryInput(data: FormData) {
+  const received = operationalDateField(data, "received_at");
+  let rawItems: unknown;
+  try {
+    rawItems = JSON.parse(textField(data, "items", "Itens", 2, 100000));
+  } catch {
+    throw new ValidationError("Confira os itens deste recebimento.");
+  }
+  if (!Array.isArray(rawItems) || rawItems.length < 1 || rawItems.length > 50)
+    throw new ValidationError("Informe de 1 a 50 itens por recebimento.");
+
+  const items = rawItems.map((rawItem) => {
+    if (!rawItem || typeof rawItem !== "object" || Array.isArray(rawItem))
+      throw new ValidationError("Confira os itens deste recebimento.");
+    const item = rawItem as Record<string, unknown>;
+    const manufactured_on = objectDate(item, "manufactured_on", true);
+    const expires_on = objectDate(item, "expires_on", true);
+    if (
+      (expires_on &&
+        (expires_on < businessDate() || expires_on < received.slice(0, 10))) ||
+      (manufactured_on && manufactured_on > received.slice(0, 10))
+    )
+      throw new ValidationError("Confira fabricação, recebimento e validade.");
+
+    const unit = objectText(item, "unit", "Unidade", 1, 3);
+    if (!Object.hasOwn(units, unit))
+      throw new ValidationError("Selecione uma unidade válida.");
+    const quantity = objectDecimal(item, "quantity")!;
+    if (["un", "pct", "cx"].includes(unit) && !Number.isInteger(quantity))
+      throw new ValidationError(
+        "Unidades, pacotes e caixas exigem quantidade inteira.",
+      );
+
+    const expiry_source = objectText(
+      item,
+      "expiry_source",
+      "Origem da validade",
+      8,
+      14,
+    );
+    if (!["supplier", "internal", "not_applicable"].includes(expiry_source))
+      throw new ValidationError("Selecione a origem da validade.");
+    if (!expires_on !== (expiry_source === "not_applicable"))
+      throw new ValidationError(
+        "Informe a validade e sua origem, ou marque não aplicável.",
+      );
+
+    return {
+      variant_id: objectUuid(item, "variant_id"),
+      location_id: objectUuid(item, "location_id"),
+      code: objectText(item, "code", "Lote interno", 0, 80).toUpperCase(),
+      supplier_lot: objectText(
+        item,
+        "supplier_lot",
+        "Lote do fornecedor",
+        0,
+        80,
+      ),
+      manufactured_on,
+      expires_on,
+      expiry_source,
+      unit,
+      quantity,
+      net_weight_kg: objectDecimal(item, "net_weight_kg", 6, false, true),
+      total_cost: objectDecimal(item, "total_cost", 2, true)!,
+      inspection_notes: objectText(
+        item,
+        "inspection_notes",
+        "Inspeção de qualidade",
+        3,
+        1000,
+      ),
+    };
+  });
+
+  return {
+    p_request_id: uuidField(data, "request_id"),
+    p_data: {
+      supplier_id: uuidField(data, "supplier_id"),
+      reference: textField(
+        data,
+        "reference",
+        "Nota fiscal ou referência",
+        1,
+        80,
+      ),
+      received_at: received,
+      items,
     },
   };
 }

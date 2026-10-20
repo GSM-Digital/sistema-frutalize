@@ -5,6 +5,7 @@ import type { ActionState } from "@/lib/inventory/types";
 import {
   catalogInput,
   decimalField,
+  deliveryInput,
   enumField,
   operationalDateField,
   receiptInput,
@@ -92,6 +93,29 @@ export async function receiveLot(
       "Recebimento registrado. O lote está em quarentena para conferência.",
     ),
     lotId,
+  };
+}
+export async function receiveDelivery(
+  _previous: ActionState,
+  data: FormData,
+): Promise<ActionState> {
+  const { supabase } = await requireStaff();
+  let receiptId: string;
+  try {
+    const { data: id, error } = await supabase.rpc(
+      "receive_delivery",
+      deliveryInput(data),
+    );
+    if (error) return failure(error, data);
+    receiptId = id;
+  } catch (error) {
+    return failure(error, data);
+  }
+  return {
+    ...saved(
+      "Recebimento registrado. Os itens estão em quarentena para conferência.",
+    ),
+    receiptId,
   };
 }
 export async function moveStock(

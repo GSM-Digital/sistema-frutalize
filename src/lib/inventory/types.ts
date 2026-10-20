@@ -39,11 +39,13 @@ export type Category = BaseCatalog;
 export type Product = BaseCatalog & {
   category_id: string;
   requires_expiry: boolean;
+  has_variants: boolean;
 };
 export type Variant = BaseCatalog & {
   product_id: string;
   sku: string;
   unit_weight_kg: number | null;
+  is_default: boolean;
 };
 export type Supplier = BaseCatalog & {
   cnpj: string;
@@ -55,6 +57,7 @@ export type Location = BaseCatalog & { description: string };
 export type InventoryVariant = Variant & {
   product_name: string;
   requires_expiry: boolean;
+  has_variants: boolean;
   product_active: boolean;
   category_name: string;
   category_active: boolean;
@@ -62,6 +65,7 @@ export type InventoryVariant = Variant & {
 };
 export type Lot = {
   id: string;
+  receipt_id: string | null;
   code: string;
   variant_id: string;
   location_id: string;
@@ -112,6 +116,8 @@ export type InventoryLot = Lot & {
   product_name: string;
   variant_name: string;
   sku: string;
+  is_default: boolean;
+  has_variants: boolean;
   location_name: string;
   supplier_name: string;
   remaining_weight_kg: number | null;
@@ -122,6 +128,8 @@ export type InventoryMovement = Movement & {
   product_name: string;
   variant_name: string;
   sku: string;
+  is_default: boolean;
+  has_variants: boolean;
   unit: Unit;
   location_name: string;
   search_text: string;
@@ -138,6 +146,7 @@ export type ActionState = {
   success?: string;
   values?: Record<string, string>;
   lotId?: string;
+  receiptId?: string;
   successId?: string;
 };
 export type SearchParams = Record<string, string | string[] | undefined>;
@@ -178,6 +187,17 @@ export type Database = {
       item_variants: Table<Variant>;
       suppliers: Table<Supplier>;
       storage_locations: Table<Location>;
+      receipts: Table<{
+        id: string;
+        request_id: string;
+        supplier_id: string;
+        reference: string;
+        received_at: string;
+        item_count: number;
+        total_cost: number;
+        created_by: string;
+        created_at: string;
+      }>;
       lots: Table<Lot>;
       stock_movements: Table<Movement>;
       audit_events: Table<AuditEvent>;
@@ -200,6 +220,10 @@ export type Database = {
         Returns: string;
       };
       receive_lot: {
+        Args: { p_request_id: string; p_data: Json };
+        Returns: string;
+      };
+      receive_delivery: {
         Args: { p_request_id: string; p_data: Json };
         Returns: string;
       };

@@ -10,7 +10,7 @@ const catalogs: {
   order: string;
 }[] = [
   {
-    title: "Produtos",
+    title: "Itens de estoque",
     description:
       "Cadastre frutas, polpas, embalagens, materiais e demais itens.",
     href: "/dashboard/cadastros/produtos",
@@ -81,8 +81,9 @@ export default function CatalogsPage() {
       <aside className="catalog-flow-note">
         <span className="badge badge-green">Ordem recomendada</span>
         <p>
-          Para o primeiro recebimento, comece por produto e tamanho/embalagem.
-          Depois, confirme o fornecedor e o local onde o lote ficará armazenado.
+          Para o primeiro recebimento, cadastre o item e o fornecedor. Crie
+          tamanhos ou embalagens apenas quando cada opção precisar de saldo
+          separado. Depois, informe o local físico onde o lote ficará guardado.
         </p>
         <Link className="text-link" href="/dashboard/recebimentos/novo">
           Ir para recebimento →

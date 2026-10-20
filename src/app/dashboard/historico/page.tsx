@@ -13,7 +13,8 @@ import {
 export const instant = false;
 const entities: Record<string, string> = {
   categories: "Categoria",
-  products: "Produto",
+  products: "Item",
+  receipts: "Recebimento",
   item_variants: "Tamanho/embalagem",
   suppliers: "Fornecedor",
   storage_locations: "Local de estoque",
@@ -22,10 +23,11 @@ const labels: Record<string, string> = {
   name: "Nome",
   active: "Situação",
   category_id: "Categoria",
-  product_id: "Produto principal",
+  product_id: "Item principal",
   sku: "SKU",
   unit_weight_kg: "Peso unitário (kg)",
   requires_expiry: "Controle de validade",
+  has_variants: "Tamanhos/embalagens separados",
   cnpj: "CNPJ",
   phone: "Telefone",
   address: "Endereço",
@@ -49,11 +51,15 @@ function Snapshot({ data, options }: { data: Json; options: CatalogOptions }) {
                 ? value
                   ? "Obrigatória"
                   : "Opcional"
-                : key === "category_id"
-                  ? options.categories.find((x) => x.id === value)?.name
-                  : key === "product_id"
-                    ? options.products.find((x) => x.id === value)?.name
-                    : value;
+                : key === "has_variants"
+                  ? value
+                    ? "Sim"
+                    : "Não, entrada direta"
+                  : key === "category_id"
+                    ? options.categories.find((x) => x.id === value)?.name
+                    : key === "product_id"
+                      ? options.products.find((x) => x.id === value)?.name
+                      : value;
           return (
             <div key={key}>
               <dt>{labels[key]}</dt>

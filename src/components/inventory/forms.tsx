@@ -4,7 +4,7 @@ import Link from "next/link";
 import {
   changeLotStatus,
   moveStock,
-  receiveLot,
+  receiveDelivery,
   saveCatalog,
 } from "@/app/dashboard/inventory-actions";
 import { money } from "@/lib/inventory/format";
@@ -16,6 +16,7 @@ import {
   type CatalogOptions,
   type CatalogRecord,
   type InventoryLot,
+  type Unit,
 } from "@/lib/inventory/types";
 
 type FieldProps = {
@@ -103,6 +104,11 @@ function Result({ state }: { state: ActionState }) {
               href={`/dashboard/lotes/${state.lotId}`}
             >
               Abrir o lote recebido →
+            </Link>
+          )}
+          {state.receiptId && (
+            <Link className="text-link block mt-2" href="/dashboard/lotes">
+              Consultar os lotes recebidos →
             </Link>
           )}
         </p>
@@ -214,6 +220,15 @@ export function CatalogForm({
                 <option value="true">Sim</option>
                 <option value="false">Não</option>
               </Field>
+              <Field
+                label="Possui tamanhos ou embalagens separados?"
+                name="has_variants"
+                value={v("has_variants", "false")}
+                hint="Use Não para frutas, toucas, uniformes e itens recebidos diretamente. Use Sim quando cada tamanho ou embalagem precisa de saldo próprio, como polpa de 500 g e 1 kg."
+              >
+                <option value="false">Não, entrada direta</option>
+                <option value="true">Sim, controlar separadamente</option>
+              </Field>
             </>
           )}
           {entity === "variants" && (
@@ -225,12 +240,14 @@ export function CatalogForm({
                 value={v("product_id")}
               >
                 <option value="">Selecione</option>
-                {options.products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                    {!p.active ? " (arquivado)" : ""}
-                  </option>
-                ))}
+                {options.products
+                  .filter((p) => p.has_variants)
+                  .map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                      {!p.active ? " (arquivado)" : ""}
+                    </option>
+                  ))}
               </Field>
               <Field
                 label="SKU"
@@ -314,6 +331,123 @@ export function CatalogForm({
   );
 }
 
+export function ReceiptSetup({ options }: { options: CatalogOptions }) {
+  const [productState, productAction, productPending] = useActionState(
+    saveCatalog,
+    {},
+  );
+  const [supplierState, supplierAction, supplierPending] = useActionState(
+    saveCatalog,
+    {},
+  );
+  return (
+    <div className="receipt-setup">
+      <details>
+        <summary>＋ Cadastrar item sem sair desta tela</summary>
+        <form action={productAction} className="inventory-form compact-form">
+          <input type="hidden" name="entity" value="products" />
+          <input type="hidden" name="active" value="true" />
+          <input
+            type="hidden"
+            name="reason"
+            value="Cadastro durante recebimento"
+          />
+          <fieldset disabled={productPending}>
+            <div className="form-grid">
+              <Field label="Nome do item" name="name" required />
+              <Field label="Categoria" name="category_id" required>
+                <option value="">Selecione</option>
+                {options.categories
+                  .filter((item) => item.active)
+                  .map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+              </Field>
+              <Field
+                label="Exige validade?"
+                name="requires_expiry"
+                value="false"
+              >
+                <option value="false">Não</option>
+                <option value="true">Sim</option>
+              </Field>
+              <Field
+                label="Tamanhos/embalagens com saldos separados?"
+                name="has_variants"
+                value="false"
+                hint="Para maracujá, touca ou detergente comum, escolha Não."
+              >
+                <option value="false">Não, entrada direta</option>
+                <option value="true">Sim</option>
+              </Field>
+            </div>
+          </fieldset>
+          <Result state={productState} />
+          <SaveButton pending={productPending}>Salvar item</SaveButton>
+        </form>
+      </details>
+      <details>
+        <summary>＋ Cadastrar fornecedor sem sair desta tela</summary>
+        <form action={supplierAction} className="inventory-form compact-form">
+          <input type="hidden" name="entity" value="suppliers" />
+          <input type="hidden" name="active" value="true" />
+          <input
+            type="hidden"
+            name="reason"
+            value="Cadastro durante recebimento"
+          />
+          <fieldset disabled={supplierPending}>
+            <div className="form-grid">
+              <Field label="Nome do fornecedor" name="name" required />
+              <Field label="CNPJ" name="cnpj" maxLength={20} />
+              <Field label="Telefone" name="phone" type="tel" maxLength={30} />
+              <Field label="Pessoa de contato" name="contact_name" />
+              <Field label="Endereço" name="address" maxLength={240} />
+            </div>
+          </fieldset>
+          <Result state={supplierState} />
+          <SaveButton pending={supplierPending}>Salvar fornecedor</SaveButton>
+        </form>
+      </details>
+    </div>
+  );
+}
+
+type ReceiptDraft = {
+  key: string;
+  variant_id: string;
+  location_id: string;
+  supplier_lot: string;
+  code: string;
+  manufactured_on: string;
+  expires_on: string;
+  expiry_source: "supplier" | "internal" | "not_applicable";
+  unit: Unit;
+  quantity: string;
+  net_weight_kg: string;
+  total_cost: string;
+  inspection_notes: string;
+};
+function blankReceiptItem(key: string): ReceiptDraft {
+  return {
+    key,
+    variant_id: "",
+    location_id: "",
+    supplier_lot: "",
+    code: "",
+    manufactured_on: "",
+    expires_on: "",
+    expiry_source: "not_applicable",
+    unit: "kg",
+    quantity: "",
+    net_weight_kg: "",
+    total_cost: "",
+    inspection_notes: "Recebido sem avarias aparentes.",
+  };
+}
+
 export function ReceiptForm({
   options,
   requestId,
@@ -325,45 +459,76 @@ export function ReceiptForm({
   now: string;
   today: string;
 }) {
-  const [preview, setPreview] = useState({ quantity: "", cost: "" });
+  const [items, setItems] = useState<ReceiptDraft[]>([
+    blankReceiptItem("item-1"),
+  ]);
   const { state, action, pending, operationId } = useStockAction(
-    receiveLot,
+    receiveDelivery,
     requestId,
-    () => setPreview({ quantity: "", cost: "" }),
+    () => setItems([blankReceiptItem("item-1")]),
   );
   const v = (key: string, fallback = "") => state.values?.[key] ?? fallback;
-  const qty = Number(preview.quantity.replace(",", "."));
-  const cost = Number(preview.cost.replace(",", "."));
+  const receivable = options.variants.filter(
+    (item) =>
+      item.active &&
+      item.product_active &&
+      item.category_active &&
+      ((item.has_variants && !item.is_default) ||
+        (!item.has_variants && item.is_default)),
+  );
+  const suppliers = options.suppliers.filter((item) => item.active);
+  const locations = options.locations.filter((item) => item.active);
+  const ready =
+    receivable.length > 0 && suppliers.length > 0 && locations.length > 0;
+  const changeItem = <K extends keyof ReceiptDraft>(
+    index: number,
+    key: K,
+    value: ReceiptDraft[K],
+  ) =>
+    setItems((current) =>
+      current.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, [key]: value } : item,
+      ),
+    );
+  const chooseItem = (index: number, variantId: string) => {
+    const variant = receivable.find((item) => item.id === variantId);
+    const preferredLocation = variant
+      ? locations.find((location) => {
+          const locationName = location.name.toLocaleLowerCase("pt-BR");
+          if (variant.category_name === "Frutas recebidas")
+            return locationName === "estoque de frutas";
+          if (variant.category_name === "Polpas prontas")
+            return locationName === "freezer 1";
+          return locationName === "estoque de insumos";
+        })
+      : undefined;
+    setItems((current) =>
+      current.map((item, itemIndex) =>
+        itemIndex === index
+          ? {
+              ...item,
+              variant_id: variantId,
+              location_id: item.location_id || preferredLocation?.id || "",
+              expiry_source: variant?.requires_expiry
+                ? "supplier"
+                : "not_applicable",
+              expires_on: variant?.requires_expiry ? item.expires_on : "",
+            }
+          : item,
+      ),
+    );
+  };
+  const totalCost = items.reduce((total, item) => {
+    const value = Number(item.total_cost.replace(",", "."));
+    return total + (Number.isFinite(value) ? value : 0);
+  }, 0);
   return (
-    <form
-      key={state.successId ?? "initial"}
-      action={action}
-      className="inventory-form"
-    >
-      <input
-        type="hidden"
-        name="request_id"
-        value={v("request_id", operationId)}
-      />
-      <fieldset disabled={pending}>
-        <legend>Identificação do recebimento</legend>
+    <form action={action} className="inventory-form">
+      <input type="hidden" name="request_id" value={operationId} />
+      <input type="hidden" name="items" value={JSON.stringify(items)} />
+      <fieldset disabled={pending || !ready}>
+        <legend>Dados da entrega</legend>
         <div className="form-grid">
-          <Field
-            label="Produto, tamanho e embalagem"
-            name="variant_id"
-            required
-            value={v("variant_id")}
-          >
-            <option value="">Selecione</option>
-            {options.variants
-              .filter((x) => x.active && x.product_active && x.category_active)
-              .map((x) => (
-                <option key={x.id} value={x.id}>
-                  {x.product_name} · {x.name} ({x.sku})
-                  {x.requires_expiry ? " · exige validade" : ""}
-                </option>
-              ))}
-          </Field>
           <Field
             label="Fornecedor"
             name="supplier_id"
@@ -371,13 +536,11 @@ export function ReceiptForm({
             value={v("supplier_id")}
           >
             <option value="">Selecione</option>
-            {options.suppliers
-              .filter((x) => x.active)
-              .map((x) => (
-                <option key={x.id} value={x.id}>
-                  {x.name}
-                </option>
-              ))}
+            {suppliers.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
           </Field>
           <Field
             label="Nota fiscal ou referência"
@@ -385,35 +548,7 @@ export function ReceiptForm({
             required
             maxLength={80}
             value={v("reference")}
-          />
-          <Field
-            label="Local físico de armazenamento"
-            name="location_id"
-            required
-            value={v("location_id")}
-            hint="Informe onde o lote ficará fisicamente, mesmo durante a quarentena."
-          >
-            <option value="">Selecione</option>
-            {options.locations
-              .filter((x) => x.active)
-              .map((x) => (
-                <option key={x.id} value={x.id}>
-                  {x.name}
-                </option>
-              ))}
-          </Field>
-          <Field
-            label="Lote do fornecedor"
-            name="supplier_lot"
-            maxLength={80}
-            value={v("supplier_lot")}
-          />
-          <Field
-            label="Lote interno"
-            name="code"
-            maxLength={80}
-            value={v("code")}
-            hint="Opcional. Em branco, gera SKU + data + sequência. Padrão provisório, a validar para o datador."
+            hint="Pode ser o número da nota, recibo ou outra identificação da entrega."
           />
           <Field
             label="Data e hora do recebimento"
@@ -421,105 +556,284 @@ export function ReceiptForm({
             type="datetime-local"
             required
             value={v("received_at", now)}
-            hint="Horário de Brasília. A data real do registro também será preservada."
-          />
-          <Field
-            label="Data de fabricação"
-            name="manufactured_on"
-            type="date"
-            max={today}
-            value={v("manufactured_on")}
-          />
-          <Field
-            label="Validade"
-            name="expires_on"
-            type="date"
-            value={v("expires_on")}
-            hint="Obrigatória para produtos configurados com controle de validade."
-          />
-          <Field
-            label="Origem da validade"
-            name="expiry_source"
-            required
-            value={v("expiry_source", "supplier")}
-          >
-            <option value="supplier">Informada pelo fornecedor</option>
-            <option value="internal">
-              Definida internamente pelo responsável
-            </option>
-            <option value="not_applicable">Não se aplica ao item</option>
-          </Field>
-        </div>
-      </fieldset>
-      <fieldset disabled={pending}>
-        <legend>Quantidade e custo</legend>
-        <div className="form-grid">
-          <Field
-            label="Quantidade recebida"
-            name="quantity"
-            required
-            inputMode="decimal"
-            value={v("quantity")}
-            onChange={(quantity) => setPreview((old) => ({ ...old, quantity }))}
-          />
-          <Field
-            label="Unidade deste recebimento"
-            name="unit"
-            required
-            value={v("unit", "kg")}
-          >
-            <>
-              {Object.entries(units).map(([key, label]) => (
-                <option key={key} value={key}>
-                  {label}
-                </option>
-              ))}
-            </>
-          </Field>
-          <Field
-            label="Peso líquido total (kg)"
-            name="net_weight_kg"
-            inputMode="decimal"
-            value={v("net_weight_kg")}
-            hint="Opcional para itens pesados. Em kg/g ou unidade com peso conhecido, o sistema calcula. Sem pesagem, deixe em branco."
-          />
-          <Field
-            label="Preço total (R$)"
-            name="total_cost"
-            required
-            inputMode="decimal"
-            value={v("total_cost")}
-            onChange={(cost) => setPreview((old) => ({ ...old, cost }))}
-            hint="Use 0 para entrada sem custo. Não use separador de milhar."
+            hint="Horário de Brasília."
           />
         </div>
-        <p className="muted text-sm mt-4" aria-live="polite">
-          Custo por unidade informada:{" "}
-          {qty > 0 && Number.isFinite(cost) && preview.cost
-            ? money(cost / qty, 6)
-            : "calculado ao informar quantidade e preço"}
-          .
-        </p>
       </fieldset>
-      <fieldset disabled={pending}>
-        <legend>Conferência de qualidade</legend>
-        <Field
-          label="Observações da inspeção"
-          name="inspection_notes"
-          rows={4}
-          required
-          maxLength={1000}
-          value={v("inspection_notes")}
-          hint="Descreva a condição observada e eventuais não conformidades, conforme o procedimento aprovado da fábrica."
-        />
-      </fieldset>
+
+      <div className="receipt-items">
+        {items.map((item, index) => {
+          const selected = receivable.find(
+            (variant) => variant.id === item.variant_id,
+          );
+          const quantityValue = Number(item.quantity.replace(",", "."));
+          const costValue = Number(item.total_cost.replace(",", "."));
+          return (
+            <fieldset
+              key={item.key}
+              disabled={pending || !ready}
+              className="receipt-item"
+            >
+              <legend>Item {index + 1}</legend>
+              <div className="receipt-item-heading">
+                <p className="muted text-sm">
+                  Informe o que chegou, em qual unidade foi comprado e onde
+                  ficará.
+                </p>
+                {items.length > 1 && (
+                  <button
+                    type="button"
+                    className="text-link"
+                    onClick={() =>
+                      setItems((current) =>
+                        current.filter((_, i) => i !== index),
+                      )
+                    }
+                  >
+                    Remover item
+                  </button>
+                )}
+              </div>
+              <div className="form-grid">
+                <div className="field">
+                  <label htmlFor={`${item.key}-variant`}>Item recebido *</label>
+                  <select
+                    id={`${item.key}-variant`}
+                    required
+                    value={item.variant_id}
+                    onChange={(event) => chooseItem(index, event.target.value)}
+                  >
+                    <option value="">Selecione</option>
+                    {receivable.map((variant) => (
+                      <option key={variant.id} value={variant.id}>
+                        {variant.product_name}
+                        {variant.has_variants ? ` · ${variant.name}` : ""}
+                        {variant.requires_expiry ? " · exige validade" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor={`${item.key}-location`}>Local físico *</label>
+                  <select
+                    id={`${item.key}-location`}
+                    required
+                    value={item.location_id}
+                    onChange={(event) =>
+                      changeItem(index, "location_id", event.target.value)
+                    }
+                  >
+                    <option value="">Selecione</option>
+                    {locations.map((location) => (
+                      <option key={location.id} value={location.id}>
+                        {location.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p>
+                    É o lugar real onde este item ficará: estoque, produção ou
+                    freezer.
+                  </p>
+                </div>
+                <div className="field">
+                  <label htmlFor={`${item.key}-quantity`}>
+                    Quantidade recebida *
+                  </label>
+                  <input
+                    id={`${item.key}-quantity`}
+                    required
+                    inputMode="decimal"
+                    value={item.quantity}
+                    onChange={(event) =>
+                      changeItem(index, "quantity", event.target.value)
+                    }
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor={`${item.key}-unit`}>
+                    Unidade da compra *
+                  </label>
+                  <select
+                    id={`${item.key}-unit`}
+                    required
+                    value={item.unit}
+                    onChange={(event) =>
+                      changeItem(index, "unit", event.target.value as Unit)
+                    }
+                  >
+                    {Object.entries(units).map(([key, label]) => (
+                      <option key={key} value={key}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                  <p>Use kg se comprou por peso ou un se contou as peças.</p>
+                </div>
+                <div className="field">
+                  <label htmlFor={`${item.key}-cost`}>
+                    Preço total deste item (R$) *
+                  </label>
+                  <input
+                    id={`${item.key}-cost`}
+                    required
+                    inputMode="decimal"
+                    value={item.total_cost}
+                    onChange={(event) =>
+                      changeItem(index, "total_cost", event.target.value)
+                    }
+                  />
+                  <p>
+                    Custo por {item.unit}:{" "}
+                    {quantityValue > 0 && Number.isFinite(costValue)
+                      ? money(costValue / quantityValue, 6)
+                      : "calculado automaticamente"}
+                  </p>
+                </div>
+                <div className="field">
+                  <label htmlFor={`${item.key}-weight`}>
+                    Peso líquido total (kg)
+                  </label>
+                  <input
+                    id={`${item.key}-weight`}
+                    inputMode="decimal"
+                    value={item.net_weight_kg}
+                    onChange={(event) =>
+                      changeItem(index, "net_weight_kg", event.target.value)
+                    }
+                  />
+                  <p>
+                    Opcional. Ao comprar frutas por unidade, informe o peso real
+                    se houver pesagem.
+                  </p>
+                </div>
+                <div className="field">
+                  <label htmlFor={`${item.key}-supplier-lot`}>
+                    Lote do fornecedor
+                  </label>
+                  <input
+                    id={`${item.key}-supplier-lot`}
+                    maxLength={80}
+                    value={item.supplier_lot}
+                    onChange={(event) =>
+                      changeItem(index, "supplier_lot", event.target.value)
+                    }
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor={`${item.key}-code`}>Lote interno</label>
+                  <input
+                    id={`${item.key}-code`}
+                    maxLength={80}
+                    value={item.code}
+                    onChange={(event) =>
+                      changeItem(index, "code", event.target.value)
+                    }
+                  />
+                  <p>Opcional. Em branco, o sistema gera o código.</p>
+                </div>
+                <div className="field">
+                  <label htmlFor={`${item.key}-manufactured`}>
+                    Data de fabricação
+                  </label>
+                  <input
+                    id={`${item.key}-manufactured`}
+                    type="date"
+                    max={today}
+                    value={item.manufactured_on}
+                    onChange={(event) =>
+                      changeItem(index, "manufactured_on", event.target.value)
+                    }
+                  />
+                </div>
+                {selected?.requires_expiry && (
+                  <>
+                    <div className="field">
+                      <label htmlFor={`${item.key}-expires`}>Validade *</label>
+                      <input
+                        id={`${item.key}-expires`}
+                        type="date"
+                        min={today}
+                        required
+                        value={item.expires_on}
+                        onChange={(event) =>
+                          changeItem(index, "expires_on", event.target.value)
+                        }
+                      />
+                    </div>
+                    <div className="field">
+                      <label htmlFor={`${item.key}-expiry-source`}>
+                        Origem da validade *
+                      </label>
+                      <select
+                        id={`${item.key}-expiry-source`}
+                        value={item.expiry_source}
+                        onChange={(event) =>
+                          changeItem(
+                            index,
+                            "expiry_source",
+                            event.target.value as ReceiptDraft["expiry_source"],
+                          )
+                        }
+                      >
+                        <option value="supplier">
+                          Informada pelo fornecedor
+                        </option>
+                        <option value="internal">Definida internamente</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+                <div className="field receipt-notes">
+                  <label htmlFor={`${item.key}-inspection`}>
+                    Conferência de qualidade *
+                  </label>
+                  <textarea
+                    id={`${item.key}-inspection`}
+                    rows={3}
+                    maxLength={1000}
+                    required
+                    value={item.inspection_notes}
+                    onChange={(event) =>
+                      changeItem(index, "inspection_notes", event.target.value)
+                    }
+                  />
+                  <p>
+                    Registre avarias, rejeições ou outras observações reais.
+                  </p>
+                </div>
+              </div>
+            </fieldset>
+          );
+        })}
+      </div>
+      <button
+        type="button"
+        className="btn btn-secondary"
+        disabled={pending || !ready || items.length >= 50}
+        onClick={() =>
+          setItems((current) => [
+            ...current,
+            blankReceiptItem(crypto.randomUUID()),
+          ])
+        }
+      >
+        ＋ Adicionar outro item desta entrega
+      </button>
+      <div className="receipt-summary" aria-live="polite">
+        <span>
+          {items.length} {items.length === 1 ? "item" : "itens"}
+        </span>
+        <strong>Total da entrega: {money(totalCost)}</strong>
+      </div>
       <p className="notice text-sm">
-        O recebimento será registrado integralmente em quarentena. A liberação
-        exige uma conferência separada por administrador autorizado.
+        Todos os itens serão registrados juntos e ficarão em quarentena até a
+        conferência e liberação por um administrador autorizado.
       </p>
       <Result state={state} />
       <div className="flex flex-wrap gap-3">
-        <SaveButton pending={pending}>Registrar recebimento</SaveButton>
+        <SaveButton pending={pending} disabled={!ready}>
+          Registrar recebimento
+        </SaveButton>
         <Link href="/dashboard/lotes" className="btn btn-secondary">
           Consultar estoque
         </Link>

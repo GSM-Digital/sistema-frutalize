@@ -47,8 +47,9 @@ export default async function NewReceiptPage() {
             <div className="notice receipt-prerequisite" role="status">
               <h2>Cadastre {missing.join(" e ")} para continuar</h2>
               <p>
-                Use os atalhos acima. Depois de salvar, os campos da entrega
-                serão liberados automaticamente.
+                Use os atalhos acima. Você já pode preencher os outros campos;
+                depois de salvar os cadastros pendentes, poderá concluir o
+                recebimento.
               </p>
             </div>
           )}

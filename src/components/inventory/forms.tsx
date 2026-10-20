@@ -484,7 +484,7 @@ export function ReceiptForm({
   );
   const suppliers = options.suppliers.filter((item) => item.active);
   const locations = options.locations.filter((item) => item.active);
-  const ready =
+  const canSubmit =
     receivable.length > 0 && suppliers.length > 0 && locations.length > 0;
   const changeItem = <K extends keyof ReceiptDraft>(
     index: number,
@@ -532,7 +532,7 @@ export function ReceiptForm({
     <form action={action} className="inventory-form">
       <input type="hidden" name="request_id" value={operationId} />
       <input type="hidden" name="items" value={JSON.stringify(items)} />
-      <fieldset disabled={pending || !ready}>
+      <fieldset disabled={pending}>
         <legend>Dados da entrega</legend>
         <div className="form-grid">
           <Field
@@ -577,7 +577,7 @@ export function ReceiptForm({
           return (
             <fieldset
               key={item.key}
-              disabled={pending || !ready}
+              disabled={pending}
               className="receipt-item"
             >
               <legend>Item {index + 1}</legend>
@@ -821,7 +821,7 @@ export function ReceiptForm({
       <button
         type="button"
         className="btn btn-secondary"
-        disabled={pending || !ready || items.length >= 50}
+        disabled={pending || receivable.length === 0 || items.length >= 50}
         onClick={() =>
           setItems((current) => [
             ...current,
@@ -843,7 +843,7 @@ export function ReceiptForm({
       </p>
       <Result state={state} />
       <div className="receipt-actions">
-        <SaveButton pending={pending} disabled={!ready}>
+        <SaveButton pending={pending} disabled={!canSubmit}>
           Registrar recebimento
         </SaveButton>
         <Link href="/dashboard/lotes" className="btn btn-secondary">

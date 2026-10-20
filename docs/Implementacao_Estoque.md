@@ -43,10 +43,24 @@ Esta implementação segue os [requisitos consolidados](Requisitos_Sistema_Fruta
 
 ## Preparar o Supabase
 
-O acesso ao GitHub não fornece credenciais administrativas do Supabase. A migração está versionada, mas não foi aplicada ao banco publicado durante esta entrega.
+O acesso ao GitHub não fornece credenciais administrativas do Supabase. Em 20/10/2026, a preparação foi aplicada ao projeto `Sistema Frutalize` (`ofemxaqzrnryrochqtrv`) com o Supabase CLI e ficou registrada no histórico remoto de migrações.
+
+Estado confirmado do ambiente publicado:
+
+- `202610200001_inventory.sql`: schema, RLS, funções, views, nove categorias e sete locais;
+- `202610200002_bootstrap_admin.sql`: vínculo do usuário Auth existente ao perfil interno `admin` ativo;
+- `202610200003_harden_inventory_rpcs.sql`: implementações privilegiadas isoladas no schema privado e RPCs públicas sem `SECURITY DEFINER`;
+- cadastro público desabilitado globalmente e no provedor de e-mail;
+- senha mínima de oito caracteres, exigindo maiúscula, minúscula, número e símbolo;
+- URLs autorizadas para `https://sistema-frutalize.vercel.app/**` e `http://localhost:3000/**`;
+- lint do banco sem erros; advisor sem alertas das funções de estoque. Permanece apenas o aviso de proteção contra senhas vazadas, recurso disponível no plano Pro.
+
+A configuração declarativa não secreta está em `supabase/config.toml`. Metadados e credenciais locais do CLI permanecem fora do Git.
+
+Para preparar outro ambiente:
 
 1. Use preferencialmente um projeto de homologação separado para validar esta entrega.
-2. Aplique `supabase/migrations/202610200001_inventory.sql` com uma conexão administrativa ou pelo SQL Editor. A migração é para uma base ainda sem estas tabelas: não a execute repetidamente nem sobre tabelas homônimas sem revisar conflitos.
+2. Vincule o CLI ao projeto correto e use `supabase db push`, preservando o histórico das migrações. Não aplique os arquivos repetidamente pelo SQL Editor nem sobre tabelas homônimas sem revisar conflitos.
 3. Confirme que o schema `public` está entre os schemas expostos na Data API. A exposição automática estava desabilitada no projeto; a migração concede explicitamente leitura das tabelas/views e execução das funções ao papel `authenticated`. Não conceda escrita direta para contornar erros de configuração.
 4. Crie ou reutilize a conta do administrador em Supabase Auth e vincule o UUID dela a `staff_members`. Exemplo a executar **somente no contexto administrativo do banco**, substituindo nome e e-mail:
 
@@ -61,7 +75,7 @@ O acesso ao GitHub não fornece credenciais administrativas do Supabase. A migra
 
    Confira que uma linha foi afetada. Não existe promoção de perfil por metadados, formulário de cadastro ou chave publicável. Não há promoção automática do primeiro usuário que entrar.
 
-5. Desabilite novas inscrições públicas nas configurações do Supabase Auth. A ausência de cadastro na interface não desabilita o endpoint de inscrição do provedor. Usuários sem vínculo administrativo ativo são negados pelas políticas mesmo se houver uma conta Auth.
+5. Confirme que novas inscrições públicas estão desabilitadas no Supabase Auth. A ausência de cadastro na interface não desabilita o endpoint de inscrição do provedor. Usuários sem vínculo administrativo ativo são negados pelas políticas mesmo se houver uma conta Auth.
 6. Configure as variáveis de `.env.example`. A aplicação usa somente a chave publicável para autenticação e operações autorizadas por RLS; não precisa de `service_role` nesta fatia.
 7. Valide o fluxo de aceite abaixo antes de integrar a branch à `main`.
 

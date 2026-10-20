@@ -1,0 +1,17 @@
+# Configuração declarativa do projeto Sistema Frutalize.
+# Segredos não pertencem a este arquivo e nunca devem ser versionados.
+project_id = "sistema-frutalize"
+
+[db]
+major_version = 17
+
+[auth]
+site_url = "https://sistema-frutalize.vercel.app"
+additional_redirect_urls = ["https://sistema-frutalize.vercel.app/**", "http://localhost:3000/**"]
+enable_signup = false
+enable_anonymous_sign_ins = false
+minimum_password_length = 8
+password_requirements = "lower_upper_letters_digits_symbols"
+
+[auth.email]
+enable_signup = false

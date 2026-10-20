@@ -5,6 +5,7 @@ import { Icon, type IconName } from "./icon";
 
 type NavItem = {
   label: string;
+  shortLabel?: string;
   icon: IconName;
   href?: string;
   planned?: boolean;
@@ -20,6 +21,7 @@ const sections: { label?: string; items: NavItem[] }[] = [
       {
         href: "/dashboard/recebimentos/novo",
         label: "Receber mercadoria",
+        shortLabel: "Receber",
         icon: "receive",
       },
       { label: "Produzir", icon: "production", planned: true },
@@ -45,6 +47,7 @@ const sections: { label?: string; items: NavItem[] }[] = [
       {
         href: "/dashboard/historico",
         label: "Histórico e auditoria",
+        shortLabel: "Histórico",
         icon: "history",
       },
     ],
@@ -92,7 +95,12 @@ export function Navigation() {
                   <span aria-hidden="true" className="nav-icon">
                     <Icon name={item.icon} />
                   </span>
-                  <span className="nav-item-label">{item.label}</span>
+                  <span className="nav-item-label nav-label-full">
+                    {item.label}
+                  </span>
+                  <span className="nav-item-label nav-label-short">
+                    {item.shortLabel ?? item.label}
+                  </span>
                 </Link>
               );
             })}

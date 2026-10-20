@@ -343,7 +343,10 @@ export function ReceiptSetup({ options }: { options: CatalogOptions }) {
   return (
     <div className="receipt-setup">
       <details>
-        <summary>＋ Cadastrar item sem sair desta tela</summary>
+        <summary>
+          <span>＋ Cadastrar item</span>
+          <small>Sem sair da tela</small>
+        </summary>
         <form action={productAction} className="inventory-form compact-form">
           <input type="hidden" name="entity" value="products" />
           <input type="hidden" name="active" value="true" />
@@ -389,7 +392,10 @@ export function ReceiptSetup({ options }: { options: CatalogOptions }) {
         </form>
       </details>
       <details>
-        <summary>＋ Cadastrar fornecedor sem sair desta tela</summary>
+        <summary>
+          <span>＋ Cadastrar fornecedor</span>
+          <small>Sem sair da tela</small>
+        </summary>
         <form action={supplierAction} className="inventory-form compact-form">
           <input type="hidden" name="entity" value="suppliers" />
           <input type="hidden" name="active" value="true" />
@@ -594,7 +600,7 @@ export function ReceiptForm({
                   </button>
                 )}
               </div>
-              <div className="form-grid">
+              <div className="form-grid receipt-core-grid">
                 <div className="field">
                   <label htmlFor={`${item.key}-variant`}>Item recebido *</label>
                   <select
@@ -635,7 +641,7 @@ export function ReceiptForm({
                     freezer.
                   </p>
                 </div>
-                <div className="field">
+                <div className="field receipt-half">
                   <label htmlFor={`${item.key}-quantity`}>
                     Quantidade recebida *
                   </label>
@@ -649,7 +655,7 @@ export function ReceiptForm({
                     }
                   />
                 </div>
-                <div className="field">
+                <div className="field receipt-half">
                   <label htmlFor={`${item.key}-unit`}>
                     Unidade da compra *
                   </label>
@@ -689,62 +695,6 @@ export function ReceiptForm({
                       : "calculado automaticamente"}
                   </p>
                 </div>
-                <div className="field">
-                  <label htmlFor={`${item.key}-weight`}>
-                    Peso líquido total (kg)
-                  </label>
-                  <input
-                    id={`${item.key}-weight`}
-                    inputMode="decimal"
-                    value={item.net_weight_kg}
-                    onChange={(event) =>
-                      changeItem(index, "net_weight_kg", event.target.value)
-                    }
-                  />
-                  <p>
-                    Opcional. Ao comprar frutas por unidade, informe o peso real
-                    se houver pesagem.
-                  </p>
-                </div>
-                <div className="field">
-                  <label htmlFor={`${item.key}-supplier-lot`}>
-                    Lote do fornecedor
-                  </label>
-                  <input
-                    id={`${item.key}-supplier-lot`}
-                    maxLength={80}
-                    value={item.supplier_lot}
-                    onChange={(event) =>
-                      changeItem(index, "supplier_lot", event.target.value)
-                    }
-                  />
-                </div>
-                <div className="field">
-                  <label htmlFor={`${item.key}-code`}>Lote interno</label>
-                  <input
-                    id={`${item.key}-code`}
-                    maxLength={80}
-                    value={item.code}
-                    onChange={(event) =>
-                      changeItem(index, "code", event.target.value)
-                    }
-                  />
-                  <p>Opcional. Em branco, o sistema gera o código.</p>
-                </div>
-                <div className="field">
-                  <label htmlFor={`${item.key}-manufactured`}>
-                    Data de fabricação
-                  </label>
-                  <input
-                    id={`${item.key}-manufactured`}
-                    type="date"
-                    max={today}
-                    value={item.manufactured_on}
-                    onChange={(event) =>
-                      changeItem(index, "manufactured_on", event.target.value)
-                    }
-                  />
-                </div>
                 {selected?.requires_expiry && (
                   <>
                     <div className="field">
@@ -783,24 +733,86 @@ export function ReceiptForm({
                     </div>
                   </>
                 )}
-                <div className="field receipt-notes">
-                  <label htmlFor={`${item.key}-inspection`}>
-                    Conferência de qualidade *
-                  </label>
-                  <textarea
-                    id={`${item.key}-inspection`}
-                    rows={3}
-                    maxLength={1000}
-                    required
-                    value={item.inspection_notes}
-                    onChange={(event) =>
-                      changeItem(index, "inspection_notes", event.target.value)
-                    }
-                  />
-                  <p>
-                    Registre avarias, rejeições ou outras observações reais.
-                  </p>
+              </div>
+              <details className="receipt-more">
+                <summary>
+                  <span>Mais informações do item</span>
+                  <small>Opcional</small>
+                </summary>
+                <div className="form-grid receipt-more-grid">
+                  <div className="field">
+                    <label htmlFor={`${item.key}-weight`}>
+                      Peso líquido total (kg)
+                    </label>
+                    <input
+                      id={`${item.key}-weight`}
+                      inputMode="decimal"
+                      value={item.net_weight_kg}
+                      onChange={(event) =>
+                        changeItem(index, "net_weight_kg", event.target.value)
+                      }
+                    />
+                    <p>
+                      Ao comprar por unidade, informe o peso real se houver
+                      pesagem.
+                    </p>
+                  </div>
+                  <div className="field">
+                    <label htmlFor={`${item.key}-supplier-lot`}>
+                      Lote do fornecedor
+                    </label>
+                    <input
+                      id={`${item.key}-supplier-lot`}
+                      maxLength={80}
+                      value={item.supplier_lot}
+                      onChange={(event) =>
+                        changeItem(index, "supplier_lot", event.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="field">
+                    <label htmlFor={`${item.key}-code`}>Lote interno</label>
+                    <input
+                      id={`${item.key}-code`}
+                      maxLength={80}
+                      value={item.code}
+                      onChange={(event) =>
+                        changeItem(index, "code", event.target.value)
+                      }
+                    />
+                    <p>Em branco, o sistema gera o código.</p>
+                  </div>
+                  <div className="field">
+                    <label htmlFor={`${item.key}-manufactured`}>
+                      Data de fabricação
+                    </label>
+                    <input
+                      id={`${item.key}-manufactured`}
+                      type="date"
+                      max={today}
+                      value={item.manufactured_on}
+                      onChange={(event) =>
+                        changeItem(index, "manufactured_on", event.target.value)
+                      }
+                    />
+                  </div>
                 </div>
+              </details>
+              <div className="field receipt-notes">
+                <label htmlFor={`${item.key}-inspection`}>
+                  Conferência de qualidade *
+                </label>
+                <textarea
+                  id={`${item.key}-inspection`}
+                  rows={3}
+                  maxLength={1000}
+                  required
+                  value={item.inspection_notes}
+                  onChange={(event) =>
+                    changeItem(index, "inspection_notes", event.target.value)
+                  }
+                />
+                <p>Registre avarias, rejeições ou outras observações reais.</p>
               </div>
             </fieldset>
           );
@@ -830,7 +842,7 @@ export function ReceiptForm({
         conferência e liberação por um administrador autorizado.
       </p>
       <Result state={state} />
-      <div className="flex flex-wrap gap-3">
+      <div className="receipt-actions">
         <SaveButton pending={pending} disabled={!ready}>
           Registrar recebimento
         </SaveButton>

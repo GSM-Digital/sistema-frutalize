@@ -20,35 +20,35 @@ export default async function NewReceiptPage() {
   const hasSuppliers = options.suppliers.some((x) => x.active);
   const hasLocations = options.locations.some((x) => x.active);
   const missing = [
-    !hasItems && "ao menos um item ativo",
-    !hasSuppliers && "ao menos um fornecedor ativo",
-    !hasLocations && "ao menos um local físico ativo",
+    !hasItems && "um item",
+    !hasSuppliers && "um fornecedor",
+    !hasLocations && "um local físico",
   ].filter(Boolean) as string[];
   return (
-    <>
+    <div className="receipt-page">
       <PageHeading
         title="Novo recebimento"
         description="Registre a entrada, a conferência e o custo do material recebido."
       >
-        <Link href="/dashboard/lotes" className="btn btn-secondary">
-          Voltar ao estoque
+        <Link
+          href="/dashboard/lotes"
+          className="btn btn-secondary mobile-back-link"
+        >
+          ← Voltar ao estoque
         </Link>
       </PageHeading>
       <Panel
-        title="Dados da entrada"
+        title="Comece pela entrega"
         description="Uma entrega pode incluir frutas, embalagens, uniformes, limpeza e outros itens."
       >
-        <div className="p-5 sm:p-7">
+        <div className="receipt-panel-body">
           <ReceiptSetup options={options} />
           {missing.length > 0 && (
-            <div className="notice">
-              <h2 className="font-semibold">
-                Falta preparar {missing.join(" e ")}
-              </h2>
-              <p className="muted mt-2 text-sm leading-6">
-                Cadastre o item ou fornecedor acima. Os locais físicos da
-                fábrica ficam configurados no sistema e indicam onde cada lote
-                será guardado.
+            <div className="notice receipt-prerequisite" role="status">
+              <h2>Cadastre {missing.join(" e ")} para continuar</h2>
+              <p>
+                Use os atalhos acima. Depois de salvar, os campos da entrega
+                serão liberados automaticamente.
               </p>
             </div>
           )}
@@ -60,6 +60,6 @@ export default async function NewReceiptPage() {
           />
         </div>
       </Panel>
-    </>
+    </div>
   );
 }

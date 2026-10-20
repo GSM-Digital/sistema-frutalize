@@ -1078,8 +1078,8 @@ tbody tr:hover {
   min-height: 40px;
   flex-shrink: 0;
 }
-.receipt-page .inventory-form > fieldset .field input,
-.receipt-core-grid > .field > select {
+.receipt-page .field input,
+.receipt-page .field select {
   height: var(--receipt-control-height);
   min-height: var(--receipt-control-height);
 }

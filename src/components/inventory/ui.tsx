@@ -117,27 +117,19 @@ export function LotsTable({
   today: string;
 }) {
   return (
-    <div className="table-scroll">
-      <table>
-        <caption className="sr-only">
-          Lotes por tamanho/embalagem e local de armazenamento
-        </caption>
-        <thead>
-          <tr>
-            <th>Item / lote</th>
-            <th>Local</th>
-            <th>Saldo</th>
-            <th>Validade</th>
-            <th>
-              <span className="sr-only">Ações</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {lots.map((lot) => (
-            <tr key={lot.id}>
-              <td>
-                <Link className="text-link" href={`/dashboard/lotes/${lot.id}`}>
+    <>
+      <ul
+        className="lots-mobile-list"
+        aria-label="Lotes por item e local de armazenamento"
+      >
+        {lots.map((lot) => (
+          <li className="lot-mobile-card" key={lot.id}>
+            <div className="lot-mobile-heading">
+              <div className="lot-mobile-identity">
+                <Link
+                  className="lot-mobile-title"
+                  href={`/dashboard/lotes/${lot.id}`}
+                >
                   {lot.product_name}
                 </Link>
                 {!lot.is_default && (
@@ -146,31 +138,95 @@ export function LotsTable({
                   </span>
                 )}
                 <span className="table-sub font-mono">{lot.code}</span>
-              </td>
-              <td>{lot.location_name}</td>
-              <td className="tabular-nums whitespace-nowrap font-semibold">
-                {quantity(lot.quantity, lot.unit)}
-              </td>
-              <td className="whitespace-nowrap">
-                {lot.expires_on ? shortDate(lot.expires_on) : "Não se aplica"}
-                <span className="table-sub">
-                  <LotBadge lot={lot} today={today} />
-                </span>
-              </td>
-              <td>
-                <Link
-                  className="text-link whitespace-nowrap"
-                  href={`/dashboard/lotes/${lot.id}`}
-                  aria-label={`Consultar lote ${lot.code}`}
-                >
-                  Abrir →
-                </Link>
-              </td>
+              </div>
+              <Link
+                className="lot-mobile-action"
+                href={`/dashboard/lotes/${lot.id}`}
+                aria-label={`Consultar lote ${lot.code}`}
+              >
+                Abrir <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+            <dl className="lot-mobile-details">
+              <div className="lot-mobile-location">
+                <dt>Local</dt>
+                <dd>{lot.location_name}</dd>
+              </div>
+              <div>
+                <dt>Saldo</dt>
+                <dd className="tabular-nums font-semibold">
+                  {quantity(lot.quantity, lot.unit)}
+                </dd>
+              </div>
+              <div>
+                <dt>Validade</dt>
+                <dd>
+                  {lot.expires_on ? shortDate(lot.expires_on) : "Não se aplica"}
+                </dd>
+                <LotBadge lot={lot} today={today} />
+              </div>
+            </dl>
+          </li>
+        ))}
+      </ul>
+      <div className="table-scroll lots-desktop-table">
+        <table>
+          <caption className="sr-only">
+            Lotes por tamanho/embalagem e local de armazenamento
+          </caption>
+          <thead>
+            <tr>
+              <th>Item / lote</th>
+              <th>Local</th>
+              <th>Saldo</th>
+              <th>Validade</th>
+              <th>
+                <span className="sr-only">Ações</span>
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {lots.map((lot) => (
+              <tr key={lot.id}>
+                <td>
+                  <Link
+                    className="text-link"
+                    href={`/dashboard/lotes/${lot.id}`}
+                  >
+                    {lot.product_name}
+                  </Link>
+                  {!lot.is_default && (
+                    <span className="table-sub">
+                      {lot.variant_name} · {lot.sku}
+                    </span>
+                  )}
+                  <span className="table-sub font-mono">{lot.code}</span>
+                </td>
+                <td>{lot.location_name}</td>
+                <td className="tabular-nums whitespace-nowrap font-semibold">
+                  {quantity(lot.quantity, lot.unit)}
+                </td>
+                <td className="whitespace-nowrap">
+                  {lot.expires_on ? shortDate(lot.expires_on) : "Não se aplica"}
+                  <span className="table-sub">
+                    <LotBadge lot={lot} today={today} />
+                  </span>
+                </td>
+                <td>
+                  <Link
+                    className="text-link whitespace-nowrap"
+                    href={`/dashboard/lotes/${lot.id}`}
+                    aria-label={`Consultar lote ${lot.code}`}
+                  >
+                    Abrir →
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
 export function MovementsTable({

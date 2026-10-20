@@ -9,6 +9,14 @@ Sistema interno e responsivo de gestão da Frutalize. O primeiro módulo em dese
 - Supabase Auth e PostgreSQL
 - Vercel
 
+## Ambiente publicado
+
+- Aplicação: https://sistema-frutalize.vercel.app
+- Verificação de saúde: https://sistema-frutalize.vercel.app/api/health
+- Repositório: https://github.com/GSM-Digital/sistema-frutalize
+
+Todo push na branch `main` gera automaticamente uma nova implantação de produção na Vercel.
+
 ## Desenvolvimento local
 
 1. Copie `.env.example` para `.env.local`.

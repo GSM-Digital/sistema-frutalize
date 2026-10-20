@@ -15,6 +15,7 @@ export async function GET() {
     const response = await fetch(`${url}/auth/v1/health`, {
       headers: { apikey: key },
       cache: "no-store",
+      signal: AbortSignal.timeout(5000),
     });
 
     return NextResponse.json(

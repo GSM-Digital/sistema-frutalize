@@ -52,6 +52,8 @@ export async function saveCatalog(
   data: FormData,
 ): Promise<ActionState> {
   const { supabase } = await requireStaff();
+  let catalogId: string;
+  let catalogName: string;
   try {
     const entity = enumField(data, "entity", [
       "products",
@@ -60,17 +62,24 @@ export async function saveCatalog(
       "locations",
       "categories",
     ] as const);
-    const { error } = await supabase.rpc("save_catalog", {
+    const values = catalogInput(entity, data);
+    const { data: id, error } = await supabase.rpc("save_catalog", {
       p_entity: entity,
       p_id: data.get("id") ? uuidField(data, "id") : null,
-      p_values: catalogInput(entity, data),
+      p_values: values,
       p_reason: textField(data, "reason", "Motivo", 3, 240),
     });
     if (error) return failure(error, data);
+    catalogId = id;
+    catalogName = textField(data, "name", "Nome", 1, 120);
   } catch (error) {
     return failure(error, data);
   }
-  return saved("Cadastro salvo. A alteração foi registrada no histórico.");
+  return {
+    ...saved("Cadastro salvo. A alteração foi registrada no histórico."),
+    catalogId,
+    catalogName,
+  };
 }
 export async function receiveLot(
   _previous: ActionState,

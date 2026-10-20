@@ -1,6 +1,7 @@
 "use client";
 import { useActionState, useId, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   changeLotStatus,
   moveStock,
@@ -331,96 +332,6 @@ export function CatalogForm({
   );
 }
 
-export function ReceiptSetup({ options }: { options: CatalogOptions }) {
-  const [productState, productAction, productPending] = useActionState(
-    saveCatalog,
-    {},
-  );
-  const [supplierState, supplierAction, supplierPending] = useActionState(
-    saveCatalog,
-    {},
-  );
-  return (
-    <div className="receipt-setup">
-      <details>
-        <summary>
-          <span>＋ Cadastrar item</span>
-          <small>Sem sair da tela</small>
-        </summary>
-        <form action={productAction} className="inventory-form compact-form">
-          <input type="hidden" name="entity" value="products" />
-          <input type="hidden" name="active" value="true" />
-          <input
-            type="hidden"
-            name="reason"
-            value="Cadastro durante recebimento"
-          />
-          <fieldset disabled={productPending}>
-            <div className="form-grid">
-              <Field label="Nome do item" name="name" required />
-              <Field label="Categoria" name="category_id" required>
-                <option value="">Selecione</option>
-                {options.categories
-                  .filter((item) => item.active)
-                  .map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
-              </Field>
-              <Field
-                label="Exige validade?"
-                name="requires_expiry"
-                value="false"
-              >
-                <option value="false">Não</option>
-                <option value="true">Sim</option>
-              </Field>
-              <Field
-                label="Tamanhos/embalagens com saldos separados?"
-                name="has_variants"
-                value="false"
-                hint="Para maracujá, touca ou detergente comum, escolha Não."
-              >
-                <option value="false">Não, entrada direta</option>
-                <option value="true">Sim</option>
-              </Field>
-            </div>
-          </fieldset>
-          <Result state={productState} />
-          <SaveButton pending={productPending}>Salvar item</SaveButton>
-        </form>
-      </details>
-      <details>
-        <summary>
-          <span>＋ Cadastrar fornecedor</span>
-          <small>Sem sair da tela</small>
-        </summary>
-        <form action={supplierAction} className="inventory-form compact-form">
-          <input type="hidden" name="entity" value="suppliers" />
-          <input type="hidden" name="active" value="true" />
-          <input
-            type="hidden"
-            name="reason"
-            value="Cadastro durante recebimento"
-          />
-          <fieldset disabled={supplierPending}>
-            <div className="form-grid">
-              <Field label="Nome do fornecedor" name="name" required />
-              <Field label="CNPJ" name="cnpj" maxLength={20} />
-              <Field label="Telefone" name="phone" type="tel" maxLength={30} />
-              <Field label="Pessoa de contato" name="contact_name" />
-              <Field label="Endereço" name="address" maxLength={240} />
-            </div>
-          </fieldset>
-          <Result state={supplierState} />
-          <SaveButton pending={supplierPending}>Salvar fornecedor</SaveButton>
-        </form>
-      </details>
-    </div>
-  );
-}
-
 type ReceiptDraft = {
   key: string;
   variant_id: string;
@@ -465,9 +376,41 @@ export function ReceiptForm({
   now: string;
   today: string;
 }) {
+  const router = useRouter();
   const [items, setItems] = useState<ReceiptDraft[]>([
     blankReceiptItem("item-1"),
   ]);
+  const [supplierId, setSupplierId] = useState("");
+  const [pickerTarget, setPickerTarget] = useState<
+    { kind: "item"; index: number } | { kind: "supplier" } | null
+  >(null);
+  const [pickerStep, setPickerStep] = useState<"choice" | "existing" | "new">(
+    "choice",
+  );
+  const [productState, productAction, productPending] = useActionState(
+    async (previous: ActionState, data: FormData) => {
+      const result = await saveCatalog(previous, data);
+      if (result.success) {
+        router.refresh();
+        setPickerStep("existing");
+      }
+      return result;
+    },
+    {},
+  );
+  const [supplierState, supplierAction, supplierPending] = useActionState(
+    async (previous: ActionState, data: FormData) => {
+      const result = await saveCatalog(previous, data);
+      if (result.success && result.catalogId) {
+        setSupplierId(result.catalogId);
+        router.refresh();
+        setPickerTarget(null);
+        setPickerStep("choice");
+      }
+      return result;
+    },
+    {},
+  );
   const { state, action, pending, operationId } = useStockAction(
     receiveDelivery,
     requestId,
@@ -485,7 +428,10 @@ export function ReceiptForm({
   const suppliers = options.suppliers.filter((item) => item.active);
   const locations = options.locations.filter((item) => item.active);
   const canSubmit =
-    receivable.length > 0 && suppliers.length > 0 && locations.length > 0;
+    items.every((item) => Boolean(item.variant_id && item.location_id)) &&
+    Boolean(supplierId) &&
+    locations.length > 0;
+  const selectedSupplier = suppliers.find((item) => item.id === supplierId);
   const changeItem = <K extends keyof ReceiptDraft>(
     index: number,
     key: K,
@@ -524,333 +470,557 @@ export function ReceiptForm({
       ),
     );
   };
+  const openPicker = (
+    target: { kind: "item"; index: number } | { kind: "supplier" },
+  ) => {
+    setPickerTarget(target);
+    setPickerStep("choice");
+  };
+  const closePicker = () => {
+    setPickerTarget(null);
+    setPickerStep("choice");
+  };
   const totalCost = items.reduce((total, item) => {
     const value = Number(item.total_cost.replace(",", "."));
     return total + (Number.isFinite(value) ? value : 0);
   }, 0);
   return (
-    <form action={action} className="inventory-form">
-      <input type="hidden" name="request_id" value={operationId} />
-      <input type="hidden" name="items" value={JSON.stringify(items)} />
-      <fieldset disabled={pending}>
-        <legend>Dados da entrega</legend>
-        <div className="form-grid">
-          <Field
-            label="Fornecedor"
-            name="supplier_id"
-            required
-            value={v("supplier_id")}
-          >
-            <option value="">Selecione</option>
-            {suppliers.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </Field>
-          <Field
-            label="Nota fiscal ou referência"
-            name="reference"
-            required
-            maxLength={80}
-            value={v("reference")}
-            hint="Pode ser o número da nota, recibo ou outra identificação da entrega."
-          />
-          <Field
-            label="Data e hora do recebimento"
-            name="received_at"
-            type="datetime-local"
-            required
-            value={v("received_at", now)}
-            hint="Horário de Brasília."
-          />
-        </div>
-      </fieldset>
-
-      <div className="receipt-items">
-        {items.map((item, index) => {
-          const selected = receivable.find(
-            (variant) => variant.id === item.variant_id,
-          );
-          const quantityValue = Number(item.quantity.replace(",", "."));
-          const costValue = Number(item.total_cost.replace(",", "."));
-          return (
-            <fieldset
-              key={item.key}
-              disabled={pending}
-              className="receipt-item"
-            >
-              <legend>Item {index + 1}</legend>
-              <div className="receipt-item-heading">
-                <p className="muted text-sm">
-                  Informe o que chegou, em qual unidade foi comprado e onde
-                  ficará.
-                </p>
-                {items.length > 1 && (
-                  <button
-                    type="button"
-                    className="text-link"
-                    onClick={() =>
-                      setItems((current) =>
-                        current.filter((_, i) => i !== index),
-                      )
-                    }
-                  >
-                    Remover item
-                  </button>
-                )}
+    <>
+      <form action={action} className="inventory-form">
+        <input type="hidden" name="request_id" value={operationId} />
+        <input type="hidden" name="items" value={JSON.stringify(items)} />
+        <input type="hidden" name="supplier_id" value={supplierId} />
+        <fieldset disabled={pending}>
+          <legend>Dados da entrega</legend>
+          <div className="form-grid">
+            <div className="field receipt-picker-field">
+              <span className="field-label">Fornecedor *</span>
+              <div className="receipt-picker-value">
+                <div>
+                  <strong>
+                    {selectedSupplier?.name ||
+                      (supplierId && supplierState.catalogName) ||
+                      "Nenhum fornecedor selecionado"}
+                  </strong>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary receipt-picker-trigger"
+                  onClick={() => openPicker({ kind: "supplier" })}
+                >
+                  {supplierId ? "Trocar fornecedor" : "＋ Adicionar fornecedor"}
+                </button>
               </div>
-              <div className="form-grid receipt-core-grid">
-                <div className="field">
-                  <label htmlFor={`${item.key}-variant`}>Item recebido *</label>
-                  <select
-                    id={`${item.key}-variant`}
-                    required
-                    value={item.variant_id}
-                    onChange={(event) => chooseItem(index, event.target.value)}
-                  >
-                    <option value="">Selecione</option>
-                    {receivable.map((variant) => (
-                      <option key={variant.id} value={variant.id}>
-                        {variant.product_name}
-                        {variant.has_variants ? ` · ${variant.name}` : ""}
-                        {variant.requires_expiry ? " · exige validade" : ""}
-                      </option>
-                    ))}
-                  </select>
+            </div>
+            <Field
+              label="Nota fiscal ou referência"
+              name="reference"
+              required
+              maxLength={80}
+              value={v("reference")}
+              hint="Pode ser o número da nota, recibo ou outra identificação da entrega."
+            />
+            <Field
+              label="Data e hora do recebimento"
+              name="received_at"
+              type="datetime-local"
+              required
+              value={v("received_at", now)}
+              hint="Horário de Brasília."
+            />
+          </div>
+        </fieldset>
+
+        <div className="receipt-items">
+          {items.map((item, index) => {
+            const selected = receivable.find(
+              (variant) => variant.id === item.variant_id,
+            );
+            const quantityValue = Number(item.quantity.replace(",", "."));
+            const costValue = Number(item.total_cost.replace(",", "."));
+            return (
+              <fieldset
+                key={item.key}
+                disabled={pending}
+                className="receipt-item"
+              >
+                <legend>Item {index + 1}</legend>
+                {items.length > 1 && (
+                  <div className="receipt-item-heading">
+                    <button
+                      type="button"
+                      className="receipt-remove-item"
+                      aria-label={`Remover item ${index + 1}`}
+                      title="Remover item"
+                      onClick={() =>
+                        setItems((current) =>
+                          current.filter((_, i) => i !== index),
+                        )
+                      }
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-2 6h10l-.7 11H7.7L7 9Zm3 2v7m4-7v7" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+                <div className="form-grid receipt-core-grid">
+                  <div className="field receipt-picker-field">
+                    <span className="field-label">Item recebido *</span>
+                    <div className="receipt-picker-value">
+                      <div>
+                        <strong>
+                          {selected
+                            ? `${selected.product_name}${selected.has_variants ? ` · ${selected.name}` : ""}`
+                            : "Nenhum item selecionado"}
+                        </strong>
+                        {selected?.requires_expiry && (
+                          <small>Exige validade</small>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-secondary receipt-picker-trigger"
+                        onClick={() => openPicker({ kind: "item", index })}
+                      >
+                        {selected ? "Trocar item" : "＋ Adicionar item"}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="field">
+                    <label htmlFor={`${item.key}-location`}>
+                      Local físico *
+                    </label>
+                    <select
+                      id={`${item.key}-location`}
+                      required
+                      value={item.location_id}
+                      onChange={(event) =>
+                        changeItem(index, "location_id", event.target.value)
+                      }
+                    >
+                      <option value="">Selecione</option>
+                      {locations.map((location) => (
+                        <option key={location.id} value={location.id}>
+                          {location.name}
+                        </option>
+                      ))}
+                    </select>
+                    <p>
+                      É o lugar real onde este item ficará: estoque, produção ou
+                      freezer.
+                    </p>
+                  </div>
+                  <div className="field receipt-half">
+                    <label htmlFor={`${item.key}-quantity`}>
+                      Quantidade recebida *
+                    </label>
+                    <input
+                      id={`${item.key}-quantity`}
+                      required
+                      inputMode="decimal"
+                      value={item.quantity}
+                      onChange={(event) =>
+                        changeItem(index, "quantity", event.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="field receipt-half">
+                    <label htmlFor={`${item.key}-unit`}>
+                      Unidade da compra *
+                    </label>
+                    <select
+                      id={`${item.key}-unit`}
+                      required
+                      value={item.unit}
+                      onChange={(event) =>
+                        changeItem(index, "unit", event.target.value as Unit)
+                      }
+                    >
+                      {Object.entries(units).map(([key, label]) => (
+                        <option key={key} value={key}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                    <p>Use kg se comprou por peso ou un se contou as peças.</p>
+                  </div>
+                  <div className="field">
+                    <label htmlFor={`${item.key}-cost`}>
+                      Preço total deste item (R$) *
+                    </label>
+                    <input
+                      id={`${item.key}-cost`}
+                      required
+                      inputMode="decimal"
+                      value={item.total_cost}
+                      onChange={(event) =>
+                        changeItem(index, "total_cost", event.target.value)
+                      }
+                    />
+                    <p>
+                      Custo por {item.unit}:{" "}
+                      {quantityValue > 0 && Number.isFinite(costValue)
+                        ? money(costValue / quantityValue, 6)
+                        : "calculado automaticamente"}
+                    </p>
+                  </div>
+                  {selected?.requires_expiry && (
+                    <>
+                      <div className="field">
+                        <label htmlFor={`${item.key}-expires`}>
+                          Validade *
+                        </label>
+                        <input
+                          id={`${item.key}-expires`}
+                          type="date"
+                          min={today}
+                          required
+                          value={item.expires_on}
+                          onChange={(event) =>
+                            changeItem(index, "expires_on", event.target.value)
+                          }
+                        />
+                      </div>
+                      <div className="field">
+                        <label htmlFor={`${item.key}-expiry-source`}>
+                          Origem da validade *
+                        </label>
+                        <select
+                          id={`${item.key}-expiry-source`}
+                          value={item.expiry_source}
+                          onChange={(event) =>
+                            changeItem(
+                              index,
+                              "expiry_source",
+                              event.target
+                                .value as ReceiptDraft["expiry_source"],
+                            )
+                          }
+                        >
+                          <option value="supplier">
+                            Informada pelo fornecedor
+                          </option>
+                          <option value="internal">
+                            Definida internamente
+                          </option>
+                        </select>
+                      </div>
+                    </>
+                  )}
                 </div>
-                <div className="field">
-                  <label htmlFor={`${item.key}-location`}>Local físico *</label>
-                  <select
-                    id={`${item.key}-location`}
-                    required
-                    value={item.location_id}
-                    onChange={(event) =>
-                      changeItem(index, "location_id", event.target.value)
-                    }
-                  >
-                    <option value="">Selecione</option>
-                    {locations.map((location) => (
-                      <option key={location.id} value={location.id}>
-                        {location.name}
-                      </option>
-                    ))}
-                  </select>
-                  <p>
-                    É o lugar real onde este item ficará: estoque, produção ou
-                    freezer.
-                  </p>
-                </div>
-                <div className="field receipt-half">
-                  <label htmlFor={`${item.key}-quantity`}>
-                    Quantidade recebida *
-                  </label>
-                  <input
-                    id={`${item.key}-quantity`}
-                    required
-                    inputMode="decimal"
-                    value={item.quantity}
-                    onChange={(event) =>
-                      changeItem(index, "quantity", event.target.value)
-                    }
-                  />
-                </div>
-                <div className="field receipt-half">
-                  <label htmlFor={`${item.key}-unit`}>
-                    Unidade da compra *
-                  </label>
-                  <select
-                    id={`${item.key}-unit`}
-                    required
-                    value={item.unit}
-                    onChange={(event) =>
-                      changeItem(index, "unit", event.target.value as Unit)
-                    }
-                  >
-                    {Object.entries(units).map(([key, label]) => (
-                      <option key={key} value={key}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                  <p>Use kg se comprou por peso ou un se contou as peças.</p>
-                </div>
-                <div className="field">
-                  <label htmlFor={`${item.key}-cost`}>
-                    Preço total deste item (R$) *
-                  </label>
-                  <input
-                    id={`${item.key}-cost`}
-                    required
-                    inputMode="decimal"
-                    value={item.total_cost}
-                    onChange={(event) =>
-                      changeItem(index, "total_cost", event.target.value)
-                    }
-                  />
-                  <p>
-                    Custo por {item.unit}:{" "}
-                    {quantityValue > 0 && Number.isFinite(costValue)
-                      ? money(costValue / quantityValue, 6)
-                      : "calculado automaticamente"}
-                  </p>
-                </div>
-                {selected?.requires_expiry && (
-                  <>
+                <details className="receipt-more">
+                  <summary>
+                    <span>Mais informações do item</span>
+                    <small>Opcional</small>
+                  </summary>
+                  <div className="form-grid receipt-more-grid">
                     <div className="field">
-                      <label htmlFor={`${item.key}-expires`}>Validade *</label>
+                      <label htmlFor={`${item.key}-weight`}>
+                        Peso líquido total (kg)
+                      </label>
                       <input
-                        id={`${item.key}-expires`}
-                        type="date"
-                        min={today}
-                        required
-                        value={item.expires_on}
+                        id={`${item.key}-weight`}
+                        inputMode="decimal"
+                        value={item.net_weight_kg}
                         onChange={(event) =>
-                          changeItem(index, "expires_on", event.target.value)
+                          changeItem(index, "net_weight_kg", event.target.value)
+                        }
+                      />
+                      <p>
+                        Ao comprar por unidade, informe o peso real se houver
+                        pesagem.
+                      </p>
+                    </div>
+                    <div className="field">
+                      <label htmlFor={`${item.key}-supplier-lot`}>
+                        Lote do fornecedor
+                      </label>
+                      <input
+                        id={`${item.key}-supplier-lot`}
+                        maxLength={80}
+                        value={item.supplier_lot}
+                        onChange={(event) =>
+                          changeItem(index, "supplier_lot", event.target.value)
                         }
                       />
                     </div>
                     <div className="field">
-                      <label htmlFor={`${item.key}-expiry-source`}>
-                        Origem da validade *
+                      <label htmlFor={`${item.key}-code`}>Lote interno</label>
+                      <input
+                        id={`${item.key}-code`}
+                        maxLength={80}
+                        value={item.code}
+                        onChange={(event) =>
+                          changeItem(index, "code", event.target.value)
+                        }
+                      />
+                      <p>Em branco, o sistema gera o código.</p>
+                    </div>
+                    <div className="field">
+                      <label htmlFor={`${item.key}-manufactured`}>
+                        Data de fabricação
                       </label>
-                      <select
-                        id={`${item.key}-expiry-source`}
-                        value={item.expiry_source}
+                      <input
+                        id={`${item.key}-manufactured`}
+                        type="date"
+                        max={today}
+                        value={item.manufactured_on}
                         onChange={(event) =>
                           changeItem(
                             index,
-                            "expiry_source",
-                            event.target.value as ReceiptDraft["expiry_source"],
+                            "manufactured_on",
+                            event.target.value,
                           )
                         }
-                      >
-                        <option value="supplier">
-                          Informada pelo fornecedor
-                        </option>
-                        <option value="internal">Definida internamente</option>
-                      </select>
+                      />
                     </div>
-                  </>
-                )}
-              </div>
-              <details className="receipt-more">
-                <summary>
-                  <span>Mais informações do item</span>
-                  <small>Opcional</small>
-                </summary>
-                <div className="form-grid receipt-more-grid">
-                  <div className="field">
-                    <label htmlFor={`${item.key}-weight`}>
-                      Peso líquido total (kg)
-                    </label>
-                    <input
-                      id={`${item.key}-weight`}
-                      inputMode="decimal"
-                      value={item.net_weight_kg}
-                      onChange={(event) =>
-                        changeItem(index, "net_weight_kg", event.target.value)
-                      }
-                    />
-                    <p>
-                      Ao comprar por unidade, informe o peso real se houver
-                      pesagem.
-                    </p>
                   </div>
-                  <div className="field">
-                    <label htmlFor={`${item.key}-supplier-lot`}>
-                      Lote do fornecedor
-                    </label>
-                    <input
-                      id={`${item.key}-supplier-lot`}
-                      maxLength={80}
-                      value={item.supplier_lot}
-                      onChange={(event) =>
-                        changeItem(index, "supplier_lot", event.target.value)
-                      }
-                    />
-                  </div>
-                  <div className="field">
-                    <label htmlFor={`${item.key}-code`}>Lote interno</label>
-                    <input
-                      id={`${item.key}-code`}
-                      maxLength={80}
-                      value={item.code}
-                      onChange={(event) =>
-                        changeItem(index, "code", event.target.value)
-                      }
-                    />
-                    <p>Em branco, o sistema gera o código.</p>
-                  </div>
-                  <div className="field">
-                    <label htmlFor={`${item.key}-manufactured`}>
-                      Data de fabricação
-                    </label>
-                    <input
-                      id={`${item.key}-manufactured`}
-                      type="date"
-                      max={today}
-                      value={item.manufactured_on}
-                      onChange={(event) =>
-                        changeItem(index, "manufactured_on", event.target.value)
-                      }
-                    />
-                  </div>
+                </details>
+                <div className="field receipt-notes">
+                  <label htmlFor={`${item.key}-inspection`}>
+                    Conferência de qualidade *
+                  </label>
+                  <textarea
+                    id={`${item.key}-inspection`}
+                    rows={3}
+                    maxLength={1000}
+                    required
+                    value={item.inspection_notes}
+                    onChange={(event) =>
+                      changeItem(index, "inspection_notes", event.target.value)
+                    }
+                  />
+                  <p>
+                    Registre avarias, rejeições ou outras observações reais.
+                  </p>
                 </div>
-              </details>
-              <div className="field receipt-notes">
-                <label htmlFor={`${item.key}-inspection`}>
-                  Conferência de qualidade *
-                </label>
-                <textarea
-                  id={`${item.key}-inspection`}
-                  rows={3}
-                  maxLength={1000}
-                  required
-                  value={item.inspection_notes}
-                  onChange={(event) =>
-                    changeItem(index, "inspection_notes", event.target.value)
-                  }
-                />
-                <p>Registre avarias, rejeições ou outras observações reais.</p>
+              </fieldset>
+            );
+          })}
+        </div>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          disabled={pending || receivable.length === 0 || items.length >= 50}
+          onClick={() =>
+            setItems((current) => [
+              ...current,
+              blankReceiptItem(crypto.randomUUID()),
+            ])
+          }
+        >
+          ＋ Adicionar outro item desta entrega
+        </button>
+        <div className="receipt-summary" aria-live="polite">
+          <span>
+            {items.length} {items.length === 1 ? "item" : "itens"}
+          </span>
+          <strong>Total da entrega: {money(totalCost)}</strong>
+        </div>
+        <Result state={state} />
+        <div className="receipt-actions">
+          <SaveButton pending={pending} disabled={!canSubmit}>
+            Registrar recebimento
+          </SaveButton>
+          <Link href="/dashboard/lotes" className="btn btn-secondary">
+            Consultar estoque
+          </Link>
+        </div>
+      </form>
+
+      {pickerTarget && (
+        <div
+          className="receipt-picker-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closePicker();
+          }}
+        >
+          <section
+            className="receipt-picker-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="receipt-picker-title"
+          >
+            <header>
+              <div>
+                <span className="eyebrow">Adicionar ao recebimento</span>
+                <h2 id="receipt-picker-title">
+                  {pickerTarget.kind === "item"
+                    ? "Adicionar item"
+                    : "Adicionar fornecedor"}
+                </h2>
               </div>
-            </fieldset>
-          );
-        })}
-      </div>
-      <button
-        type="button"
-        className="btn btn-secondary"
-        disabled={pending || receivable.length === 0 || items.length >= 50}
-        onClick={() =>
-          setItems((current) => [
-            ...current,
-            blankReceiptItem(crypto.randomUUID()),
-          ])
-        }
-      >
-        ＋ Adicionar outro item desta entrega
-      </button>
-      <div className="receipt-summary" aria-live="polite">
-        <span>
-          {items.length} {items.length === 1 ? "item" : "itens"}
-        </span>
-        <strong>Total da entrega: {money(totalCost)}</strong>
-      </div>
-      <p className="notice text-sm">
-        Todos os itens serão registrados juntos e ficarão em quarentena até a
-        conferência e liberação por um administrador autorizado.
-      </p>
-      <Result state={state} />
-      <div className="receipt-actions">
-        <SaveButton pending={pending} disabled={!canSubmit}>
-          Registrar recebimento
-        </SaveButton>
-        <Link href="/dashboard/lotes" className="btn btn-secondary">
-          Consultar estoque
-        </Link>
-      </div>
-    </form>
+              <button
+                type="button"
+                className="receipt-picker-close"
+                aria-label="Fechar"
+                onClick={closePicker}
+              >
+                ×
+              </button>
+            </header>
+
+            {pickerStep === "choice" && (
+              <div className="receipt-picker-choices">
+                <button type="button" onClick={() => setPickerStep("existing")}>
+                  <strong>Escolher um cadastro existente</strong>
+                  <span>Usar o que já está cadastrado no sistema.</span>
+                </button>
+                <button type="button" onClick={() => setPickerStep("new")}>
+                  <strong>
+                    Cadastrar novo{" "}
+                    {pickerTarget.kind === "item" ? "item" : "fornecedor"}
+                  </strong>
+                  <span>Criar agora, sem sair do recebimento.</span>
+                </button>
+              </div>
+            )}
+
+            {pickerStep === "existing" && (
+              <div className="receipt-picker-existing">
+                <button
+                  type="button"
+                  className="text-link"
+                  onClick={() => setPickerStep("choice")}
+                >
+                  ← Voltar
+                </button>
+                <div className="field">
+                  {pickerTarget.kind === "item" && productState.success && (
+                    <Result state={productState} />
+                  )}
+                  <label htmlFor="receipt-existing-picker">
+                    {pickerTarget.kind === "item"
+                      ? "Item cadastrado"
+                      : "Fornecedor cadastrado"}
+                  </label>
+                  <select
+                    id="receipt-existing-picker"
+                    defaultValue=""
+                    onChange={(event) => {
+                      if (!event.target.value) return;
+                      if (pickerTarget.kind === "item")
+                        chooseItem(pickerTarget.index, event.target.value);
+                      else setSupplierId(event.target.value);
+                      closePicker();
+                    }}
+                  >
+                    <option value="">Selecione</option>
+                    {pickerTarget.kind === "item"
+                      ? receivable.map((variant) => (
+                          <option key={variant.id} value={variant.id}>
+                            {variant.product_name}
+                            {variant.has_variants ? ` · ${variant.name}` : ""}
+                            {variant.requires_expiry ? " · exige validade" : ""}
+                          </option>
+                        ))
+                      : suppliers.map((supplier) => (
+                          <option key={supplier.id} value={supplier.id}>
+                            {supplier.name}
+                          </option>
+                        ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {pickerStep === "new" && pickerTarget.kind === "item" && (
+              <form
+                key={productState.successId ?? "new-receipt-item"}
+                action={productAction}
+                className="inventory-form receipt-picker-form"
+              >
+                <input type="hidden" name="entity" value="products" />
+                <input type="hidden" name="active" value="true" />
+                <input type="hidden" name="has_variants" value="false" />
+                <input
+                  type="hidden"
+                  name="reason"
+                  value="Cadastro durante recebimento"
+                />
+                <button
+                  type="button"
+                  className="text-link"
+                  onClick={() => setPickerStep("choice")}
+                >
+                  ← Voltar
+                </button>
+                <fieldset disabled={productPending}>
+                  <div className="form-grid">
+                    <Field label="Nome do item" name="name" required />
+                    <Field label="Categoria" name="category_id" required>
+                      <option value="">Selecione</option>
+                      {options.categories
+                        .filter((item) => item.active)
+                        .map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.name}
+                          </option>
+                        ))}
+                    </Field>
+                    <Field
+                      label="Exige validade?"
+                      name="requires_expiry"
+                      value="false"
+                    >
+                      <option value="false">Não</option>
+                      <option value="true">Sim</option>
+                    </Field>
+                  </div>
+                </fieldset>
+                <Result state={productState} />
+                <SaveButton pending={productPending}>
+                  Salvar e usar item
+                </SaveButton>
+              </form>
+            )}
+
+            {pickerStep === "new" && pickerTarget.kind === "supplier" && (
+              <form
+                key={supplierState.successId ?? "new-receipt-supplier"}
+                action={supplierAction}
+                className="inventory-form receipt-picker-form"
+              >
+                <input type="hidden" name="entity" value="suppliers" />
+                <input type="hidden" name="active" value="true" />
+                <input
+                  type="hidden"
+                  name="reason"
+                  value="Cadastro durante recebimento"
+                />
+                <button
+                  type="button"
+                  className="text-link"
+                  onClick={() => setPickerStep("choice")}
+                >
+                  ← Voltar
+                </button>
+                <fieldset disabled={supplierPending}>
+                  <div className="form-grid">
+                    <Field label="Nome do fornecedor" name="name" required />
+                    <Field label="CNPJ" name="cnpj" maxLength={20} />
+                    <Field
+                      label="Telefone"
+                      name="phone"
+                      type="tel"
+                      maxLength={30}
+                    />
+                    <Field label="Pessoa de contato" name="contact_name" />
+                    <Field label="Endereço" name="address" maxLength={240} />
+                  </div>
+                </fieldset>
+                <Result state={supplierState} />
+                <SaveButton pending={supplierPending}>
+                  Salvar e usar fornecedor
+                </SaveButton>
+              </form>
+            )}
+          </section>
+        </div>
+      )}
+    </>
   );
 }
 

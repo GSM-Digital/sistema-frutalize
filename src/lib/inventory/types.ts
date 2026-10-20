@@ -145,6 +145,8 @@ export type ActionState = {
   error?: string;
   success?: string;
   values?: Record<string, string>;
+  catalogId?: string;
+  catalogName?: string;
   lotId?: string;
   receiptId?: string;
   successId?: string;

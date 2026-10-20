@@ -913,19 +913,6 @@ tbody tr:hover {
 .receipt-panel-body {
   padding: 1.75rem;
 }
-.receipt-prerequisite {
-  margin-bottom: 1.5rem;
-}
-.receipt-prerequisite h2 {
-  font-size: 0.9rem;
-  font-weight: 650;
-}
-.receipt-prerequisite p {
-  margin-top: 0.4rem;
-  color: #786a48;
-  font-size: 0.75rem;
-  line-height: 1.65;
-}
 .inventory-form fieldset {
   min-width: 0;
   border: 0;
@@ -948,6 +935,13 @@ tbody tr:hover {
   min-width: 0;
 }
 .field label {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 550;
+  color: #40503a;
+}
+.field-label {
   display: block;
   margin-bottom: 0.45rem;
   font-size: 0.75rem;
@@ -998,43 +992,11 @@ tbody tr:hover {
   color: #35672d;
   border: 1px solid #d4e5ca;
 }
-.receipt-setup {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-}
-.receipt-setup details {
-  border: 1px solid #dce4d9;
-  border-radius: 0.75rem;
-  background: #f9fbf7;
-}
-.receipt-setup summary {
-  display: flex;
-  min-height: 48px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  cursor: pointer;
-  list-style: none;
-  padding: 0.9rem 1rem;
-  color: var(--brand-dark);
-  font-size: 0.78rem;
-  font-weight: 650;
-}
-.receipt-setup summary small,
 .receipt-more summary small {
   flex-shrink: 0;
   color: #7d8879;
   font-size: 0.62rem;
   font-weight: 500;
-}
-.receipt-setup summary::-webkit-details-marker {
-  display: none;
-}
-.compact-form {
-  border-top: 1px solid #e5eae2;
-  padding: 1rem;
 }
 .receipt-items {
   display: grid;
@@ -1058,7 +1020,140 @@ tbody tr:hover {
   gap: 1rem;
 }
 .receipt-item-heading {
-  margin: -0.4rem 0 1rem;
+  justify-content: flex-end;
+  margin: -1.8rem 0 0.75rem;
+}
+.receipt-remove-item {
+  display: inline-grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid #efcac4;
+  border-radius: 0.65rem;
+  background: #fbeae7;
+  color: #ad4f43;
+  cursor: pointer;
+}
+.receipt-remove-item:hover {
+  border-color: #e8b7af;
+  background: #f7ddd8;
+}
+.receipt-remove-item svg {
+  width: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+.receipt-picker-value {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid #d5ddd2;
+  border-radius: 0.7rem;
+  background: white;
+  padding: 0.6rem 0.65rem 0.6rem 0.9rem;
+}
+.receipt-picker-value strong,
+.receipt-picker-value small {
+  display: block;
+}
+.receipt-picker-value strong {
+  color: #344333;
+  font-size: 0.83rem;
+}
+.receipt-picker-value small {
+  margin-top: 0.2rem;
+  color: #788275;
+  font-size: 0.65rem;
+}
+.receipt-picker-trigger {
+  min-height: 40px;
+  flex-shrink: 0;
+}
+.receipt-picker-backdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  background: rgb(26 37 26 / 48%);
+  padding: 1rem;
+}
+.receipt-picker-dialog {
+  width: min(100%, 680px);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  border: 1px solid #dce4d9;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 24px 70px rgb(23 40 25 / 24%);
+  padding: 1.25rem;
+}
+.receipt-picker-dialog > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.receipt-picker-dialog h2 {
+  margin-top: 0.25rem;
+  font-size: 1.15rem;
+}
+.receipt-picker-close {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  place-items: center;
+  border: 1px solid #dce4d9;
+  border-radius: 50%;
+  background: #f7f9f5;
+  color: #52604f;
+  cursor: pointer;
+  font-size: 1.4rem;
+}
+.receipt-picker-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+.receipt-picker-choices button {
+  min-height: 118px;
+  border: 1px solid #dce4d9;
+  border-radius: 0.85rem;
+  background: #f8faf6;
+  padding: 1rem;
+  text-align: left;
+  cursor: pointer;
+}
+.receipt-picker-choices button:hover {
+  border-color: #abc1aa;
+  background: #f1f6ed;
+}
+.receipt-picker-choices strong,
+.receipt-picker-choices span {
+  display: block;
+}
+.receipt-picker-choices strong {
+  color: var(--brand-dark);
+  font-size: 0.85rem;
+}
+.receipt-picker-choices span {
+  margin-top: 0.4rem;
+  color: #748071;
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+.receipt-picker-existing,
+.receipt-picker-form {
+  display: grid;
+  gap: 1rem;
 }
 .receipt-notes {
   grid-column: 1 / -1;
@@ -1406,26 +1501,6 @@ tbody tr:hover {
   .receipt-panel-body {
     padding: 1rem;
   }
-  .receipt-setup {
-    gap: 0.6rem;
-    margin-bottom: 1rem;
-  }
-  .receipt-setup summary {
-    padding: 0.75rem 0.85rem;
-    font-size: 0.75rem;
-  }
-  .receipt-prerequisite {
-    margin-bottom: 1.15rem;
-    padding: 0.9rem 1rem;
-  }
-  .receipt-prerequisite h2 {
-    font-size: 0.85rem;
-    line-height: 1.4;
-  }
-  .receipt-prerequisite p {
-    font-size: 0.74rem;
-    line-height: 1.55;
-  }
   .receipt-page .inventory-form {
     gap: 1.1rem;
   }
@@ -1445,9 +1520,31 @@ tbody tr:hover {
   .receipt-item-heading {
     margin-bottom: 0.8rem;
   }
-  .receipt-item-heading p {
-    font-size: 0.78rem;
-    line-height: 1.55;
+  .receipt-picker-value {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 0.85rem;
+  }
+  .receipt-picker-trigger {
+    width: 100%;
+  }
+  .receipt-picker-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+  .receipt-picker-dialog {
+    width: 100%;
+    max-height: 88dvh;
+    border-width: 1px 0 0;
+    border-radius: 1rem 1rem 0 0;
+    padding: 1rem;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+  .receipt-picker-choices {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .receipt-picker-choices button {
+    min-height: 96px;
   }
   .receipt-more {
     margin-top: 0.85rem;
@@ -1466,10 +1563,6 @@ tbody tr:hover {
   .receipt-page .inventory-form > .btn {
     width: 100%;
     min-height: 48px;
-  }
-  .receipt-page .inventory-form > .notice {
-    padding: 0.9rem 1rem;
-    line-height: 1.55;
   }
   .home-section {
     margin-bottom: 2.2rem;
@@ -1541,9 +1634,6 @@ tbody tr:hover {
     padding-right: 1rem;
   }
   .form-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .receipt-setup {
     grid-template-columns: minmax(0, 1fr);
   }
   .receipt-item {

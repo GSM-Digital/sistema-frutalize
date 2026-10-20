@@ -20,7 +20,7 @@ Esta implementação segue os [requisitos consolidados](Requisitos_Sistema_Fruta
 | Consulta        | Busca por produto, SKU, lote, fornecedor e local; filtros por situação e validade; paginação no servidor                                                               |
 | Histórico       | Livro imutável de movimentos e auditoria de criação, edição e arquivamento de cadastros, com antes/depois                                                              |
 | Acesso          | Sessão verificada no servidor; vínculo e papel em tabela protegida; apenas administrador ativo habilitado nesta fase                                                   |
-| Login           | Estado de envio, retorno seguro ao caminho solicitado e integração opcional com Turnstile validada no servidor                                                         |
+| Login           | Estado de envio, retorno seguro ao caminho solicitado e Turnstile obrigatório em produção, validado no servidor e com falha fechada                                    |
 | Qualidade       | TypeScript, lint, formatação, testes de validação e PostgreSQL embarcado; CI em pull requests e na main                                                                |
 
 ## Decisões desta primeira fatia
@@ -34,6 +34,7 @@ Esta implementação segue os [requisitos consolidados](Requisitos_Sistema_Fruta
 - Uma mesma identificação de lote pode existir em apresentações ou locais diferentes. Um lançamento é único por apresentação, código e local.
 - A quarentena é uma situação de qualidade. O local físico continua explícito e independente dela. A localização sanitária da área denominada Quarentena continua sujeita à validação técnica.
 - Os critérios finais de inspeção estão pendentes; por isso, há observações obrigatórias e liberação explícita, sem aprovação automática por temperatura, tempo ou produto químico.
+- A observação de inspeção começa vazia e precisa ser preenchida após a conferência. O sistema não presume a ausência de avarias.
 - Saídas exigem situação liberada, saldo suficiente e validade atual. Perdas e descartes admitem lotes bloqueados ou vencidos, com motivo. A destinação sanitária não é presumida pelo sistema.
 - O alerta de 30 dias é um filtro operacional desta entrega e não define validade ou vida de prateleira.
 - Retroatividade preserva a data real de criação. A data da saída pode ser anterior ao registro, mas não ao recebimento do lote, nem futura. O saldo é validado contra a posição atual; ainda não há reconstrução de saldo histórico por data operacional.
@@ -48,7 +49,7 @@ O acesso ao GitHub não fornece credenciais administrativas do Supabase. Em 20/1
 Estado confirmado do ambiente publicado:
 
 - `202610200001_inventory.sql`: schema, RLS, funções, views, nove categorias e sete locais;
-- `202610200002_bootstrap_admin.sql`: vínculo do usuário Auth existente ao perfil interno `admin` ativo;
+- `202610200002_bootstrap_admin.sql`: etapa portátil de bootstrap, sem e-mail ou UUID de ambiente; o vínculo administrativo já existente permanece no banco publicado;
 - `202610200003_harden_inventory_rpcs.sql`: implementações privilegiadas isoladas no schema privado e RPCs públicas sem `SECURITY DEFINER`;
 - cadastro público desabilitado globalmente, mantendo o provedor de e-mail ativo para login das contas criadas pelo administrador;
 - senha mínima de oito caracteres, exigindo maiúscula, minúscula, número e símbolo;
@@ -60,7 +61,7 @@ A configuração declarativa não secreta está em `supabase/config.toml`. Metad
 Para preparar outro ambiente:
 
 1. Use preferencialmente um projeto de homologação separado para validar esta entrega.
-2. Vincule o CLI ao projeto correto e use `supabase db push`, preservando o histórico das migrações. Não aplique os arquivos repetidamente pelo SQL Editor nem sobre tabelas homônimas sem revisar conflitos.
+2. Vincule o CLI ao projeto correto e use `supabase db push`, preservando o histórico das migrações. O conjunto completo pode ser reproduzido em um banco vazio sem exigir previamente um usuário Auth. Não aplique os arquivos repetidamente pelo SQL Editor nem sobre tabelas homônimas sem revisar conflitos.
 3. Confirme que o schema `public` está entre os schemas expostos na Data API. A exposição automática estava desabilitada no projeto; a migração concede explicitamente leitura das tabelas/views e execução das funções ao papel `authenticated`. Não conceda escrita direta para contornar erros de configuração.
 4. Crie ou reutilize a conta do administrador em Supabase Auth e vincule o UUID dela a `staff_members`. Exemplo a executar **somente no contexto administrativo do banco**, substituindo nome e e-mail:
 
@@ -85,13 +86,14 @@ A migração inclui as nove categorias e sete locais confirmados. Não inclui pr
 
 Para ativar a proteção, configure juntos:
 
+- `TURNSTILE_REQUIRED=true`: torna a proteção obrigatória também em homologação; desenvolvimento local pode usar `false`;
 - `NEXT_PUBLIC_TURNSTILE_SITE_KEY`: chave pública do widget;
 - `TURNSTILE_SECRET_KEY`: segredo somente no servidor;
 - `TURNSTILE_EXPECTED_HOSTNAME`: hostname exato do ambiente, sem protocolo nem caminho.
 
-O login verifica `success`, a ação `login` e o hostname no Siteverify. Token ausente, vencido/recusado, configuração incompleta ou indisponibilidade de validação impedem o login quando a proteção está habilitada. O segredo não é enviado ao widget. Cada ambiente precisa de hostname permitido e configuração compatível.
+O login verifica `success`, a ação `login` e o hostname no Siteverify. Token ausente, vencido/recusado, configuração incompleta ou indisponibilidade de validação impedem o login quando a proteção está habilitada. Em `NODE_ENV=production`, `VERCEL_ENV=production` ou com `TURNSTILE_REQUIRED=true`, a proteção é obrigatória e configuração ausente ou parcial bloqueia o formulário. O segredo não é enviado ao widget. Cada ambiente precisa de hostname permitido e configuração compatível.
 
-Com site key e segredo ausentes, a proteção fica desabilitada para permitir desenvolvimento e homologação. Configure e valide as chaves antes de considerar a proteção contra automação entregue em produção. Não configure o captcha nativo do Supabase simultaneamente sem adaptar o envio de token: esta implementação valida o Turnstile na Server Action.
+Somente em desenvolvimento, com `TURNSTILE_REQUIRED=false` e com as três variáveis vazias, a proteção fica desabilitada. Homologação deve usar suas próprias chaves e hostname. Não configure o captcha nativo do Supabase simultaneamente sem adaptar o envio de token: esta implementação valida o Turnstile na Server Action.
 
 Referências: [validação no servidor](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/) e [widget](https://developers.cloudflare.com/turnstile/get-started/client-side-rendering/).
 
@@ -108,13 +110,13 @@ npm run typecheck
 npm run build
 ```
 
-Os testes de banco executam a migração real em PostgreSQL embarcado (PGlite). O schema `auth` e os papéis da plataforma são simulados no teste; não existe acesso ao Supabase de produção. São verificados RLS, grants, perfis negados, alterações auditadas, bloqueio por vínculo, integridade transacional, idempotência, precisão, custo, peso, saldo e validade.
+Os testes de banco executam o replay completo das migrações reais em PostgreSQL embarcado (PGlite), inclusive o bootstrap portátil sem usuário pré-existente. O schema `auth` e os papéis da plataforma são simulados no teste; não existe acesso ao Supabase de produção. São verificados RLS, grants, perfis negados, alterações auditadas, bloqueio por vínculo, integridade transacional, idempotência, precisão, custo, peso, saldo e validade.
 
 O teste de requisições concorrentes usa uma conexão do PGlite, que serializa as consultas. Ele verifica que duas solicitações não consomem o mesmo saldo; a disputa real entre múltiplas conexões, o PostgREST, a renovação de sessão e o widget precisam de aceite em homologação Supabase. Os testes de Turnstile simulam respostas HTTP, sem usar chaves reais.
 
 Nenhum teste usa automação visual de desktop ou navegador. Responsividade, câmera, widget e comportamento de formulários devem receber aceite manual em celular e computador antes de produção.
 
-A CI também inicia o build e executa `scripts/check-http.mjs` por HTTP: verifica os redirecionamentos sem sessão, a renderização do formulário de login, a disponibilidade do endpoint de saúde e o acesso ao favicon. O endpoint de saúde verifica a conexão de autenticação; não confirma a instalação da migração nem um fluxo autenticado completo.
+A CI também inicia o build e executa `scripts/check-http.mjs` por HTTP: verifica os redirecionamentos sem sessão, a renderização do formulário de login, os cabeçalhos de segurança, a disponibilidade do endpoint de saúde e o acesso ao favicon. A política CSP permite somente as origens necessárias da aplicação, do Supabase e do Turnstile; também são emitidas proteções contra enquadramento, detecção indevida de conteúdo e permissões desnecessárias do navegador. O endpoint de saúde verifica a conexão de autenticação; não confirma a instalação da migração nem um fluxo autenticado completo.
 
 `npm audit --omit=dev` não apontou vulnerabilidades nas dependências de produção na verificação desta entrega. A auditoria completa apontou avisos altos de desenvolvimento na cadeia `eslint-config-next → fast-glob → micromatch → braces` (GHSA-vfj7-8cjw-p6xm). Não havia versão corrigida de `braces` publicada na consulta; não foi feito downgrade incompatível do Next.js/ESLint para mascarar o aviso. Acompanhar a correção antes das próximas atualizações.
 

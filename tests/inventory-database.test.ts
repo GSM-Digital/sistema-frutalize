@@ -18,6 +18,7 @@ test("inventory migration and database authorization", async (t) => {
     grant execute on function auth.uid() to anon,authenticated;`);
   for (const file of [
     "202610200001_inventory.sql",
+    "202610200002_bootstrap_admin.sql",
     "202610200003_harden_inventory_rpcs.sql",
     "202610200004_simplify_receiving.sql",
   ]) {
@@ -27,6 +28,14 @@ test("inventory migration and database authorization", async (t) => {
     );
     await db.exec(migration);
   }
+  const bootstrap = await db.query<{ count: number }>(
+    "select count(*)::int as count from staff_members",
+  );
+  assert.equal(
+    bootstrap.rows[0].count,
+    0,
+    "a clean migration replay must not create an environment-specific admin",
+  );
   await db.query("insert into auth.users(id) values ($1),($2),($3),($4)", [
     admin,
     outsider,

@@ -37,6 +37,18 @@ for (const path of [
 }
 const login = await fetch(`${base}/login`);
 assert.equal(login.status, 200);
+const contentSecurityPolicy =
+  login.headers.get("content-security-policy") ?? "";
+assert.match(contentSecurityPolicy, /frame-ancestors 'none'/);
+assert.match(contentSecurityPolicy, /https:\/\/challenges\.cloudflare\.com/);
+assert.equal(login.headers.get("x-frame-options"), "DENY");
+assert.equal(login.headers.get("x-content-type-options"), "nosniff");
+assert.equal(
+  login.headers.get("referrer-policy"),
+  "strict-origin-when-cross-origin",
+);
+assert.match(login.headers.get("permissions-policy") ?? "", /camera=\(self\)/);
+console.log("PASS security headers: CSP and browser policies applied");
 const html = await login.text();
 assert.ok(html.includes("Bem-vindo de volta"));
 assert.ok(html.includes('name="email"') && html.includes('name="password"'));

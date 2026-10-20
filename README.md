@@ -44,11 +44,15 @@ A aplicação ficará disponível em `http://localhost:3000`.
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+TURNSTILE_REQUIRED=false
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=
+TURNSTILE_SECRET_KEY=
+TURNSTILE_EXPECTED_HOSTNAME=
 ```
 
 Nunca adicione chaves secretas do Supabase a variáveis prefixadas com `NEXT_PUBLIC_`.
 
-O login também está preparado para Cloudflare Turnstile. Configure a site key, o segredo e o hostname esperado juntos, como descrito no guia. Sem essas chaves a proteção permanece desabilitada para desenvolvimento.
+O login usa Cloudflare Turnstile em produção. Configure a site key, o segredo e o hostname esperado juntos, como descrito no guia. Produção falha de modo fechado: sem a configuração completa, o formulário informa a indisponibilidade e não permite entrar. Em homologação, use `TURNSTILE_REQUIRED=true`; em desenvolvimento local, `false` permite trabalhar sem as três chaves.
 
 ## Verificações
 
@@ -60,7 +64,7 @@ npm run typecheck
 npm run build
 ```
 
-Os testes executam as regras de estoque e acesso em PostgreSQL embarcado, sem credenciais de produção. A integração com Supabase, a responsividade e o fluxo completo devem passar pelo aceite em homologação documentado antes de publicar em produção.
+Os testes executam o replay completo das migrações e as regras de estoque e acesso em PostgreSQL embarcado, sem credenciais de produção. A integração com Supabase, a responsividade e o fluxo completo devem passar pelo aceite em homologação documentado antes de publicar em produção.
 
 ## Licença
 

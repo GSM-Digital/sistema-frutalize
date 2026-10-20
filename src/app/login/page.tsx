@@ -137,8 +137,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             )}
             {turnstile.enabled && !turnstile.ready && (
               <p role="status" className="notice text-sm">
-                A verificação de segurança está em preparação. Contate o
-                administrador.
+                A verificação de segurança obrigatória não está configurada.
+                Contate o administrador.
               </p>
             )}
             <div className="login-submit">

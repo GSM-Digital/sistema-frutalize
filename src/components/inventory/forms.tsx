@@ -444,7 +444,7 @@ function blankReceiptItem(key: string): ReceiptDraft {
     quantity: "",
     net_weight_kg: "",
     total_cost: "",
-    inspection_notes: "Recebido sem avarias aparentes.",
+    inspection_notes: "",
   };
 }
 

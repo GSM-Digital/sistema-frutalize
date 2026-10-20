@@ -6,12 +6,18 @@ test("Turnstile verifies on the server and fails closed for invalid configuratio
     site: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
     secret: process.env.TURNSTILE_SECRET_KEY,
     host: process.env.TURNSTILE_EXPECTED_HOSTNAME,
+    required: process.env.TURNSTILE_REQUIRED,
+    nodeEnvironment: process.env.NODE_ENV,
+    vercelEnvironment: process.env.VERCEL_ENV,
   };
   t.after(() => {
     for (const [key, value] of Object.entries({
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: original.site,
       TURNSTILE_SECRET_KEY: original.secret,
       TURNSTILE_EXPECTED_HOSTNAME: original.host,
+      TURNSTILE_REQUIRED: original.required,
+      NODE_ENV: original.nodeEnvironment,
+      VERCEL_ENV: original.vercelEnvironment,
     })) {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
@@ -21,7 +27,16 @@ test("Turnstile verifies on the server and fails closed for invalid configuratio
   delete process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   delete process.env.TURNSTILE_SECRET_KEY;
   delete process.env.TURNSTILE_EXPECTED_HOSTNAME;
+  delete process.env.TURNSTILE_REQUIRED;
+  delete process.env.VERCEL_ENV;
+  Reflect.set(process.env, "NODE_ENV", "development");
   assert.equal(await verifyTurnstile(null), true);
+  Reflect.set(process.env, "NODE_ENV", "production");
+  assert.equal(await verifyTurnstile(null), false);
+  Reflect.set(process.env, "NODE_ENV", "development");
+  process.env.TURNSTILE_REQUIRED = "true";
+  assert.equal(await verifyTurnstile(null), false);
+  delete process.env.TURNSTILE_REQUIRED;
   process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = "public-test";
   assert.equal(await verifyTurnstile("test-token"), false);
   process.env.TURNSTILE_SECRET_KEY = "secret-test";

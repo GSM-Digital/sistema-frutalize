@@ -56,10 +56,20 @@ export default async function LotPage({
       ? []
       : [["Tamanho/embalagem", `${lot.variant_name} · ${lot.sku}`]]),
     ["Local físico", lot.location_name],
-    ["Fornecedor", lot.supplier_name],
-    ["Documento", lot.reference],
-    ["Lote do fornecedor", lot.supplier_lot || "Não informado"],
-    ["Recebimento", dateTime(lot.received_at)],
+    ...(lot.origin === "production"
+      ? [
+          ["Origem", "Produção interna"],
+          ["Processo de produção", lot.reference],
+        ]
+      : [
+          ["Fornecedor", lot.supplier_name],
+          ["Documento", lot.reference],
+          ["Lote do fornecedor", lot.supplier_lot || "Não informado"],
+        ]),
+    [
+      lot.origin === "production" ? "Finalização" : "Recebimento",
+      dateTime(lot.received_at),
+    ],
     [
       "Fabricação",
       lot.manufactured_on ? shortDate(lot.manufactured_on) : "Não informada",
@@ -80,7 +90,12 @@ export default async function LotPage({
         ? "Não informado"
         : quantity(lot.initial_weight_kg, "kg"),
     ],
-    ["Preço total de entrada", money(lot.total_cost)],
+    [
+      lot.origin === "production"
+        ? "Custo dos insumos"
+        : "Preço total de entrada",
+      money(lot.total_cost),
+    ],
     [`Custo por ${lot.unit}`, money(lot.unit_cost, 6)],
     ["Registro real", dateTime(lot.created_at)],
   ];
@@ -108,7 +123,7 @@ export default async function LotPage({
         </div>
         <LotBadge lot={lot} today={today} />
       </div>
-      <Panel title="Rastreabilidade da entrada">
+      <Panel title="Rastreabilidade do lote">
         <dl className="details-grid">
           {details.map(([label, value]) => (
             <div key={label}>
@@ -118,7 +133,11 @@ export default async function LotPage({
           ))}
         </dl>
         <div className="border-t border-[#dfe6dc] p-5 sm:p-6">
-          <h3 className="text-sm font-semibold">Inspeção de qualidade</h3>
+          <h3 className="text-sm font-semibold">
+            {lot.origin === "production"
+              ? "Observações da produção"
+              : "Inspeção de qualidade"}
+          </h3>
           <p className="muted mt-2 text-sm whitespace-pre-wrap leading-6">
             {lot.inspection_notes}
           </p>
@@ -126,8 +145,8 @@ export default async function LotPage({
       </Panel>
       <div className="mt-6">
         <Panel
-          title="Registrar saída ou perda"
-          description="O saldo é validado no momento da gravação."
+          title="Movimentar este lote"
+          description="Envie para produção, registre uma saída externa ou dê baixa por perda."
         >
           <div className="p-5 sm:p-6">
             <MovementForm

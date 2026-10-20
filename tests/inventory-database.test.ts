@@ -22,6 +22,7 @@ test("inventory migration and database authorization", async (t) => {
     "202610200003_harden_inventory_rpcs.sql",
     "202610200004_simplify_receiving.sql",
     "20261020221100_remove_lot_status_workflow.sql",
+    "20261020223216_add_production_flow.sql",
   ]) {
     const migration = await readFile(
       new URL(`../supabase/migrations/${file}`, import.meta.url),
@@ -102,7 +103,7 @@ test("inventory migration and database authorization", async (t) => {
   const move = (
     kind: string,
     qty: number,
-    reason = "Operação de teste",
+    reason = kind === "loss" ? "Deterioração" : "Devolução ao fornecedor",
     requestId = randomUUID(),
     date = new Date().toISOString(),
   ) =>
@@ -116,7 +117,7 @@ test("inventory migration and database authorization", async (t) => {
     ]);
 
   await t.test(
-    "seeds confirmed categories and keeps the former quarantine location archived",
+    "seeds confirmed categories and archives non-stock process locations",
     async () => {
       assert.equal(Number(await scalar("select count(*) from categories")), 9);
       assert.equal(
@@ -129,11 +130,17 @@ test("inventory migration and database authorization", async (t) => {
             "select count(*) from storage_locations where active = true",
           ),
         ),
-        6,
+        5,
       );
       assert.equal(
         await scalar(
           "select active::text from storage_locations where name = 'Quarentena'",
+        ),
+        "false",
+      );
+      assert.equal(
+        await scalar(
+          "select active::text from storage_locations where name = 'Produção'",
         ),
         "false",
       );
@@ -167,6 +174,23 @@ test("inventory migration and database authorization", async (t) => {
         );
         await assert.rejects(
           db.query("select receive_lot($1,'{}')", [randomUUID()]),
+          /Acesso não autorizado/,
+        );
+        await assert.rejects(
+          db.query("select start_production($1,$2,$3,$4)", [
+            randomUUID(),
+            randomUUID(),
+            1,
+            new Date().toISOString(),
+          ]),
+          /Acesso não autorizado/,
+        );
+        await assert.rejects(
+          db.query("select complete_production($1,$2,$3)", [
+            randomUUID(),
+            randomUUID(),
+            "{}",
+          ]),
           /Acesso não autorizado/,
         );
       }
@@ -334,6 +358,8 @@ test("inventory migration and database authorization", async (t) => {
         "products",
         "lots",
         "stock_movements",
+        "production_runs",
+        "production_inputs",
         "audit_events",
         "staff_members",
       ]) {
@@ -382,7 +408,7 @@ test("inventory migration and database authorization", async (t) => {
     },
   );
   await t.test("failed writes roll back both balance and ledger", async () => {
-    await assert.rejects(move("loss", 1, ""), /check constraint/);
+    await assert.rejects(move("external_dispatch", 1, ""), /destino válido/);
     assert.equal(
       Number(await scalar("select quantity from lots where id = $1", [lot])),
       10,
@@ -399,12 +425,22 @@ test("inventory migration and database authorization", async (t) => {
     );
   });
   await t.test(
-    "dispatch is immediately available and retries leave one audit trail",
+    "external dispatch is immediately available and retries leave one audit trail",
     async () => {
       const requestId = randomUUID();
-      const movement = await move("dispatch", 3, "Uso em produção", requestId);
+      const movement = await move(
+        "external_dispatch",
+        3,
+        "Devolução ao fornecedor",
+        requestId,
+      );
       assert.equal(
-        await move("dispatch", 3, "Uso em produção", requestId),
+        await move(
+          "external_dispatch",
+          3,
+          "Devolução ao fornecedor",
+          requestId,
+        ),
         movement,
       );
       assert.equal(
@@ -425,16 +461,19 @@ test("inventory migration and database authorization", async (t) => {
   await t.test(
     "no negative stock, fractional count units or forged operation types",
     async () => {
-      await assert.rejects(move("dispatch", 8), /Saldo insuficiente/);
-      await assert.rejects(move("dispatch", 0.5), /Quantidade inválida/);
+      await assert.rejects(move("external_dispatch", 8), /Saldo insuficiente/);
+      await assert.rejects(
+        move("external_dispatch", 0.5),
+        /Quantidade inválida/,
+      );
       await assert.rejects(move("invented", 1), /Tipo de movimentação/);
       await assert.rejects(move("loss", -1), /Quantidade inválida/);
       await assert.rejects(
-        move("loss", 1, "Teste", randomUUID(), "2100-01-01T00:00:00Z"),
+        move("loss", 1, "Deterioração", randomUUID(), "2100-01-01T00:00:00Z"),
         /Data operacional/,
       );
       await assert.rejects(
-        move("loss", 1, "Teste", randomUUID(), "2000-01-01T00:00:00Z"),
+        move("loss", 1, "Deterioração", randomUUID(), "2000-01-01T00:00:00Z"),
         /Data operacional/,
       );
     },
@@ -443,8 +482,8 @@ test("inventory migration and database authorization", async (t) => {
     "competing stock requests cannot overspend the balance",
     async () => {
       const results = await Promise.allSettled([
-        move("dispatch", 5),
-        move("dispatch", 5),
+        move("external_dispatch", 5),
+        move("external_dispatch", 5),
       ]);
       assert.equal(results.filter((x) => x.status === "fulfilled").length, 1);
       assert.equal(
@@ -454,9 +493,16 @@ test("inventory migration and database authorization", async (t) => {
     },
   );
   await t.test(
-    "expired lots cannot dispatch, but allow justified disposal",
+    "loss receives its automatic classification and expired lots cannot dispatch",
     async () => {
-      await move("loss", 1);
+      await move("loss", 1, "Avaria");
+      assert.equal(
+        await scalar(
+          "select reason from stock_movements where lot_id = $1 order by created_at desc, id desc limit 1",
+          [lot],
+        ),
+        "Perda operacional",
+      );
       // Advance this fixture into the past through the trusted database owner.
       await db.exec("reset role");
       await db.query(
@@ -464,8 +510,15 @@ test("inventory migration and database authorization", async (t) => {
         [lot],
       );
       await user(admin);
-      await assert.rejects(move("dispatch", 1), /validade/);
-      await move("loss", 1);
+      await assert.rejects(move("external_dispatch", 1), /vencidos/);
+      await move("loss", 1, "Produto vencido");
+      assert.equal(
+        await scalar(
+          "select reason from stock_movements where lot_id = $1 order by created_at desc, id desc limit 1",
+          [lot],
+        ),
+        "Produto vencido",
+      );
       assert.equal(
         Number(await scalar("select quantity from lots where id = $1", [lot])),
         0,
@@ -577,6 +630,124 @@ test("inventory migration and database authorization", async (t) => {
     },
   );
   await t.test(
+    "production consumes a source lot and creates a traceable frozen output",
+    async () => {
+      const sourceLot = await receipt();
+      const startedAt = new Date().toISOString();
+      const startRequest = randomUUID();
+      const productionId = await scalar(
+        "select start_production($1,$2,$3,$4)",
+        [startRequest, sourceLot, 4, startedAt],
+      );
+      assert.equal(
+        await scalar("select start_production($1,$2,$3,$4)", [
+          startRequest,
+          sourceLot,
+          4,
+          startedAt,
+        ]),
+        productionId,
+      );
+      assert.equal(
+        Number(
+          await scalar("select quantity from lots where id = $1", [sourceLot]),
+        ),
+        6,
+      );
+      assert.equal(
+        await scalar("select kind from stock_movements where request_id = $1", [
+          startRequest,
+        ]),
+        "production_input",
+      );
+
+      const pulpCategory = await scalar(
+        "select id from categories where name = 'Polpas prontas'",
+      );
+      const pulpProduct = await save("products", null, {
+        name: "Polpa rastreável de maracujá",
+        category_id: pulpCategory,
+        requires_expiry: true,
+        has_variants: true,
+      });
+      const pulpVariant = await save("variants", null, {
+        name: "500 g",
+        product_id: pulpProduct,
+        sku: "POLPA-MAR-500",
+        unit_weight_kg: 0.5,
+      });
+      const freezer = await scalar(
+        "select id from storage_locations where name = 'Freezer 1'",
+      );
+      const completedAt = new Date().toISOString();
+      const completionRequest = randomUUID();
+      const outputData = JSON.stringify({
+        variant_id: pulpVariant,
+        location_id: freezer,
+        quantity: 8,
+        unit: "un",
+        net_weight_kg: "",
+        completed_at: completedAt,
+        expires_on: tomorrow,
+        notes: "Produção de teste concluída.",
+      });
+      const outputLot = await scalar("select complete_production($1,$2,$3)", [
+        completionRequest,
+        productionId,
+        outputData,
+      ]);
+      assert.equal(
+        await scalar("select complete_production($1,$2,$3)", [
+          completionRequest,
+          productionId,
+          outputData,
+        ]),
+        outputLot,
+      );
+      const { rows } = await db.query<{
+        production_run_id: string;
+        supplier_id: string | null;
+        quantity: string;
+        initial_weight_kg: string;
+        total_cost: string;
+      }>("select * from lots where id = $1", [outputLot]);
+      assert.equal(rows[0].production_run_id, productionId);
+      assert.equal(rows[0].supplier_id, null);
+      assert.equal(Number(rows[0].quantity), 8);
+      assert.equal(Number(rows[0].initial_weight_kg), 4);
+      assert.equal(Number(rows[0].total_cost), 10);
+      assert.equal(
+        await scalar("select status from production_runs where id = $1", [
+          productionId,
+        ]),
+        "completed",
+      );
+      assert.equal(
+        await scalar("select origin from inventory_lots where id = $1", [
+          outputLot,
+        ]),
+        "production",
+      );
+      await assert.rejects(
+        db.query("select start_production($1,$2,$3,$4)", [
+          randomUUID(),
+          outputLot,
+          1,
+          new Date().toISOString(),
+        ]),
+        /Somente frutas recebidas/,
+      );
+      await assert.rejects(
+        db.query("select complete_production($1,$2,$3)", [
+          randomUUID(),
+          productionId,
+          outputData,
+        ]),
+        /já foi finalizada/,
+      );
+    },
+  );
+  await t.test(
     "archive prevents new receipts and preserves old lots",
     async () => {
       await save(
@@ -611,6 +782,8 @@ test("inventory migration and database authorization", async (t) => {
         "inventory_variants",
         "inventory_lots",
         "inventory_movements",
+        "inventory_production_runs",
+        "inventory_production_inputs",
       ])
         assert.equal(Number(await scalar(`select count(*) from ${view}`)), 0);
     },

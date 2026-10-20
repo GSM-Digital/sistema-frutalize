@@ -42,7 +42,7 @@ export default async function MovementsPage({
     <>
       <PageHeading
         title="Movimentações"
-        description="Entradas, saídas, perdas e conferências com motivo e responsável."
+        description="Entradas, produção, saídas externas e perdas com destino, causa e responsável."
       >
         <Link className="btn btn-primary" href="/dashboard/lotes">
           Consultar lote para movimentar

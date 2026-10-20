@@ -36,7 +36,9 @@ const quickActions: HomeCard[] = [
     description:
       "Registre os insumos consumidos e os lotes de polpa produzidos.",
     icon: "production",
-    status: "Em breve",
+    href: "/dashboard/producao",
+    status: "Disponível agora",
+    statusTone: "green",
   },
   {
     title: "Registrar venda",
@@ -65,7 +67,9 @@ const modules: HomeCard[] = [
     title: "Produção",
     description: "Planeje e registre a transformação de insumos em produtos.",
     icon: "production",
-    status: "Próxima etapa",
+    href: "/dashboard/producao",
+    status: "Disponível",
+    statusTone: "green",
   },
   {
     title: "Financeiro",

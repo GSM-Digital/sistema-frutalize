@@ -3,18 +3,24 @@ import { useActionState, useId, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  moveStock,
+  completeProduction,
   receiveDelivery,
+  registerLotOperation,
   saveCatalog,
 } from "@/app/dashboard/inventory-actions";
 import { money } from "@/lib/inventory/format";
 import {
+  externalDestinations,
+  lotOperations,
   units,
   type ActionState,
   type CatalogEntity,
   type CatalogOptions,
   type CatalogRecord,
   type InventoryLot,
+  type InventoryVariant,
+  type Location,
+  type LotOperation,
   type Unit,
 } from "@/lib/inventory/types";
 
@@ -108,6 +114,14 @@ function Result({ state }: { state: ActionState }) {
           {state.receiptId && (
             <Link className="text-link block mt-2" href="/dashboard/lotes">
               Consultar os lotes recebidos →
+            </Link>
+          )}
+          {state.productionId && (
+            <Link
+              className="text-link block mt-2"
+              href={`/dashboard/producao/${state.productionId}`}
+            >
+              Abrir a produção iniciada →
             </Link>
           )}
         </p>
@@ -1034,11 +1048,18 @@ export function MovementForm({
   today: string;
 }) {
   const { state, action, pending, operationId } = useStockAction(
-    moveStock,
+    registerLotOperation,
     requestId,
   );
   const v = (key: string, fallback = "") => state.values?.[key] ?? fallback;
   const canDispatch = !lot.expires_on || lot.expires_on >= today;
+  const canProduce = canDispatch && lot.category_name === "Frutas recebidas";
+  const [kind, setKind] = useState<LotOperation>(
+    v(
+      "kind",
+      canProduce ? "production" : canDispatch ? "external_dispatch" : "loss",
+    ) as LotOperation,
+  );
   return (
     <form
       key={state.successId ?? "initial"}
@@ -1057,12 +1078,21 @@ export function MovementForm({
           <Field
             label="Tipo"
             name="kind"
-            value={v("kind", canDispatch ? "dispatch" : "loss")}
+            value={kind}
+            onChange={(value) => setKind(value as LotOperation)}
           >
-            <option value="dispatch" disabled={!canDispatch}>
-              Saída
-            </option>
-            <option value="loss">Perda / descarte</option>
+            {Object.entries(lotOperations).map(([value, label]) => (
+              <option
+                key={value}
+                value={value}
+                disabled={
+                  (!canDispatch && value !== "loss") ||
+                  (value === "production" && !canProduce)
+                }
+              >
+                {label}
+              </option>
+            ))}
           </Field>
           <Field
             label={`Quantidade (${lot.unit})`}
@@ -1079,25 +1109,162 @@ export function MovementForm({
             value={v("operated_at", now)}
             hint="Horário de Brasília. Não pode anteceder o recebimento."
           />
-          <Field
-            label="Motivo / destino"
-            name="reason"
-            required
-            maxLength={240}
-            value={v("reason")}
-          />
+          {kind === "external_dispatch" && (
+            <Field
+              key="external-destination"
+              label="Destino da saída"
+              name="reason"
+              required
+              value={v("reason")}
+              hint="Use para itens que realmente deixaram a fábrica sem entrar na produção."
+            >
+              <option value="">Selecione</option>
+              {Object.entries(externalDestinations).map(([value, label]) => (
+                <option value={value} key={value}>
+                  {label}
+                </option>
+              ))}
+            </Field>
+          )}
         </div>
       </fieldset>
+      {kind === "loss" && (
+        <p className="muted text-sm">
+          O sistema registrará automaticamente como produto vencido ou perda
+          operacional, conforme a validade atual do lote.
+        </p>
+      )}
       {!canDispatch && (
         <p className="muted text-sm">
-          Lotes vencidos não podem registrar saída. Perdas e descartes exigem
-          justificativa.
+          Este lote está vencido e só pode registrar perda ou descarte.
+        </p>
+      )}
+      {canDispatch && !canProduce && (
+        <p className="muted text-sm">
+          Somente lotes da categoria Frutas recebidas podem iniciar uma produção
+          de polpa.
         </p>
       )}
       <Result state={state} />
       <SaveButton pending={pending} disabled={lot.quantity === 0}>
-        Registrar movimentação
+        {kind === "production"
+          ? "Enviar para produção"
+          : kind === "external_dispatch"
+            ? "Registrar saída externa"
+            : "Registrar perda / descarte"}
       </SaveButton>
+    </form>
+  );
+}
+
+export function CompleteProductionForm({
+  productionId,
+  requestId,
+  now,
+  variants,
+  locations,
+}: {
+  productionId: string;
+  requestId: string;
+  now: string;
+  variants: InventoryVariant[];
+  locations: Location[];
+}) {
+  const { state, action, pending, operationId } = useStockAction(
+    completeProduction,
+    requestId,
+  );
+  const v = (key: string, fallback = "") => state.values?.[key] ?? fallback;
+  return (
+    <form
+      key={state.successId ?? "initial"}
+      action={action}
+      className="inventory-form"
+    >
+      <input
+        type="hidden"
+        name="request_id"
+        value={v("request_id", operationId)}
+      />
+      <input type="hidden" name="production_id" value={productionId} />
+      <fieldset disabled={pending}>
+        <legend className="sr-only">Produto final da produção</legend>
+        <div className="form-grid">
+          <Field
+            label="Polpa produzida"
+            name="variant_id"
+            required
+            value={v("variant_id")}
+          >
+            <option value="">Selecione</option>
+            {variants.map((variant) => (
+              <option key={variant.id} value={variant.id}>
+                {variant.product_name}
+                {!variant.is_default ? ` · ${variant.name}` : ""}
+              </option>
+            ))}
+          </Field>
+          <Field
+            label="Freezer de destino"
+            name="location_id"
+            required
+            value={v("location_id")}
+          >
+            <option value="">Selecione</option>
+            {locations.map((location) => (
+              <option key={location.id} value={location.id}>
+                {location.name}
+              </option>
+            ))}
+          </Field>
+          <Field
+            label="Quantidade produzida"
+            name="quantity"
+            required
+            inputMode="decimal"
+            value={v("quantity")}
+          />
+          <Field label="Unidade" name="unit" required value={v("unit", "un")}>
+            {Object.entries(units).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </Field>
+          <Field
+            label="Peso líquido total (kg)"
+            name="net_weight_kg"
+            inputMode="decimal"
+            value={v("net_weight_kg")}
+            hint="Opcional quando o peso já estiver definido na apresentação."
+          />
+          <Field
+            label="Data e hora de finalização"
+            name="completed_at"
+            type="datetime-local"
+            required
+            value={v("completed_at", now)}
+            hint="Horário de Brasília. Não pode anteceder o início da produção."
+          />
+          <Field
+            label="Validade da polpa"
+            name="expires_on"
+            type="date"
+            required
+            value={v("expires_on")}
+          />
+          <Field
+            label="Observações da produção"
+            name="notes"
+            rows={4}
+            maxLength={1000}
+            value={v("notes")}
+            hint="Opcional. Registre ocorrências relevantes do processamento."
+          />
+        </div>
+      </fieldset>
+      <Result state={state} />
+      <SaveButton pending={pending}>Finalizar produção</SaveButton>
     </form>
   );
 }

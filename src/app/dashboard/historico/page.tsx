@@ -18,6 +18,7 @@ const entities: Record<string, string> = {
   item_variants: "Tamanho/embalagem",
   suppliers: "Fornecedor",
   storage_locations: "Local de estoque",
+  production_runs: "Produção",
 };
 const labels: Record<string, string> = {
   name: "Nome",

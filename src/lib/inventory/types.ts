@@ -16,11 +16,26 @@ export const units = {
 export type Unit = keyof typeof units;
 export const movementKinds = {
   receipt: "Recebimento",
-  dispatch: "Saída",
+  dispatch: "Saída anterior",
+  external_dispatch: "Saída externa",
   loss: "Perda / descarte",
+  production_input: "Envio à produção",
+  production_output: "Produção finalizada",
   note: "Registro histórico",
 } as const;
 export type MovementKind = keyof typeof movementKinds;
+export const lotOperations = {
+  production: "Enviar para produção",
+  external_dispatch: "Registrar saída externa",
+  loss: "Registrar perda / descarte",
+} as const;
+export type LotOperation = keyof typeof lotOperations;
+export const externalDestinations = {
+  supplier_return: "Devolução ao fornecedor",
+  donation: "Doação",
+  internal_use: "Uso interno",
+  other: "Outra saída",
+} as const;
 type BaseCatalog = {
   id: string;
   name: string;
@@ -61,7 +76,8 @@ export type Lot = {
   code: string;
   variant_id: string;
   location_id: string;
-  supplier_id: string;
+  supplier_id: string | null;
+  production_run_id: string | null;
   supplier_lot: string;
   reference: string;
   received_at: string;
@@ -105,12 +121,14 @@ export type AuditEvent = {
 };
 export type InventoryLot = Lot & {
   product_name: string;
+  category_name: string;
   variant_name: string;
   sku: string;
   is_default: boolean;
   has_variants: boolean;
   location_name: string;
   supplier_name: string;
+  origin: "supplier" | "production";
   remaining_weight_kg: number | null;
   search_text: string;
 };
@@ -131,6 +149,50 @@ export type Overview = {
   expiring_count: number;
   expired_count: number;
 };
+export type ProductionStatus = "in_progress" | "completed";
+export type ProductionRun = {
+  id: string;
+  request_id: string;
+  completion_request_id: string | null;
+  code: string;
+  status: ProductionStatus;
+  started_at: string;
+  completed_at: string | null;
+  output_lot_id: string | null;
+  created_by: string;
+  completed_by: string | null;
+  created_at: string;
+};
+export type InventoryProductionRun = ProductionRun & {
+  input_count: number;
+  total_input_cost: number;
+  input_summary: string;
+  output_lot_code: string | null;
+  output_quantity: number | null;
+  output_unit: Unit | null;
+  output_product_name: string | null;
+  output_variant_name: string | null;
+  output_is_default: boolean | null;
+  output_location_name: string | null;
+};
+export type ProductionInput = {
+  id: string;
+  production_run_id: string;
+  source_lot_id: string;
+  movement_id: string;
+  quantity: number;
+  unit: Unit;
+  input_cost: number;
+  created_at: string;
+};
+export type InventoryProductionInput = ProductionInput & {
+  source_lot_code: string;
+  product_name: string;
+  variant_name: string;
+  sku: string;
+  is_default: boolean;
+  source_location_name: string;
+};
 export type ActionState = {
   error?: string;
   success?: string;
@@ -139,6 +201,7 @@ export type ActionState = {
   catalogName?: string;
   lotId?: string;
   receiptId?: string;
+  productionId?: string;
   successId?: string;
 };
 export type SearchParams = Record<string, string | string[] | undefined>;
@@ -192,12 +255,16 @@ export type Database = {
       }>;
       lots: Table<Lot>;
       stock_movements: Table<Movement>;
+      production_runs: Table<ProductionRun>;
+      production_inputs: Table<ProductionInput>;
       audit_events: Table<AuditEvent>;
     };
     Views: {
       inventory_variants: View<InventoryVariant>;
       inventory_lots: View<InventoryLot>;
       inventory_movements: View<InventoryMovement>;
+      inventory_production_runs: View<InventoryProductionRun>;
+      inventory_production_inputs: View<InventoryProductionInput>;
     };
     Functions: {
       can_manage_inventory: { Args: Record<string, never>; Returns: boolean };
@@ -223,10 +290,27 @@ export type Database = {
         Args: {
           p_request_id: string;
           p_lot_id: string;
-          p_kind: "dispatch" | "loss";
+          p_kind: "external_dispatch" | "loss";
           p_quantity: number;
           p_reason: string;
           p_operated_at: string;
+        };
+        Returns: string;
+      };
+      start_production: {
+        Args: {
+          p_request_id: string;
+          p_lot_id: string;
+          p_quantity: number;
+          p_operated_at: string;
+        };
+        Returns: string;
+      };
+      complete_production: {
+        Args: {
+          p_request_id: string;
+          p_production_id: string;
+          p_data: Json;
         };
         Returns: string;
       };

@@ -1,9 +1,14 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { requireStaff } from "@/lib/auth";
-import type { ActionState } from "@/lib/inventory/types";
+import {
+  externalDestinations,
+  units,
+  type ActionState,
+} from "@/lib/inventory/types";
 import {
   catalogInput,
+  dateField,
   decimalField,
   deliveryInput,
   enumField,
@@ -122,23 +127,104 @@ export async function receiveDelivery(
     receiptId,
   };
 }
-export async function moveStock(
+export async function registerLotOperation(
   _previous: ActionState,
   data: FormData,
 ): Promise<ActionState> {
   const { supabase } = await requireStaff();
+  let productionId: string | undefined;
   try {
-    const { error } = await supabase.rpc("move_stock", {
+    const kind = enumField(data, "kind", [
+      "production",
+      "external_dispatch",
+      "loss",
+    ] as const);
+    const common = {
       p_request_id: uuidField(data, "request_id"),
       p_lot_id: uuidField(data, "lot_id"),
-      p_kind: enumField(data, "kind", ["dispatch", "loss"] as const),
       p_quantity: decimalField(data, "quantity")!,
-      p_reason: textField(data, "reason", "Motivo / destino", 3, 240),
       p_operated_at: operationalDateField(data, "operated_at"),
-    });
-    if (error) return failure(error, data);
+    };
+    if (kind === "production") {
+      const { data: id, error } = await supabase.rpc(
+        "start_production",
+        common,
+      );
+      if (error) return failure(error, data);
+      productionId = id;
+    } else {
+      const reason =
+        kind === "external_dispatch"
+          ? externalDestinations[
+              enumField(
+                data,
+                "reason",
+                Object.keys(
+                  externalDestinations,
+                ) as (keyof typeof externalDestinations)[],
+              )
+            ]
+          : "";
+      const { error } = await supabase.rpc("move_stock", {
+        ...common,
+        p_kind: kind,
+        p_reason: reason,
+      });
+      if (error) return failure(error, data);
+    }
   } catch (error) {
     return failure(error, data);
   }
+  if (productionId)
+    return {
+      ...saved("Item enviado para a linha de produção."),
+      productionId,
+    };
   return saved("Movimentação registrada.");
+}
+
+export async function completeProduction(
+  _previous: ActionState,
+  data: FormData,
+): Promise<ActionState> {
+  const { supabase } = await requireStaff();
+  let lotId: string;
+  try {
+    const completedAt = operationalDateField(data, "completed_at");
+    const expiresOn = dateField(data, "expires_on")!;
+    if (expiresOn < completedAt.slice(0, 10))
+      throw new ValidationError("A validade não pode anteceder a fabricação.");
+    const unit = enumField(
+      data,
+      "unit",
+      Object.keys(units) as (keyof typeof units)[],
+    );
+    const quantity = decimalField(data, "quantity")!;
+    if (["un", "pct", "cx"].includes(unit) && !Number.isInteger(quantity))
+      throw new ValidationError(
+        "Unidades, pacotes e caixas exigem quantidade inteira.",
+      );
+    const { data: id, error } = await supabase.rpc("complete_production", {
+      p_request_id: uuidField(data, "request_id"),
+      p_production_id: uuidField(data, "production_id"),
+      p_data: {
+        variant_id: uuidField(data, "variant_id"),
+        location_id: uuidField(data, "location_id"),
+        completed_at: completedAt,
+        expires_on: expiresOn,
+        unit,
+        quantity,
+        net_weight_kg: decimalField(data, "net_weight_kg", 6, false, true),
+        notes: textField(data, "notes", "Observações", 0, 1000),
+      },
+    });
+    if (error) return failure(error, data);
+    lotId = id;
+  } catch (error) {
+    return failure(error, data);
+  }
+  return {
+    ...saved("Produção finalizada e lote adicionado ao estoque congelado."),
+    lotId,
+  };
 }

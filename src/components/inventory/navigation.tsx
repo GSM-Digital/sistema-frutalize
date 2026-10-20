@@ -24,7 +24,11 @@ const sections: { label?: string; items: NavItem[] }[] = [
         shortLabel: "Receber",
         icon: "receive",
       },
-      { label: "Produzir", icon: "production", planned: true },
+      {
+        href: "/dashboard/producao",
+        label: "Produzir",
+        icon: "production",
+      },
       { label: "Registrar venda", icon: "sale", planned: true },
     ],
   },

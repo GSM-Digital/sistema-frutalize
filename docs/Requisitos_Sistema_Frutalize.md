@@ -113,14 +113,13 @@ Todos os cadastros devem permitir inclusão e edição futura.
 
 - Estoque de frutas.
 - Estoque de insumos, embalagens, produtos de limpeza e demais materiais, com separação física por categoria.
-- Produção.
 - Freezer 1.
 - Freezer 2.
 - Freezer 3.
 
 O módulo terá uma visão virtual global de todo o estoque da Frutalize, indicando em cada saldo onde o item está fisicamente. Cada freezer será um local separado, e a mesma apresentação de polpa poderá ficar em mais de um freezer. Inicialmente somente um freezer será usado, mas os três já existirão no cadastro. O controle de capacidade máxima dos freezers será uma evolução futura.
 
-Descarte será um tipo de movimento de saída, não um local com saldo disponível. Em 20/10/2026, o local físico “Quarentena” foi retirado dos cadastros ativos e preservado apenas como registro arquivado para manter vínculos históricos. Sua eventual reativação deverá ser validada pelo responsável técnico e pelas exigências sanitárias.
+Descarte será um tipo de movimento de saída, não um local com saldo disponível. Em 20/10/2026, os locais físicos “Quarentena” e “Produção” foram retirados dos cadastros ativos e preservados apenas como registros arquivados para manter vínculos históricos. Produção passa a representar um processo, sem saldo intermediário disponível. A eventual reativação da quarentena deverá ser validada pelo responsável técnico e pelas exigências sanitárias.
 
 ### Cadastro de itens
 
@@ -191,8 +190,11 @@ Cada recebimento deverá registrar:
 
 ### Confirmado
 
-- A lista de tipos de movimentação deverá ser configurável.
-- Toda alteração ou movimentação deverá ter motivo e usuário responsável.
+- A operação de um lote terá três destinos explícitos: envio para produção, saída externa ou perda/descarte.
+- Envio para produção é oferecido somente para a categoria `Frutas recebidas`, consome o saldo da matéria-prima e cria um processo rastreável; não transfere o item para outro estoque.
+- A saída externa exigirá seleção de destino: devolução ao fornecedor, doação, uso interno ou outra saída.
+- A perda/descarte não exibirá um campo adicional de motivo. O sistema registrará automaticamente `Produto vencido` para lotes fora da validade e `Perda operacional` para os demais.
+- Toda alteração ou movimentação deverá ter classificação, usuário responsável e, quando aplicável, destino ou causa.
 - Movimentações poderão ter data operacional retroativa.
 - Administradores terão uma tela de histórico global.
 - O histórico deverá mostrar quem realizou a ação, o que mudou e quando ocorreu.
@@ -209,7 +211,7 @@ Cada recebimento deverá registrar:
 
 ### Pendente
 
-- Tipos iniciais de movimento.
+- Tornar a lista de destinos externos configurável por administrador; nesta fase, ela é controlada pelo sistema.
 - Quais perfis podem registrar cada tipo de movimento quando gestor e colaborador forem ativados.
 - Inventário físico e frequência de contagem.
 - Regras de perdas, descartes, devoluções e reaproveitamento.
@@ -218,6 +220,11 @@ Cada recebimento deverá registrar:
 
 ### Confirmado
 
+- A produção é um processo de transformação e não um local de armazenamento com saldo disponível.
+- Ao enviar uma fruta recebida para produção, o sistema reduz o lote de origem e abre um processo “em produção”.
+- Ao finalizar o processo, o usuário informa a polpa produzida, quantidade/rendimento, validade e freezer de destino.
+- A finalização cria um novo lote de polpa congelada, preservando a ligação com o lote de matéria-prima e o custo dos insumos consumidos.
+- Na primeira entrega, cada processo é iniciado por um único lote de origem. A estrutura de rastreabilidade já permite evoluir para múltiplos insumos no mesmo processo.
 - A área do colaborador deverá futuramente registrar presença/jornada e produção.
 - Existe interesse em calcular remuneração por quantidade produzida, em quilos ou unidades.
 - O modelo ainda não foi aprovado.

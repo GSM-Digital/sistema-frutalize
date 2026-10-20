@@ -1,0 +1,7 @@
+node_modules
+.next
+package-lock.json
+docs/Contexto_Completo_Frutalize.md
+docs/Requisitos_Sistema_Frutalize.md
+AGENTS.md
+supabase/migrations

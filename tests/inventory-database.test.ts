@@ -23,6 +23,8 @@ test("inventory migration and database authorization", async (t) => {
     "202610200004_simplify_receiving.sql",
     "20261020221100_remove_lot_status_workflow.sql",
     "20261020223216_add_production_flow.sql",
+    "20261021025215_terminal_touch_workflow.sql",
+    "20261021030453_expose_terminal_workflow_in_production_view.sql",
   ]) {
     const migration = await readFile(
       new URL(`../supabase/migrations/${file}`, import.meta.url),
@@ -191,6 +193,13 @@ test("inventory migration and database authorization", async (t) => {
             randomUUID(),
             "{}",
           ]),
+          /Acesso não autorizado/,
+        );
+        await assert.rejects(
+          db.query(
+            "select save_production_progress($1,$2::smallint,$3::smallint,$4::jsonb)",
+            [randomUUID(), 1, 1, "{}"],
+          ),
           /Acesso não autorizado/,
         );
       }
@@ -640,6 +649,45 @@ test("inventory migration and database authorization", async (t) => {
         [startRequest, sourceLot, 4, startedAt],
       );
       assert.equal(
+        await scalar(
+          "select workflow_phase::text || ':' || workflow_step::text from production_runs where id = $1",
+          [productionId],
+        ),
+        "1:1",
+      );
+      assert.equal(
+        await scalar(
+          "select workflow_phase::text || ':' || workflow_step::text from inventory_production_runs where id = $1",
+          [productionId],
+        ),
+        "1:1",
+      );
+      await db.query(
+        "select save_production_progress($1,$2::smallint,$3::smallint,$4::jsonb)",
+        [productionId, 4, 2, JSON.stringify({ testWeightG: "101" })],
+      );
+      assert.equal(
+        await scalar(
+          "select workflow_phase::text || ':' || workflow_step::text from production_runs where id = $1",
+          [productionId],
+        ),
+        "4:2",
+      );
+      assert.equal(
+        await scalar(
+          "select workflow_data->>'testWeightG' from production_runs where id = $1",
+          [productionId],
+        ),
+        "101",
+      );
+      await assert.rejects(
+        db.query(
+          "select save_production_progress($1,$2::smallint,$3::smallint,$4::jsonb)",
+          [productionId, 7, 1, "{}"],
+        ),
+        /Fase de produção inválida/,
+      );
+      assert.equal(
         await scalar("select start_production($1,$2,$3,$4)", [
           startRequest,
           sourceLot,
@@ -721,6 +769,13 @@ test("inventory migration and database authorization", async (t) => {
           productionId,
         ]),
         "completed",
+      );
+      await assert.rejects(
+        db.query(
+          "select save_production_progress($1,$2::smallint,$3::smallint,$4::jsonb)",
+          [productionId, 6, 1, "{}"],
+        ),
+        /já foi finalizada/,
       );
       assert.equal(
         await scalar("select origin from inventory_lots where id = $1", [

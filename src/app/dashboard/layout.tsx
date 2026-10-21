@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { getAccess } from "@/lib/auth";
 import { Navigation } from "@/components/inventory/navigation";
 import { logout } from "./actions";
@@ -9,6 +10,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  await connection();
   const access = await getAccess();
   if (access.status !== "ready")
     return (

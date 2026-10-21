@@ -1,88 +1,88 @@
-import Link from "next/link";
 import { getAccess } from "@/lib/auth";
-import { dateTime, money } from "@/lib/inventory/format";
-import {
-  DataNotice,
-  EmptyState,
-  PageHeading,
-  Panel,
-} from "@/components/inventory/ui";
+import { connection } from "next/server";
+import { DataNotice } from "@/components/inventory/ui";
+import { ProductionTerminal } from "@/components/production/terminal";
+import { businessDateTime } from "@/lib/inventory/validation";
 
 export const instant = false;
 
-export default async function ProductionPage() {
+export default async function ProductionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ordem?: string }>;
+}) {
+  await connection();
   const access = await getAccess();
   if (access.status !== "ready") return null;
-  const { data, error } = await access.supabase
-    .from("inventory_production_runs")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .order("id");
-  if (error) return <DataNotice />;
+
+  const [
+    runsResult,
+    inputsResult,
+    variantsResult,
+    locationsResult,
+    membersResult,
+  ] = await Promise.all([
+    access.supabase
+      .from("inventory_production_runs")
+      .select("*")
+      .eq("status", "in_progress")
+      .order("workflow_phase", { ascending: false })
+      .order("workflow_updated_at", { ascending: false })
+      .order("id"),
+    access.supabase
+      .from("inventory_production_inputs")
+      .select("*")
+      .order("created_at")
+      .order("id"),
+    access.supabase
+      .from("inventory_variants")
+      .select("*")
+      .eq("category_name", "Polpas prontas")
+      .eq("active", true)
+      .eq("product_active", true)
+      .eq("category_active", true)
+      .order("product_name")
+      .order("name"),
+    access.supabase
+      .from("storage_locations")
+      .select("*")
+      .eq("active", true)
+      .ilike("name", "Freezer %")
+      .order("name"),
+    access.supabase
+      .from("staff_members")
+      .select("user_id, display_name")
+      .eq("active", true)
+      .order("display_name"),
+  ]);
+
+  if (
+    runsResult.error ||
+    inputsResult.error ||
+    variantsResult.error ||
+    locationsResult.error ||
+    membersResult.error
+  )
+    return <DataNotice />;
+
+  const runs = runsResult.data.map((run) => ({
+    ...run,
+    inputs: inputsResult.data.filter(
+      (input) => input.production_run_id === run.id,
+    ),
+  }));
+  const { ordem } = await searchParams;
+
   return (
-    <>
-      <PageHeading
-        eyebrow="Produção"
-        title="Linha de produção"
-        description="Acompanhe os insumos enviados e transforme cada processo em um lote de polpa congelada."
-      >
-        <Link className="btn btn-secondary" href="/dashboard/lotes">
-          Selecionar item do estoque
-        </Link>
-      </PageHeading>
-      <Panel
-        title="Processos de produção"
-        description="Produções em andamento aparecem primeiro para facilitar a finalização."
-      >
-        {data.length ? (
-          <ul className="production-list">
-            {[...data]
-              .sort((a, b) =>
-                a.status === b.status ? 0 : a.status === "in_progress" ? -1 : 1,
-              )
-              .map((run) => (
-                <li key={run.id} className="production-card">
-                  <div>
-                    <span
-                      className={`badge ${run.status === "in_progress" ? "badge-amber" : "badge-green"}`}
-                    >
-                      {run.status === "in_progress"
-                        ? "Em produção"
-                        : "Finalizada"}
-                    </span>
-                    <h3>{run.code}</h3>
-                    <p>{run.input_summary}</p>
-                  </div>
-                  <dl>
-                    <div>
-                      <dt>Início</dt>
-                      <dd>{dateTime(run.started_at)}</dd>
-                    </div>
-                    <div>
-                      <dt>Custo dos insumos</dt>
-                      <dd>{money(run.total_input_cost)}</dd>
-                    </div>
-                  </dl>
-                  <Link
-                    className="btn btn-secondary"
-                    href={`/dashboard/producao/${run.id}`}
-                  >
-                    {run.status === "in_progress"
-                      ? "Continuar produção"
-                      : "Consultar produção"}
-                  </Link>
-                </li>
-              ))}
-          </ul>
-        ) : (
-          <EmptyState
-            title="Nenhuma produção iniciada"
-            description="Abra um lote com saldo no estoque e escolha Enviar para produção."
-            href="/dashboard/lotes"
-            label="Abrir estoque"
-          />
-        )}
-      </Panel>
-    </>
+    <ProductionTerminal
+      runs={runs}
+      variants={variantsResult.data}
+      locations={locationsResult.data}
+      members={membersResult.data}
+      currentMemberId={access.user.id}
+      initialRunId={ordem}
+      now={businessDateTime()}
+      completionRequestId={crypto.randomUUID()}
+    />
   );
 }

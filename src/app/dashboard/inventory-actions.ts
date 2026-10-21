@@ -5,6 +5,7 @@ import {
   externalDestinations,
   units,
   type ActionState,
+  type Json,
 } from "@/lib/inventory/types";
 import {
   catalogInput,
@@ -12,6 +13,7 @@ import {
   decimalField,
   deliveryInput,
   enumField,
+  isUuid,
   operationalDateField,
   receiptInput,
   textField,
@@ -227,4 +229,50 @@ export async function completeProduction(
     ...saved("Produção finalizada e lote adicionado ao estoque congelado."),
     lotId,
   };
+}
+
+export async function saveProductionProgress(input: {
+  productionId: string;
+  phase: number;
+  step: number;
+  data: Json;
+}): Promise<ActionState> {
+  const { supabase } = await requireStaff();
+  try {
+    if (!isUuid(input.productionId))
+      throw new ValidationError("Produção inválida.");
+    if (!Number.isInteger(input.phase) || input.phase < 1 || input.phase > 6)
+      throw new ValidationError("Fase de produção inválida.");
+    if (!Number.isInteger(input.step) || input.step < 1 || input.step > 12)
+      throw new ValidationError("Passo de produção inválido.");
+    if (
+      !input.data ||
+      Array.isArray(input.data) ||
+      typeof input.data !== "object" ||
+      JSON.stringify(input.data).length > 30000
+    )
+      throw new ValidationError("Dados do terminal inválidos.");
+
+    const { error } = await supabase.rpc("save_production_progress", {
+      p_production_id: input.productionId,
+      p_phase: input.phase,
+      p_step: input.step,
+      p_data: input.data,
+    });
+    if (error) {
+      if (error.code === "42501")
+        return { error: "Você não tem permissão para esta operação." };
+      if (error.code === "P0001") return { error: error.message };
+      return { error: "Não foi possível salvar o andamento da produção." };
+    }
+  } catch (error) {
+    return {
+      error:
+        error instanceof ValidationError
+          ? error.message
+          : "Não foi possível salvar o andamento da produção.",
+    };
+  }
+  revalidatePath("/dashboard/producao");
+  return { success: "Andamento salvo." };
 }

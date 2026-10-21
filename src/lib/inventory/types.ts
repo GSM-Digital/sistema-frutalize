@@ -162,6 +162,11 @@ export type ProductionRun = {
   created_by: string;
   completed_by: string | null;
   created_at: string;
+  workflow_version: 1;
+  workflow_phase: number;
+  workflow_step: number;
+  workflow_data: Json;
+  workflow_updated_at: string;
 };
 export type InventoryProductionRun = ProductionRun & {
   input_count: number;
@@ -313,6 +318,15 @@ export type Database = {
           p_data: Json;
         };
         Returns: string;
+      };
+      save_production_progress: {
+        Args: {
+          p_production_id: string;
+          p_phase: number;
+          p_step: number;
+          p_data: Json;
+        };
+        Returns: undefined;
       };
     };
     Enums: Record<string, never>;

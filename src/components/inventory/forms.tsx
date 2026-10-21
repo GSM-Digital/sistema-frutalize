@@ -119,7 +119,7 @@ function Result({ state }: { state: ActionState }) {
           {state.productionId && (
             <Link
               className="text-link block mt-2"
-              href={`/dashboard/producao/${state.productionId}`}
+              href={`/dashboard/producao?ordem=${state.productionId}`}
             >
               Abrir a produção iniciada →
             </Link>
@@ -1163,16 +1163,19 @@ export function CompleteProductionForm({
   now,
   variants,
   locations,
+  onSuccess,
 }: {
   productionId: string;
   requestId: string;
   now: string;
   variants: InventoryVariant[];
   locations: Location[];
+  onSuccess?: () => void;
 }) {
   const { state, action, pending, operationId } = useStockAction(
     completeProduction,
     requestId,
+    onSuccess,
   );
   const v = (key: string, fallback = "") => state.values?.[key] ?? fallback;
   return (

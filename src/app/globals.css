@@ -2179,39 +2179,38 @@ body:has(.production-terminal-route) .app-content {
 .terminal-phases {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 0.65rem;
+  gap: clamp(0.35rem, 0.8vw, 0.8rem);
   border-bottom: 1px solid #d9e1d4;
   background: #f9fbf7;
-  padding: 0.8rem clamp(1rem, 3vw, 3rem);
+  padding: 0.7rem clamp(1rem, 3vw, 3rem);
 }
 .terminal-phase {
   display: flex;
   min-width: 0;
-  min-height: 54px;
+  min-height: 60px;
   align-items: center;
-  gap: 0.65rem;
+  gap: clamp(0.45rem, 0.75vw, 0.75rem);
   border-radius: 0.75rem;
-  padding: 0.5rem 0.65rem;
+  padding: 0.5rem clamp(0.45rem, 0.75vw, 0.8rem);
   color: #879183;
 }
 .terminal-phase > span {
   display: grid;
-  width: 31px;
-  height: 31px;
-  flex: 0 0 31px;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
   place-items: center;
   border: 1px solid #d3dcd0;
   border-radius: 50%;
   background: #fff;
-  font-size: 0.75rem;
+  font-size: 0.95rem;
   font-weight: 750;
 }
 .terminal-phase strong {
   min-width: 0;
-  overflow: hidden;
-  font-size: 0.73rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: clamp(0.86rem, 1.05vw, 1.08rem);
+  line-height: 1.12;
+  overflow-wrap: anywhere;
 }
 .terminal-phase-current {
   background: #e8f2e4;
@@ -2745,6 +2744,142 @@ body:has(.production-terminal-route) .app-content {
 .terminal-running.is-paused .terminal-running-heading {
   color: #8b5d12;
 }
+
+/*
+ * A etapa de produção é usada em um terminal horizontal dedicado. Nessa
+ * situação, cabeçalho, fases, conteúdo e ações precisam ocupar exatamente a
+ * altura disponível: nenhuma ação operacional pode ficar abaixo da dobra.
+ */
+@media (min-width: 800px) and (orientation: landscape) {
+  body:has(.terminal-workspace .terminal-running) {
+    overflow: hidden;
+  }
+
+  .terminal-workspace:has(.terminal-running) {
+    display: grid;
+    height: 100dvh;
+    min-height: 0;
+    grid-template-rows:
+      clamp(72px, 9dvh, 90px)
+      clamp(72px, 9dvh, 90px)
+      minmax(0, 1fr);
+    overflow: hidden;
+  }
+
+  .terminal-workspace:has(.terminal-running) .terminal-order-header,
+  .terminal-workspace:has(.terminal-running) .terminal-phases {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .terminal-workspace:has(.terminal-running) .terminal-order-header {
+    padding-block: clamp(0.5rem, 1.2dvh, 0.9rem);
+  }
+
+  .terminal-workspace:has(.terminal-running) .terminal-phases {
+    align-items: stretch;
+    padding-block: clamp(0.45rem, 0.9dvh, 0.7rem);
+  }
+
+  .terminal-workspace:has(.terminal-running) .terminal-phase {
+    min-height: 0;
+  }
+
+  .terminal-workspace:has(.terminal-running) .terminal-running {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    padding: clamp(0.65rem, 1.4dvh, 1rem) clamp(0.8rem, 1.5vw, 1.5rem);
+  }
+
+  .terminal-workspace:has(.terminal-running) .terminal-running-panel {
+    display: grid;
+    width: min(1500px, 100%);
+    height: 100%;
+    min-height: 0;
+    grid-template-columns: minmax(0, 0.9fr) minmax(390px, 1.1fr);
+    grid-template-rows: auto auto auto auto minmax(0, 1fr);
+    align-items: center;
+    justify-items: stretch;
+    column-gap: clamp(1.5rem, 3vw, 3.5rem);
+    row-gap: clamp(0.45rem, 1dvh, 0.85rem);
+    margin: 0 auto;
+    padding: clamp(1.15rem, 2.2dvh, 2rem) clamp(1.25rem, 2.8vw, 3rem);
+    overflow: hidden;
+    text-align: left;
+  }
+
+  .terminal-workspace:has(.terminal-running) .terminal-running-heading {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    font-size: clamp(1rem, 1.5vw, 1.4rem);
+  }
+
+  .terminal-workspace:has(.terminal-running) .terminal-running-panel > h1 {
+    grid-column: 1;
+    grid-row: 2;
+    margin-top: 0;
+    font-size: clamp(3rem, 5.4vw, 5.5rem);
+  }
+
+  .terminal-workspace:has(.terminal-running) .terminal-running-facts {
+    grid-column: 1;
+    grid-row: 3;
+    justify-content: flex-start;
+    gap: clamp(1.5rem, 3.5vw, 3.5rem);
+    margin-top: 0;
+  }
+
+  .terminal-workspace:has(.terminal-running) .terminal-running-warning {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    align-self: stretch;
+    width: 100%;
+    margin-top: 0;
+    place-content: center;
+    padding: clamp(1rem, 2dvh, 1.5rem);
+  }
+
+  .terminal-workspace:has(.terminal-running) .terminal-running-warning button {
+    min-height: clamp(58px, 8dvh, 72px);
+  }
+
+  .terminal-workspace:has(.terminal-running) .terminal-timer {
+    grid-column: 1;
+    grid-row: 4 / 6;
+    align-self: end;
+    justify-items: start;
+    margin-top: 0;
+  }
+
+  .terminal-workspace:has(.terminal-running) .terminal-timer strong {
+    font-size: clamp(4.25rem, 9vw, 8.5rem);
+  }
+
+  .terminal-workspace:has(.terminal-running)
+    .terminal-running-panel
+    > .terminal-message {
+    grid-column: 2;
+    grid-row: 4;
+    margin: 0;
+  }
+
+  .terminal-workspace:has(.terminal-running) .terminal-running-actions {
+    grid-column: 2;
+    grid-row: 5;
+    align-self: end;
+    width: 100%;
+    margin-top: 0;
+  }
+
+  .terminal-workspace:has(.terminal-running) .terminal-running-actions button {
+    min-height: clamp(66px, 9dvh, 92px);
+    font-size: clamp(1.05rem, 1.65vw, 1.55rem);
+  }
+}
+
 .terminal-finish {
   width: min(1200px, 100%);
   margin: 0 auto;
@@ -2969,12 +3104,6 @@ body:has(.production-terminal-route) .app-content {
   .terminal-order-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .terminal-phase strong {
-    display: none;
-  }
-  .terminal-phase {
-    justify-content: center;
-  }
   .terminal-guide,
   .terminal-running {
     grid-template-columns: minmax(0, 1fr);
@@ -3063,6 +3192,12 @@ body:has(.production-terminal-route) .app-content {
   }
   .terminal-phase {
     padding: 0.3rem;
+  }
+  .terminal-phase strong {
+    display: none;
+  }
+  .terminal-phase {
+    justify-content: center;
   }
   .terminal-phase > span {
     width: 28px;

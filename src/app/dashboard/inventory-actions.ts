@@ -276,3 +276,92 @@ export async function saveProductionProgress(input: {
   revalidatePath("/dashboard/producao");
   return { success: "Andamento salvo." };
 }
+
+export type ProductionOperatorResult = {
+  error?: string;
+  operator?: {
+    id: string;
+    name: string;
+    responsibilityStartedAt: string;
+  };
+};
+
+function productionPin(value: string) {
+  if (!/^\d{4}$/.test(value))
+    throw new ValidationError("O PIN deve ter quatro números.");
+  return value;
+}
+
+export async function claimProductionOperator(input: {
+  productionId: string;
+  pin: string;
+}): Promise<ProductionOperatorResult> {
+  const { supabase } = await requireStaff();
+  try {
+    if (!isUuid(input.productionId))
+      throw new ValidationError("Produção inválida.");
+    const { data, error } = await supabase.rpc("claim_production_run", {
+      p_production_id: input.productionId,
+      p_pin: productionPin(input.pin),
+    });
+    if (error) {
+      if (error.code === "42501")
+        return { error: "Você não tem permissão para esta operação." };
+      if (error.code === "P0001") return { error: error.message };
+      return { error: "Não foi possível identificar o responsável." };
+    }
+    const result = data?.[0];
+    if (result?.error_code === "locked")
+      return {
+        error:
+          "Muitas tentativas incorretas. Aguarde um minuto e tente novamente.",
+      };
+    if (
+      result?.error_code === "invalid" ||
+      !result?.operator_id ||
+      !result.operator_name ||
+      !result.responsibility_started_at
+    )
+      return { error: "PIN não reconhecido." };
+    revalidatePath("/dashboard/producao");
+    return {
+      operator: {
+        id: result.operator_id,
+        name: result.operator_name,
+        responsibilityStartedAt: result.responsibility_started_at,
+      },
+    };
+  } catch (error) {
+    return {
+      error:
+        error instanceof ValidationError
+          ? error.message
+          : "Não foi possível identificar o responsável.",
+    };
+  }
+}
+
+export async function setOwnProductionPin(input: {
+  pin: string;
+}): Promise<ActionState> {
+  const { supabase } = await requireStaff();
+  try {
+    const { error } = await supabase.rpc("set_own_production_pin", {
+      p_pin: productionPin(input.pin),
+    });
+    if (error) {
+      if (error.code === "42501")
+        return { error: "Você não tem permissão para esta operação." };
+      if (error.code === "P0001") return { error: error.message };
+      return { error: "Não foi possível configurar o PIN." };
+    }
+  } catch (error) {
+    return {
+      error:
+        error instanceof ValidationError
+          ? error.message
+          : "Não foi possível configurar o PIN.",
+    };
+  }
+  return { success: "PIN operacional configurado." };
+}

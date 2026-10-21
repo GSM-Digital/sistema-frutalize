@@ -15,53 +15,42 @@ export default async function ProductionPage({
   const access = await getAccess();
   if (access.status !== "ready") return null;
 
-  const [
-    runsResult,
-    inputsResult,
-    variantsResult,
-    locationsResult,
-    membersResult,
-  ] = await Promise.all([
-    access.supabase
-      .from("inventory_production_runs")
-      .select("*")
-      .eq("status", "in_progress")
-      .order("workflow_phase", { ascending: false })
-      .order("workflow_updated_at", { ascending: false })
-      .order("id"),
-    access.supabase
-      .from("inventory_production_inputs")
-      .select("*")
-      .order("created_at")
-      .order("id"),
-    access.supabase
-      .from("inventory_variants")
-      .select("*")
-      .eq("category_name", "Polpas prontas")
-      .eq("active", true)
-      .eq("product_active", true)
-      .eq("category_active", true)
-      .order("product_name")
-      .order("name"),
-    access.supabase
-      .from("storage_locations")
-      .select("*")
-      .eq("active", true)
-      .ilike("name", "Freezer %")
-      .order("name"),
-    access.supabase
-      .from("staff_members")
-      .select("user_id, display_name")
-      .eq("active", true)
-      .order("display_name"),
-  ]);
+  const [runsResult, inputsResult, variantsResult, locationsResult] =
+    await Promise.all([
+      access.supabase
+        .from("inventory_production_runs")
+        .select("*")
+        .eq("status", "in_progress")
+        .order("workflow_phase", { ascending: false })
+        .order("workflow_updated_at", { ascending: false })
+        .order("id"),
+      access.supabase
+        .from("inventory_production_inputs")
+        .select("*")
+        .order("created_at")
+        .order("id"),
+      access.supabase
+        .from("inventory_variants")
+        .select("*")
+        .eq("category_name", "Polpas prontas")
+        .eq("active", true)
+        .eq("product_active", true)
+        .eq("category_active", true)
+        .order("product_name")
+        .order("name"),
+      access.supabase
+        .from("storage_locations")
+        .select("*")
+        .eq("active", true)
+        .ilike("name", "Freezer %")
+        .order("name"),
+    ]);
 
   if (
     runsResult.error ||
     inputsResult.error ||
     variantsResult.error ||
-    locationsResult.error ||
-    membersResult.error
+    locationsResult.error
   )
     return <DataNotice />;
 
@@ -78,8 +67,6 @@ export default async function ProductionPage({
       runs={runs}
       variants={variantsResult.data}
       locations={locationsResult.data}
-      members={membersResult.data}
-      currentMemberId={access.user.id}
       initialRunId={ordem}
       now={businessDateTime()}
       completionRequestId={crypto.randomUUID()}

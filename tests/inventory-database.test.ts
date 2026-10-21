@@ -11,9 +11,19 @@ test("inventory migration and database authorization", async (t) => {
     outsider = randomUUID(),
     manager = randomUUID(),
     collaborator = randomUUID();
-  await db.exec(`create role anon; create role authenticated; create schema auth;
+  await db.exec(`create role anon; create role authenticated; create schema auth; create schema extensions;
     create table auth.users(id uuid primary key);
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
+    create function extensions.gen_salt(text, integer default 6) returns text language sql volatile as $$ select 'test$' || md5(random()::text) $$;
+    create function extensions.crypt(value text, salt text) returns text language sql immutable as $$
+      select base || '$' || md5(value || base)
+      from (
+        select case
+          when salt ~ '^test\\$[^$]+\\$' then regexp_replace(salt, '\\$[^$]+$', '')
+          else salt
+        end as base
+      ) parsed
+    $$;
     grant usage on schema public,auth to anon,authenticated;
     grant execute on function auth.uid() to anon,authenticated;`);
   for (const file of [
@@ -25,10 +35,17 @@ test("inventory migration and database authorization", async (t) => {
     "20261020223216_add_production_flow.sql",
     "20261021025215_terminal_touch_workflow.sql",
     "20261021030453_expose_terminal_workflow_in_production_view.sql",
+    "20261021032108_production_operator_pin.sql",
   ]) {
-    const migration = await readFile(
+    let migration = await readFile(
       new URL(`../supabase/migrations/${file}`, import.meta.url),
       "utf8",
+    );
+    // PGlite does not bundle pgcrypto. The test-only compatible functions above
+    // preserve the hashing contract while production installs the real extension.
+    migration = migration.replace(
+      "create extension if not exists pgcrypto with schema extensions;",
+      "",
     );
     await db.exec(migration);
   }
@@ -200,6 +217,14 @@ test("inventory migration and database authorization", async (t) => {
             "select save_production_progress($1,$2::smallint,$3::smallint,$4::jsonb)",
             [randomUUID(), 1, 1, "{}"],
           ),
+          /Acesso não autorizado/,
+        );
+        await assert.rejects(
+          db.query("select set_own_production_pin('1234')"),
+          /Acesso não autorizado/,
+        );
+        await assert.rejects(
+          db.query("select claim_production_run($1,'1234')", [randomUUID()]),
           /Acesso não autorizado/,
         );
       }
@@ -662,9 +687,46 @@ test("inventory migration and database authorization", async (t) => {
         ),
         "1:1",
       );
+      await db.query("select set_own_production_pin('1234')");
+      await assert.rejects(
+        db.query(
+          "select production_pin_hash from staff_members where user_id = $1",
+          [admin],
+        ),
+        /permission denied/,
+      );
+      await db.exec("reset role");
+      const storedPin = await scalar(
+        "select production_pin_hash from staff_members where user_id = $1",
+        [admin],
+      );
+      assert.notEqual(storedPin, "1234");
+      assert.match(String(storedPin), /^test\$/);
+      await user(admin);
+      const invalidClaim = await db.query<{ error_code: string }>(
+        "select error_code from claim_production_run($1,'9999')",
+        [productionId],
+      );
+      assert.equal(invalidClaim.rows[0].error_code, "invalid");
+      const claimed = await db.query<{
+        operator_id: string;
+        operator_name: string;
+        responsibility_started_at: string;
+        error_code: string | null;
+      }>("select * from claim_production_run($1,'1234')", [productionId]);
+      assert.equal(claimed.rows[0].operator_id, admin);
+      assert.equal(claimed.rows[0].operator_name, "Admin Teste");
+      assert.equal(claimed.rows[0].error_code, null);
+      const responsibleData = {
+        responsibleOperatorId: claimed.rows[0].operator_id,
+        responsibleOperatorName: claimed.rows[0].operator_name,
+        responsibilityStartedAt: claimed.rows[0].responsibility_started_at,
+        packageSizeG: 100,
+        testPackageConfirmedAt: new Date().toISOString(),
+      };
       await db.query(
         "select save_production_progress($1,$2::smallint,$3::smallint,$4::jsonb)",
-        [productionId, 4, 2, JSON.stringify({ testWeightG: "101" })],
+        [productionId, 4, 2, JSON.stringify(responsibleData)],
       );
       assert.equal(
         await scalar(
@@ -675,15 +737,15 @@ test("inventory migration and database authorization", async (t) => {
       );
       assert.equal(
         await scalar(
-          "select workflow_data->>'testWeightG' from production_runs where id = $1",
+          "select workflow_data->>'responsibleOperatorName' from production_runs where id = $1",
           [productionId],
         ),
-        "101",
+        "Admin Teste",
       );
       await assert.rejects(
         db.query(
           "select save_production_progress($1,$2::smallint,$3::smallint,$4::jsonb)",
-          [productionId, 7, 1, "{}"],
+          [productionId, 7, 1, JSON.stringify(responsibleData)],
         ),
         /Fase de produção inválida/,
       );
@@ -773,7 +835,7 @@ test("inventory migration and database authorization", async (t) => {
       await assert.rejects(
         db.query(
           "select save_production_progress($1,$2::smallint,$3::smallint,$4::jsonb)",
-          [productionId, 6, 1, "{}"],
+          [productionId, 6, 1, JSON.stringify(responsibleData)],
         ),
         /já foi finalizada/,
       );

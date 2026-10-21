@@ -328,6 +328,19 @@ export type Database = {
         };
         Returns: undefined;
       };
+      set_own_production_pin: {
+        Args: { p_pin: string };
+        Returns: undefined;
+      };
+      claim_production_run: {
+        Args: { p_production_id: string; p_pin: string };
+        Returns: {
+          operator_id: string | null;
+          operator_name: string | null;
+          responsibility_started_at: string | null;
+          error_code: "invalid" | "locked" | null;
+        }[];
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

@@ -36,7 +36,7 @@ type FieldProps = {
   onChange?: (value: string) => void;
   max?: string;
   rows?: number;
-  inputMode?: "decimal" | "text" | "tel";
+  inputMode?: "decimal" | "numeric" | "text" | "tel";
 };
 function Field({
   label,
@@ -1163,6 +1163,7 @@ export function CompleteProductionForm({
   now,
   variants,
   locations,
+  terminalMode,
   onSuccess,
 }: {
   productionId: string;
@@ -1170,6 +1171,10 @@ export function CompleteProductionForm({
   now: string;
   variants: InventoryVariant[];
   locations: Location[];
+  terminalMode?: {
+    packageSizeG: 100 | 500;
+    defaultVariantId: string;
+  };
   onSuccess?: () => void;
 }) {
   const { state, action, pending, operationId } = useStockAction(
@@ -1178,6 +1183,15 @@ export function CompleteProductionForm({
     onSuccess,
   );
   const v = (key: string, fallback = "") => state.values?.[key] ?? fallback;
+  const matchingVariants = terminalMode
+    ? variants.filter(
+        (variant) =>
+          variant.unit_weight_kg !== null &&
+          Math.abs(variant.unit_weight_kg - terminalMode.packageSizeG / 1000) <
+            0.000001,
+      )
+    : variants;
+  const visibleVariants = matchingVariants.length ? matchingVariants : variants;
   return (
     <form
       key={state.successId ?? "initial"}
@@ -1190,23 +1204,49 @@ export function CompleteProductionForm({
         value={v("request_id", operationId)}
       />
       <input type="hidden" name="production_id" value={productionId} />
+      {terminalMode && (
+        <div className="terminal-output-summary">
+          <span>Gramatura definida</span>
+          <strong>{terminalMode.packageSizeG} g por embalagem</strong>
+        </div>
+      )}
       <fieldset disabled={pending}>
         <legend className="sr-only">Produto final da produção</legend>
         <div className="form-grid">
-          <Field
-            label="Polpa produzida"
-            name="variant_id"
-            required
-            value={v("variant_id")}
-          >
-            <option value="">Selecione</option>
-            {variants.map((variant) => (
-              <option key={variant.id} value={variant.id}>
-                {variant.product_name}
-                {!variant.is_default ? ` · ${variant.name}` : ""}
-              </option>
-            ))}
-          </Field>
+          {terminalMode && (
+            <div className="terminal-package-count">
+              <Field
+                label="Quantas embalagens foram produzidas?"
+                name="quantity"
+                required
+                inputMode="numeric"
+                value={v("quantity")}
+                hint={`Conte somente as embalagens finalizadas de ${terminalMode.packageSizeG} g.`}
+              />
+            </div>
+          )}
+          {terminalMode?.defaultVariantId ? (
+            <input
+              type="hidden"
+              name="variant_id"
+              value={v("variant_id", terminalMode.defaultVariantId)}
+            />
+          ) : (
+            <Field
+              label="Polpa produzida"
+              name="variant_id"
+              required
+              value={v("variant_id")}
+            >
+              <option value="">Selecione</option>
+              {visibleVariants.map((variant) => (
+                <option key={variant.id} value={variant.id}>
+                  {variant.product_name}
+                  {!variant.is_default ? ` · ${variant.name}` : ""}
+                </option>
+              ))}
+            </Field>
+          )}
           <Field
             label="Freezer de destino"
             name="location_id"
@@ -1220,27 +1260,43 @@ export function CompleteProductionForm({
               </option>
             ))}
           </Field>
-          <Field
-            label="Quantidade produzida"
-            name="quantity"
-            required
-            inputMode="decimal"
-            value={v("quantity")}
-          />
-          <Field label="Unidade" name="unit" required value={v("unit", "un")}>
-            {Object.entries(units).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </Field>
-          <Field
-            label="Peso líquido total (kg)"
-            name="net_weight_kg"
-            inputMode="decimal"
-            value={v("net_weight_kg")}
-            hint="Opcional quando o peso já estiver definido na apresentação."
-          />
+          {!terminalMode && (
+            <Field
+              label="Quantidade produzida"
+              name="quantity"
+              required
+              inputMode="decimal"
+              value={v("quantity")}
+            />
+          )}
+          {terminalMode ? (
+            <>
+              <input type="hidden" name="unit" value="un" />
+              <input type="hidden" name="net_weight_kg" value="" />
+            </>
+          ) : (
+            <>
+              <Field
+                label="Unidade"
+                name="unit"
+                required
+                value={v("unit", "un")}
+              >
+                {Object.entries(units).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </Field>
+              <Field
+                label="Peso líquido total (kg)"
+                name="net_weight_kg"
+                inputMode="decimal"
+                value={v("net_weight_kg")}
+                hint="Opcional quando o peso já estiver definido na apresentação."
+              />
+            </>
+          )}
           <Field
             label="Data e hora de finalização"
             name="completed_at"

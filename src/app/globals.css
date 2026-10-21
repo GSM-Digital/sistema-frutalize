@@ -3104,6 +3104,25 @@ body:has(.production-terminal-route) .app-content {
   .terminal-order-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .terminal-phase {
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.2rem;
+    padding: 0.25rem 0.2rem;
+    text-align: center;
+  }
+  .terminal-phase > span {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+    font-size: 0.85rem;
+  }
+  .terminal-phase strong {
+    overflow: visible;
+    font-size: clamp(0.78rem, 1.45vw, 0.92rem);
+    overflow-wrap: normal;
+    white-space: nowrap;
+  }
   .terminal-guide,
   .terminal-running {
     grid-template-columns: minmax(0, 1fr);

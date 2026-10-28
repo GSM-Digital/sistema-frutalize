@@ -33,5 +33,21 @@ export async function login(formData: FormData) {
     );
   }
 
-  redirect(retorno);
+  const { data: user } = await supabase.auth.getUser();
+  const { data: member } = await supabase
+    .from("staff_members")
+    .select("role, active")
+    .eq("user_id", user.user!.id)
+    .maybeSingle();
+  if (member && !member.active) {
+    await supabase.auth.signOut();
+    redirect("/login?erro=Acesso+bloqueado.+Contate+o+administrador.");
+  }
+  redirect(
+    retorno === "/dashboard" && member?.role !== "admin"
+      ? member?.active
+        ? "/terminal"
+        : "/portal"
+      : retorno,
+  );
 }

@@ -3,6 +3,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { safeReturnPath } from "@/lib/inventory/validation";
 import { SubmitButton } from "@/components/submit-button";
 import Script from "next/script";
+import Link from "next/link";
 import { turnstileConfiguration } from "@/lib/turnstile";
 
 export const instant = false;
@@ -154,6 +155,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
           <p className="mt-7 text-center text-sm leading-6 text-[#788278]">
             Esqueceu a senha? Solicite a redefinição ao administrador.
+          </p>
+          <p className="mt-3 text-center text-sm">
+            <Link className="text-link" href="/login?retorno=%2Fterminal">
+              Entrar no terminal de produção
+            </Link>
           </p>
         </div>
       </section>

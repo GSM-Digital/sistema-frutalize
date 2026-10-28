@@ -16,6 +16,10 @@ const sections: { label?: string; items: NavItem[] }[] = [
     items: [{ href: "/dashboard", label: "Início", icon: "overview" }],
   },
   {
+    label: "Visualizações",
+    items: [{ href: "/terminal", label: "Terminal touch", icon: "production" }],
+  },
+  {
     label: "Rotina",
     items: [
       {

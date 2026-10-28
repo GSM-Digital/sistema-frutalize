@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   loadTerminalSnapshot,
@@ -15,7 +16,6 @@ import {
   type TerminalSnapshot,
 } from "@/lib/production/ui-types";
 import { OrderConfiguration } from "./order-configuration";
-import styles from "./terminal.module.css";
 
 const states: Record<string, string> = {
   preparing: "Em preparação",
@@ -48,9 +48,11 @@ function restoreCommand(
 export function ProductionTerminal({
   initial,
   initialRunId,
+  preview = false,
 }: {
   initial: TerminalSnapshot;
   initialRunId?: string;
+  preview?: boolean;
 }) {
   const [snapshot, setSnapshot] = useState(initial);
   const [runId, setRunId] = useState(initialRunId ?? "");
@@ -74,9 +76,10 @@ export function ProductionTerminal({
     (item) => item.phase === run.phase && item.step === run.step,
   );
   const ownRun = run?.operator_id === snapshot.actor.id;
-  const disabled = busy || Boolean(pending);
+  const disabled = busy || Boolean(pending) || preview;
 
   useEffect(() => {
+    if (preview) return;
     serverOffset.current = Date.parse(initial.serverTime) - Date.now();
     lastActivity.current =
       Number(sessionStorage.getItem(activityKey)) || Date.now();
@@ -124,7 +127,7 @@ export function ProductionTerminal({
       window.removeEventListener("online", connectivity);
       window.removeEventListener("offline", connectivity);
     };
-  }, [activityKey, initial.actor.id, initial.serverTime, storageKey]);
+  }, [activityKey, initial.actor.id, initial.serverTime, preview, storageKey]);
 
   function dispatch(
     kind: string,
@@ -132,7 +135,7 @@ export function ProductionTerminal({
     target: TerminalRun | undefined = run,
     retry?: ProductionCommand,
   ) {
-    if (inFlight.current || locked || (!retry && pending)) return;
+    if (preview || inFlight.current || locked || (!retry && pending)) return;
     const command: ProductionCommand = retry ?? {
       commandId: crypto.randomUUID(),
       runId: kind === "create" ? null : (target?.id ?? crypto.randomUUID()),
@@ -187,7 +190,7 @@ export function ProductionTerminal({
     });
   }
   function refresh() {
-    if (disabled || locked) return;
+    if (preview || disabled || locked) return;
     startTransition(async () => {
       try {
         const current = await loadTerminalSnapshot();
@@ -204,7 +207,7 @@ export function ProductionTerminal({
 
   if (locked)
     return (
-      <main className={`terminal-shell ${styles.locked}`}>
+      <main className="terminal-shell terminal-locked">
         <section className="panel p-8">
           <p className="eyebrow">Terminal bloqueado</p>
           <h1 className="mt-3 text-3xl font-semibold">
@@ -234,7 +237,15 @@ export function ProductionTerminal({
             <span>{snapshot.actor.name}</span>
           </div>
         </div>
-        <div className={styles.toolbar}>
+        <div className="terminal-toolbar">
+          {preview && (
+            <span className="badge">Prévia fictícia · somente leitura</span>
+          )}
+          {!preview && snapshot.actor.role === "admin" && (
+            <Link className="btn btn-secondary" href="/dashboard/producao">
+              Dashboard
+            </Link>
+          )}
           <span className={`badge ${online ? "badge-green" : "badge-danger"}`}>
             {online ? "Online" : "Sem conexão"}
           </span>
@@ -245,16 +256,18 @@ export function ProductionTerminal({
           >
             Atualizar
           </button>
-          <form action={lockTerminal}>
-            <button className="btn btn-secondary">
-              Trocar operador / sair
-            </button>
-          </form>
+          {!preview && (
+            <form action={lockTerminal}>
+              <button className="btn btn-secondary">
+                Trocar operador / sair
+              </button>
+            </form>
+          )}
         </div>
       </header>
       {(message || pending) && (
         <div
-          className={`terminal-message ${styles.banner}`}
+          className="terminal-message terminal-banner"
           role="status"
           aria-live="polite"
         >
@@ -491,7 +504,7 @@ export function ProductionTerminal({
                     )}
                   </>
                 )}
-                <div className={styles.safetyActions}>
+                <div className="terminal-safetyActions">
                   <button
                     className="terminal-btn terminal-btn-muted"
                     disabled={disabled || !ownRun}
@@ -537,7 +550,7 @@ export function ProductionTerminal({
                   ))}
                 </dl>
                 {run.profile && (
-                  <div className={styles.section}>
+                  <div className="terminal-section">
                     <h3 className="font-semibold">
                       {run.profile.name} · Rev. {run.profile.revision}
                     </h3>
@@ -558,7 +571,7 @@ export function ProductionTerminal({
                   </div>
                 )}
                 {run.qualityChecks?.length > 0 && (
-                  <div className={styles.section}>
+                  <div className="terminal-section">
                     <h3 className="font-semibold">Última medição</h3>
                     {run.qualityChecks.slice(-1).map((check) => (
                       <p key={check.id} className="mt-2 text-sm">
@@ -573,7 +586,7 @@ export function ProductionTerminal({
                   </div>
                 )}
                 {run.nonconformities?.length > 0 && (
-                  <div className={styles.section}>
+                  <div className="terminal-section">
                     <h3 className="font-semibold">Desvios</h3>
                     {run.nonconformities.map((item) => (
                       <div key={item.id} className="mt-3 text-sm">
@@ -654,7 +667,7 @@ export function ProductionTerminal({
             role="dialog"
             aria-modal="true"
             aria-labelledby="production-dialog-title"
-            className={`terminal-dialog ${styles.dialog}`}
+            className="terminal-dialog"
           >
             <h2 id="production-dialog-title">
               {
@@ -712,7 +725,7 @@ export function ProductionTerminal({
                   />
                 </div>
                 {dialog === "pause" && (
-                  <label className={styles.confirmation}>
+                  <label className="terminal-confirmation">
                     <input
                       type="checkbox"
                       name="safe_point_confirmed"
@@ -777,7 +790,7 @@ export function ProductionTerminal({
   );
 }
 
-function QualityForm({
+export function QualityForm({
   run,
   snapshot,
   disabled,
@@ -797,7 +810,7 @@ function QualityForm({
   const spec = run.qualitySpec;
   return (
     <form
-      className={`inventory-form ${styles.section}`}
+      className="inventory-form terminal-section"
       action={(data) =>
         onSubmit({
           gross: Number(data.get("gross")),
@@ -852,7 +865,7 @@ function QualityForm({
     </form>
   );
 }
-function CompleteForm({
+export function CompleteForm({
   snapshot,
   disabled,
   onSubmit,
@@ -968,7 +981,7 @@ function CompleteForm({
           disabled={disabled}
         />
       </div>
-      <label className={styles.confirmation}>
+      <label className="terminal-confirmation">
         <input type="checkbox" required disabled={disabled} /> Conferi as
         quantidades, o produto vinculado, a validade e o freezer. Confirmo o
         registro definitivo deste lote.

@@ -3128,7 +3128,7 @@ body:has(.production-terminal-route) .app-content {
     grid-template-columns: minmax(0, 1fr);
   }
   .terminal-order-summary {
-    display: none;
+    display: flex;
   }
   .terminal-setting-grid {
     grid-template-columns: minmax(0, 1fr);

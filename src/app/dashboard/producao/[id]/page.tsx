@@ -5,6 +5,8 @@ import { dateTime, money, quantity } from "@/lib/inventory/format";
 import { isUuid } from "@/lib/inventory/validation";
 import { productionStatusLabel } from "@/lib/production/status";
 import { DataNotice, PageHeading, Panel } from "@/components/inventory/ui";
+import { DashboardOperations } from "@/components/production/dashboard-operations";
+import { terminalSnapshot } from "@/lib/production/ui-types";
 
 export const instant = false;
 
@@ -17,23 +19,25 @@ export default async function ProductionDetailPage({
   if (!isUuid(id)) notFound();
   const access = await getAccess();
   if (access.status !== "ready") return null;
-  const [runResult, inputsResult, statusResult] = await Promise.all([
-    access.supabase
-      .from("inventory_production_runs")
-      .select("*")
-      .eq("id", id)
-      .maybeSingle(),
-    access.supabase
-      .from("inventory_production_inputs")
-      .select("*")
-      .eq("production_run_id", id)
-      .order("created_at"),
-    access.supabase
-      .from("production_runs")
-      .select("operational_status")
-      .eq("id", id)
-      .maybeSingle(),
-  ]);
+  const [runResult, inputsResult, statusResult, terminalResult] =
+    await Promise.all([
+      access.supabase
+        .from("inventory_production_runs")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle(),
+      access.supabase
+        .from("inventory_production_inputs")
+        .select("*")
+        .eq("production_run_id", id)
+        .order("created_at"),
+      access.supabase
+        .from("production_runs")
+        .select("operational_status")
+        .eq("id", id)
+        .maybeSingle(),
+      access.supabase.rpc("production_terminal_snapshot"),
+    ]);
   if (runResult.error || inputsResult.error || statusResult.error)
     return <DataNotice />;
   if (!runResult.data) notFound();
@@ -46,7 +50,7 @@ export default async function ProductionDetailPage({
       <PageHeading
         eyebrow="Dashboard administrativo · Produção"
         title={`Ordem ${run.code}`}
-        description="Consulta administrativa dos insumos, custo e lote de saída. A execução dos passos fica no terminal."
+        description="Acompanhe custos, insumos e lote de saída e opere esta ordem na visualização do dashboard."
       >
         <Link className="btn btn-secondary" href="/dashboard/producao">
           Voltar às ordens
@@ -88,6 +92,12 @@ export default async function ProductionDetailPage({
           )}
         </dl>
       </Panel>
+      {!terminalResult.error && terminalResult.data && (
+        <DashboardOperations
+          initial={terminalSnapshot(terminalResult.data)}
+          runId={id}
+        />
+      )}
       <Panel title="Insumos consumidos">
         {inputs.length === 0 ? (
           <p className="muted text-sm">Nenhum insumo consumido até agora.</p>

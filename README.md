@@ -8,6 +8,7 @@ Sistema interno e responsivo de gestão da Frutalize. A primeira entrega de esto
 - [Contexto da fábrica](docs/Contexto_Completo_Frutalize.md)
 - [Implementação, preparação do banco, aceite e pendências](docs/Implementacao_Estoque.md)
 - [Evolução de produção e gestão: módulos, implantação e limites](docs/Evolucao_Producao_Gestao.md)
+- [Estado do plano técnico e pendências de homologação](docs/Estado_Plano_Tecnico.md)
 
 Esta branch acrescenta terminal de produção, perfis e regras de qualidade versionados, inventário físico, inspeção, alertas, equipe, financeiro, pedidos e portal de consulta. O estoque administrativo segue restrito aos administradores; a produção e os apontamentos usam permissões próprias por papel. A ativação operacional depende das etapas de homologação e aceite descritas no [guia de evolução](docs/Evolucao_Producao_Gestao.md).
 
@@ -39,6 +40,13 @@ npm run dev
 ```
 
 A aplicação ficará disponível em `http://localhost:3000`.
+
+Para comparar as duas visualizações sem configurar o Supabase, abra
+`http://localhost:3000/visualizar` durante `npm run dev`. A página usa dados
+fictícios, mantém os comandos desativados e existe apenas em desenvolvimento.
+Para testar gravações reais, configure `.env.local` com as credenciais públicas
+de **homologação** e entre com uma conta autorizada. O dashboard fica em
+`/dashboard/producao`; o terminal touch fica em `/terminal`.
 
 ## Variáveis de ambiente
 

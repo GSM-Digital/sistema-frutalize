@@ -11,7 +11,15 @@ import {
 
 export const instant = false;
 
-export default async function ProductionPage() {
+export default async function ProductionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ visao?: string }>;
+}) {
+  const { visao } = await searchParams;
+  const selectedView = ["ativas", "finalizadas", "todas"].includes(visao ?? "")
+    ? visao
+    : "ativas";
   const access = await getAccess();
   if (access.status !== "ready") return null;
   const runsResult = await access.supabase
@@ -34,13 +42,35 @@ export default async function ProductionPage() {
   const statuses = new Map(
     (statusesResult?.data ?? []).map((run) => [run.id, run.operational_status]),
   );
+  const isActive = (run: (typeof runs)[number]) =>
+    run.status !== "completed" && statuses.get(run.id) !== "cancelled";
+  const visibleRuns = runs.filter((run) =>
+    selectedView === "todas"
+      ? true
+      : selectedView === "ativas"
+        ? isActive(run)
+        : !isActive(run),
+  );
+  const views = [
+    {
+      key: "ativas",
+      label: "Em andamento",
+      count: runs.filter(isActive).length,
+    },
+    {
+      key: "finalizadas",
+      label: "Finalizadas",
+      count: runs.filter((run) => !isActive(run)).length,
+    },
+    { key: "todas", label: "Todas", count: runs.length },
+  ];
 
   return (
     <>
       <PageHeading
         eyebrow="Dashboard administrativo"
         title="Produção"
-        description="Acompanhe ordens, insumos e lotes produzidos. O terminal é a área de execução operacional."
+        description="Acompanhe e opere ordens nesta visualização administrativa. O terminal oferece a rotina touch para a fábrica."
       >
         <Link
           className="btn btn-secondary"
@@ -48,15 +78,41 @@ export default async function ProductionPage() {
         >
           Procedimentos e qualidade
         </Link>
+        <Link className="btn btn-primary" href="/dashboard/producao/nova">
+          Nova ordem
+        </Link>
       </PageHeading>
+      <nav
+        className="flex flex-wrap gap-2"
+        aria-label="Filtrar ordens de produção"
+      >
+        {views.map((view) => (
+          <Link
+            key={view.key}
+            href={`/dashboard/producao?visao=${view.key}`}
+            aria-current={selectedView === view.key ? "page" : undefined}
+            className={`btn ${selectedView === view.key ? "btn-primary" : "btn-secondary"}`}
+          >
+            {view.label} <span className="ml-1 opacity-70">{view.count}</span>
+          </Link>
+        ))}
+      </nav>
       <Panel
         title="Ordens recentes"
-        description="Últimas 50 ordens, da mais recente para a mais antiga."
+        description="Contagem e lista das últimas 50 ordens, da mais recente para a mais antiga."
       >
-        {runs.length === 0 ? (
+        {visibleRuns.length === 0 ? (
           <EmptyState
-            title="Nenhuma ordem registrada"
-            description="As ordens criadas no terminal aparecerão aqui para acompanhamento."
+            title={
+              runs.length === 0
+                ? "Nenhuma ordem registrada"
+                : "Nenhuma ordem nesta aba"
+            }
+            description={
+              runs.length === 0
+                ? "Crie uma ordem no dashboard ou no terminal para iniciar a produção."
+                : "Consulte outra aba para ver as ordens recentes."
+            }
           />
         ) : (
           <div className="table-scroll">
@@ -75,7 +131,7 @@ export default async function ProductionPage() {
                 </tr>
               </thead>
               <tbody>
-                {runs.map((run) => (
+                {visibleRuns.map((run) => (
                   <tr key={run.id}>
                     <td>
                       <Link

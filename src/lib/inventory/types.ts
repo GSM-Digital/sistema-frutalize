@@ -158,6 +158,14 @@ export type ProductionRun = {
   completion_request_id: string | null;
   code: string;
   status: ProductionStatus;
+  operational_status?:
+    | "preparing"
+    | "configured"
+    | "in_progress"
+    | "paused"
+    | "awaiting_review"
+    | "completed"
+    | "cancelled";
   started_at: string;
   completed_at: string | null;
   output_lot_id: string | null;

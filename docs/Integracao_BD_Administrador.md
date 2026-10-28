@@ -1,0 +1,20 @@
+# Integração do banco e acessos — administrador
+
+## Separação das telas
+
+- `/dashboard` e `/dashboard/producao`: gestão administrativa. O detalhe `/dashboard/producao/[id]` mostra custos, insumos e lote de saída. Somente `staff_members.role = 'admin'` com `active = true` acessa essas páginas.
+- `/terminal`: execução da produção. Administrador, gestor e colaborador ativos podem entrar; os comandos e dados disponíveis dependem do papel e das regras do banco. O terminal não mostra custos.
+- Os links entre as áreas são explícitos. Entrar no dashboard de produção ou no detalhe da ordem não inicia nem redireciona para o terminal.
+
+## Passos no Supabase
+
+1. Confirmar qual projeto Supabase atende o ambiente e comparar o histórico em `supabase_migrations.schema_migrations` com os arquivos em `supabase/migrations/`. Não repetir manualmente migrações já registradas. Fazer backup e ensaiar restauração antes da atualização de produção.
+2. Aplicar as migrações pendentes **na ordem dos nomes dos arquivos**, primeiro em homologação. Para os módulos atuais, as três migrações finais são `20261028100000_production_commands.sql`, `20261028110000_operations_management.sql` e `20261028110100_private_receipt_storage.sql`. Elas dependem de todas as migrações anteriores do repositório, incluindo estoque, fluxo de produção e view `inventory_production_runs`.
+3. Verificar no schema `public` a tabela `production_runs` com a coluna `operational_status`; as views `inventory_production_runs` e `inventory_production_inputs`; as funções `production_terminal_snapshot`, `production_admin_snapshot`, `production_command`, `production_admin_command`, `operations_snapshot` e `operations_command`. A listagem administrativa usa as duas views e a coluna `production_runs.operational_status` para mostrar corretamente ordens pausadas, concluídas e canceladas.
+4. Conferir as tabelas de configuração de produção (`equipment`, `packaging_specs`, `procedure_versions`, `procedure_steps`, `machine_profiles`, `quality_specs`, `calibration_records`), execução/auditoria (`production_run_events`, `quality_checks`, `nonconformities`) e gestão (`inventory_counts`, `receipt_inspections`, `private_attachments`, `alert_rules`, `temperature_readings`, `operational_alerts`, `financial_accounts`, `financial_titles`, `sales_customers`, `sales_orders`, `stock_reservations`, `sales_shipments`, `sales_returns`, `time_entries`). A migração cria outras tabelas auxiliares; não selecionar apenas os objetos desta lista.
+5. Confirmar o bucket privado `frutalize-receipts`, limite de 10 MiB, tipos JPEG/PNG/PDF e políticas de inserção/leitura/limpeza criadas pela última migração. A migração só instala essas políticas quando os schemas do Supabase Storage existem.
+6. Vincular cada pessoa a uma identidade do Supabase Auth em `staff_members`, com papel e `active` corretos. O usuário que precisa abrir o dashboard deve estar como `admin` ativo; `manager` ou `collaborator` ativo entra no terminal, mas não no dashboard. Seguir `docs/Implementacao_Estoque.md` para o primeiro administrador, sem gravar senha, e-mail ou UUID pessoal em migrações.
+7. Configurar no deploy `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` para o mesmo projeto. Para convites da equipe, configurar no servidor `SUPABASE_SERVICE_ROLE_KEY` e `APP_ORIGIN` HTTPS exata; permitir `${APP_ORIGIN}/auth/confirm` no Supabase Auth. A service role nunca deve ir ao navegador.
+8. Cadastrar e aprovar POPs, equipamentos, perfis, calibrações, embalagens e regras de qualidade reais antes de executar produção física. Testar em homologação o acesso de administrador, gestor, colaborador e cliente, além de RLS, grants, ordens, saldos, Storage e restauração. A aprovação operacional e sanitária cabe aos responsáveis da fábrica.
+
+Esta alteração de navegação não adiciona migração SQL. Ela passa a consultar `production_runs.operational_status`, introduzida por `20261028100000_production_commands.sql`; sem essa migração, a tela administrativa de produção exibirá indisponibilidade de dados. O estado do banco remoto precisa ser confirmado pelo administrador do projeto Supabase.

@@ -247,12 +247,17 @@ export function ProductionTerminal({
             Atualizar
           </button>
           {snapshot.actor.role === "admin" && (
-            <Link
-              href="/dashboard/producao/configuracao"
-              className="btn btn-secondary"
-            >
-              Configurações
-            </Link>
+            <>
+              <Link href="/dashboard/producao" className="btn btn-secondary">
+                Dashboard de produção
+              </Link>
+              <Link
+                href="/dashboard/producao/configuracao"
+                className="btn btn-secondary"
+              >
+                Configurações
+              </Link>
+            </>
           )}
           <form action={lockTerminal}>
             <button className="btn btn-secondary">

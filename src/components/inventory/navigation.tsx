@@ -26,7 +26,14 @@ const sections: { label?: string; items: NavItem[] }[] = [
       },
       {
         href: "/dashboard/producao",
-        label: "Produzir",
+        label: "Produção (dashboard)",
+        shortLabel: "Produção",
+        icon: "production",
+      },
+      {
+        href: "/terminal",
+        label: "Terminal de produção",
+        shortLabel: "Terminal",
         icon: "production",
       },
       {

@@ -32,11 +32,10 @@ const quickActions: HomeCard[] = [
     statusTone: "green",
   },
   {
-    title: "Iniciar produção",
-    description:
-      "Registre os insumos consumidos e os lotes de polpa produzidos.",
+    title: "Abrir terminal de produção",
+    description: "Execute ordens e registre cada etapa da produção.",
     icon: "production",
-    href: "/dashboard/producao",
+    href: "/terminal",
     status: "Disponível agora",
     statusTone: "green",
   },
@@ -65,7 +64,7 @@ const modules: HomeCard[] = [
   },
   {
     title: "Produção",
-    description: "Planeje e registre a transformação de insumos em produtos.",
+    description: "Acompanhe ordens, consumo de insumos e lotes produzidos.",
     icon: "production",
     href: "/dashboard/producao",
     status: "Disponível",

@@ -3,5 +3,5 @@ export default function ProductionLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <section className="production-terminal-route">{children}</section>;
+  return children;
 }

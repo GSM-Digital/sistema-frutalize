@@ -29,15 +29,16 @@ const sections: { label?: string; items: NavItem[] }[] = [
         label: "Produzir",
         icon: "production",
       },
-      { label: "Registrar venda", icon: "sale", planned: true },
+      { href: "/gestao/commercial", label: "Pedidos e expedição", icon: "sale" },
     ],
   },
   {
     label: "Gestão",
     items: [
       { href: "/dashboard/lotes", label: "Estoque", icon: "inventory" },
-      { label: "Financeiro", icon: "finance", planned: true },
-      { label: "Equipe e acessos", icon: "users", planned: true },
+      { href: "/gestao/finance", label: "Financeiro", icon: "finance" },
+      { href: "/gestao/staff", label: "Equipe e acessos", icon: "users" },
+      { href: "/gestao/inventory", label: "Inventário físico", icon: "inventory" },
     ],
   },
   {
@@ -54,6 +55,10 @@ const sections: { label?: string; items: NavItem[] }[] = [
         shortLabel: "Histórico",
         icon: "history",
       },
+      { href: "/dashboard/producao/configuracao", label: "Procedimentos e qualidade", icon: "production" },
+      { href: "/gestao/receiving", label: "Inspeções e documentos", icon: "receive" },
+      { href: "/gestao/alerts", label: "Alertas e temperaturas", icon: "overview" },
+      { href: "/gestao/time", label: "Apontamentos", icon: "history" },
     ],
   },
 ];

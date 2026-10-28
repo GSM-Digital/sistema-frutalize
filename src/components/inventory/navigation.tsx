@@ -29,7 +29,11 @@ const sections: { label?: string; items: NavItem[] }[] = [
         label: "Produzir",
         icon: "production",
       },
-      { href: "/gestao/commercial", label: "Pedidos e expedição", icon: "sale" },
+      {
+        href: "/gestao/commercial",
+        label: "Pedidos e expedição",
+        icon: "sale",
+      },
     ],
   },
   {
@@ -38,7 +42,11 @@ const sections: { label?: string; items: NavItem[] }[] = [
       { href: "/dashboard/lotes", label: "Estoque", icon: "inventory" },
       { href: "/gestao/finance", label: "Financeiro", icon: "finance" },
       { href: "/gestao/staff", label: "Equipe e acessos", icon: "users" },
-      { href: "/gestao/inventory", label: "Inventário físico", icon: "inventory" },
+      {
+        href: "/gestao/inventory",
+        label: "Inventário físico",
+        icon: "inventory",
+      },
     ],
   },
   {
@@ -55,9 +63,21 @@ const sections: { label?: string; items: NavItem[] }[] = [
         shortLabel: "Histórico",
         icon: "history",
       },
-      { href: "/dashboard/producao/configuracao", label: "Procedimentos e qualidade", icon: "production" },
-      { href: "/gestao/receiving", label: "Inspeções e documentos", icon: "receive" },
-      { href: "/gestao/alerts", label: "Alertas e temperaturas", icon: "overview" },
+      {
+        href: "/dashboard/producao/configuracao",
+        label: "Procedimentos e qualidade",
+        icon: "production",
+      },
+      {
+        href: "/gestao/receiving",
+        label: "Inspeções e documentos",
+        icon: "receive",
+      },
+      {
+        href: "/gestao/alerts",
+        label: "Alertas e temperaturas",
+        icon: "overview",
+      },
       { href: "/gestao/time", label: "Apontamentos", icon: "history" },
     ],
   },

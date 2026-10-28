@@ -15,8 +15,7 @@ export const getProductionAccess = cache(async () => {
     .eq("user_id", data.user.id)
     .maybeSingle();
   if (membershipError) return { status: "database" as const };
-  if (!member?.active)
-    return { status: "forbidden" as const };
+  if (!member?.active) return { status: "forbidden" as const };
   return { status: "ready" as const, supabase, user: data.user, member };
 });
 

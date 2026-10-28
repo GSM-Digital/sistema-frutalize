@@ -121,7 +121,7 @@ create table public.sales_shipment_lines (
 );
 create table public.sales_returns (
   id uuid primary key default gen_random_uuid(), shipment_line_id uuid not null references public.sales_shipment_lines(id),
-  quantity numeric(14,3) not null check(quantity > 0), movement_id uuid not null unique references public.stock_movements(id),
+  quantity numeric(14,3) not null check(quantity > 0), movement_id uuid unique references public.stock_movements(id),
   created_by uuid not null references auth.users(id), created_at timestamptz not null default now()
 );
 create table public.time_entries (
@@ -553,15 +553,10 @@ begin
       v_quantity:=private.operations_number(v_data,'quantity',3,0.001);
       if v_lot.unit in ('un','pct','cx') and v_quantity<>trunc(v_quantity) then raise exception 'Quantidade exige número inteiro.'; end if;
       if v_quantity>v_shipment_line.quantity-v_total then raise exception 'Devolução excede quantidade expedida.'; end if;
-      -- Return is only admitted to an explicitly active location after operator's approved disposition.
-      -- Record preserves the original dispatch and exact lot, without changing its expiry.
-      perform 1 from public.storage_locations where id=v_lot.location_id and active;
-      if not found then raise exception 'Local de retorno arquivado.'; end if;
-      update public.lots set quantity=quantity+v_quantity where id=v_lot.id;
-      v_ref:=gen_random_uuid();
-      insert into public.stock_movements(id,request_id,lot_id,kind,quantity,balance_after,reason,operated_at,actor_name)
-        values(v_ref,p_command_id,v_lot.id,'sales_return',v_quantity,v_lot.quantity+v_quantity,v_reason,now(),v_name);
-      insert into public.sales_returns(id,shipment_line_id,quantity,movement_id,created_by) values(v_id,v_shipment_line.id,v_quantity,v_ref,v_actor);
+      -- Product returned by a customer remains segregated until a responsible
+      -- technician decides its destination. This does not restore stock.
+      insert into public.sales_returns(id,shipment_line_id,quantity,movement_id,created_by)
+        values(v_id,v_shipment_line.id,v_quantity,null,v_actor);
     else raise exception 'Ação comercial inválida.'; end if;
 
   elsif p_module = 'time' then

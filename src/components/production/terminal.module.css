@@ -49,11 +49,11 @@
   max-height: calc(100dvh - 2rem);
   overflow: auto;
 }
-.dialog :global(.inventory-form) {
+.dialog form {
   display: grid;
   gap: 1rem;
 }
-.dialog :global(.field) {
+.dialog label {
   min-width: 0;
 }
 .dialog select {
@@ -63,7 +63,7 @@
   .toolbar {
     justify-content: flex-end;
   }
-  .toolbar :global(.btn) {
+  .toolbar button {
     padding: 0.5rem 0.65rem;
     font-size: 0.75rem;
   }

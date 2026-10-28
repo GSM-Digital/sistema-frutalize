@@ -274,10 +274,25 @@ export type Database = {
       inventory_production_inputs: View<InventoryProductionInput>;
     };
     Functions: OperationsDatabaseFunctions & {
-      production_terminal_snapshot: { Args: Record<string, never>; Returns: Json };
+      production_terminal_snapshot: {
+        Args: Record<string, never>;
+        Returns: Json;
+      };
       production_admin_snapshot: { Args: Record<string, never>; Returns: Json };
-      production_command: { Args: { p_command_id: string; p_run_id: string | null; p_expected_revision: number; p_kind: string; p_payload: Json }; Returns: Json };
-      production_admin_command: { Args: { p_command_id: string; p_kind: string; p_payload: Json }; Returns: Json };
+      production_command: {
+        Args: {
+          p_command_id: string;
+          p_run_id: string | null;
+          p_expected_revision: number;
+          p_kind: string;
+          p_payload: Json;
+        };
+        Returns: Json;
+      };
+      production_admin_command: {
+        Args: { p_command_id: string; p_kind: string; p_payload: Json };
+        Returns: Json;
+      };
       can_manage_inventory: { Args: Record<string, never>; Returns: boolean };
       inventory_overview: { Args: Record<string, never>; Returns: Overview[] };
       save_catalog: {

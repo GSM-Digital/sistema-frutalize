@@ -4,6 +4,8 @@ import { DashboardOperations } from "@/components/production/dashboard-operation
 import { ProductionTerminal } from "@/components/production/terminal";
 import { previewRunId, previewSnapshot } from "@/lib/production/preview";
 
+export const instant = false;
+
 export default async function VisualizarPage({
   searchParams,
 }: {

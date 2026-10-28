@@ -41,6 +41,13 @@ npm run dev
 
 A aplicação ficará disponível em `http://localhost:3000`.
 
+Para comparar as duas visualizações sem configurar o Supabase, abra
+`http://localhost:3000/visualizar` durante `npm run dev`. A página usa dados
+fictícios, mantém os comandos desativados e existe apenas em desenvolvimento.
+Para testar gravações reais, configure `.env.local` com as credenciais públicas
+de **homologação** e entre com uma conta autorizada. O dashboard fica em
+`/dashboard/producao`; o terminal touch fica em `/terminal`.
+
 ## Variáveis de ambiente
 
 ```env

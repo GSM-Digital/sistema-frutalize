@@ -32,9 +32,11 @@ type Action =
 export function DashboardOperations({
   initial,
   runId,
+  preview = false,
 }: {
   initial: TerminalSnapshot;
   runId?: string;
+  preview?: boolean;
 }) {
   const router = useRouter();
   const [snapshot, setSnapshot] = useState(initial);
@@ -51,7 +53,7 @@ export function DashboardOperations({
   );
   const ownRun = run?.operator_id === snapshot.actor.id;
   const storageKey = `frutalize.dashboard.production.pending.${snapshot.actor.id}`;
-  const disabled = busy || Boolean(pending);
+  const disabled = busy || Boolean(pending) || preview;
 
   useEffect(() => {
     try {
@@ -81,7 +83,7 @@ export function DashboardOperations({
     payload: Record<string, Json | undefined> = {},
     retry?: ProductionCommand,
   ) {
-    if (inFlight.current || (pending && !retry)) return;
+    if (preview || inFlight.current || (pending && !retry)) return;
     const command: ProductionCommand = retry ?? {
       commandId: crypto.randomUUID(),
       runId: kind === "create" ? null : (run?.id ?? null),
@@ -135,7 +137,7 @@ export function DashboardOperations({
   }
 
   function refresh() {
-    if (disabled) return;
+    if (preview || disabled) return;
     startTransition(async () => {
       try {
         setSnapshot(await loadTerminalSnapshot());

@@ -49,9 +49,11 @@ function restoreCommand(
 export function ProductionTerminal({
   initial,
   initialRunId,
+  preview = false,
 }: {
   initial: TerminalSnapshot;
   initialRunId?: string;
+  preview?: boolean;
 }) {
   const [snapshot, setSnapshot] = useState(initial);
   const [runId, setRunId] = useState(initialRunId ?? "");
@@ -75,9 +77,10 @@ export function ProductionTerminal({
     (item) => item.phase === run.phase && item.step === run.step,
   );
   const ownRun = run?.operator_id === snapshot.actor.id;
-  const disabled = busy || Boolean(pending);
+  const disabled = busy || Boolean(pending) || preview;
 
   useEffect(() => {
+    if (preview) return;
     serverOffset.current = Date.parse(initial.serverTime) - Date.now();
     lastActivity.current =
       Number(sessionStorage.getItem(activityKey)) || Date.now();
@@ -125,7 +128,7 @@ export function ProductionTerminal({
       window.removeEventListener("online", connectivity);
       window.removeEventListener("offline", connectivity);
     };
-  }, [activityKey, initial.actor.id, initial.serverTime, storageKey]);
+  }, [activityKey, initial.actor.id, initial.serverTime, preview, storageKey]);
 
   function dispatch(
     kind: string,
@@ -133,7 +136,7 @@ export function ProductionTerminal({
     target: TerminalRun | undefined = run,
     retry?: ProductionCommand,
   ) {
-    if (inFlight.current || locked || (!retry && pending)) return;
+    if (preview || inFlight.current || locked || (!retry && pending)) return;
     const command: ProductionCommand = retry ?? {
       commandId: crypto.randomUUID(),
       runId: kind === "create" ? null : (target?.id ?? crypto.randomUUID()),
@@ -188,7 +191,7 @@ export function ProductionTerminal({
     });
   }
   function refresh() {
-    if (disabled || locked) return;
+    if (preview || disabled || locked) return;
     startTransition(async () => {
       try {
         const current = await loadTerminalSnapshot();
@@ -236,7 +239,10 @@ export function ProductionTerminal({
           </div>
         </div>
         <div className={styles.toolbar}>
-          {snapshot.actor.role === "admin" && (
+          {preview && (
+            <span className="badge">Prévia fictícia · somente leitura</span>
+          )}
+          {!preview && snapshot.actor.role === "admin" && (
             <Link className="btn btn-secondary" href="/dashboard/producao">
               Dashboard
             </Link>
@@ -251,11 +257,13 @@ export function ProductionTerminal({
           >
             Atualizar
           </button>
-          <form action={lockTerminal}>
-            <button className="btn btn-secondary">
-              Trocar operador / sair
-            </button>
-          </form>
+          {!preview && (
+            <form action={lockTerminal}>
+              <button className="btn btn-secondary">
+                Trocar operador / sair
+              </button>
+            </form>
+          )}
         </div>
       </header>
       {(message || pending) && (

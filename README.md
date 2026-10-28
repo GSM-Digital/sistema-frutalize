@@ -8,6 +8,7 @@ Sistema interno e responsivo de gestão da Frutalize. A primeira entrega de esto
 - [Contexto da fábrica](docs/Contexto_Completo_Frutalize.md)
 - [Implementação, preparação do banco, aceite e pendências](docs/Implementacao_Estoque.md)
 - [Evolução de produção e gestão: módulos, implantação e limites](docs/Evolucao_Producao_Gestao.md)
+- [Estado do plano técnico e pendências de homologação](docs/Estado_Plano_Tecnico.md)
 
 Esta branch acrescenta terminal de produção, perfis e regras de qualidade versionados, inventário físico, inspeção, alertas, equipe, financeiro, pedidos e portal de consulta. O estoque administrativo segue restrito aos administradores; a produção e os apontamentos usam permissões próprias por papel. A ativação operacional depende das etapas de homologação e aceite descritas no [guia de evolução](docs/Evolucao_Producao_Gestao.md).
 

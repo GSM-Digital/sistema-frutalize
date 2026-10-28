@@ -188,6 +188,7 @@ export async function inviteMember(form: FormData): Promise<OperationState> {
       id: data.user.id,
     };
   revalidatePath("/gestao/staff");
+  revalidatePath("/dashboard/gestao/staff");
   return {
     success:
       "Convite enviado pelo provedor. O usuário define a própria senha no primeiro acesso.",
@@ -258,5 +259,6 @@ export async function uploadReceipt(form: FormData): Promise<OperationState> {
   });
   if (error) return failed(error);
   revalidatePath("/gestao/receiving");
+  revalidatePath("/dashboard/gestao/receiving");
   return { success: "Documento privado vinculado ao recebimento." };
 }

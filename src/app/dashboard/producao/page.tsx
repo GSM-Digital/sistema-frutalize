@@ -48,9 +48,6 @@ export default async function ProductionPage() {
         >
           Procedimentos e qualidade
         </Link>
-        <Link className="btn btn-primary" href="/terminal">
-          Abrir terminal de produção
-        </Link>
       </PageHeading>
       <Panel
         title="Ordens recentes"
@@ -60,8 +57,6 @@ export default async function ProductionPage() {
           <EmptyState
             title="Nenhuma ordem registrada"
             description="As ordens criadas no terminal aparecerão aqui para acompanhamento."
-            href="/terminal"
-            label="Abrir terminal"
           />
         ) : (
           <div className="table-scroll">

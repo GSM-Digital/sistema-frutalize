@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { connection } from "next/server";
 import { requireStaff } from "@/lib/auth";
 import { PageHeading, DataNotice } from "@/components/inventory/ui";
@@ -19,11 +18,7 @@ export default async function ProductionConfigurationPage() {
         eyebrow="Produção e qualidade"
         title="Procedimentos e equipamentos"
         description="Versões aprovadas, parâmetros de máquina, regras de medição e calibração preservados por ordem."
-      >
-        <Link className="btn btn-secondary" href="/terminal">
-          Abrir terminal
-        </Link>
-      </PageHeading>
+      />
       <ProductionConfigurationPanel
         data={data as unknown as ProductionConfiguration}
       />

@@ -701,9 +701,11 @@ function display(value: Json | undefined, snapshot: Snapshot): string {
 export function SnapshotTables({
   snapshot,
   only,
+  documentBasePath = "/gestao/documento",
 }: {
   snapshot: Snapshot;
   only?: string[];
+  documentBasePath?: string;
 }) {
   return (
     <div className="space-y-5">
@@ -739,7 +741,7 @@ export function SnapshotTables({
                             className="text-link"
                             target="_blank"
                             rel="noopener noreferrer"
-                            href={`/gestao/documento/${row.id}`}
+                            href={`${documentBasePath}/${row.id}`}
                           >
                             Abrir
                           </a>
@@ -768,9 +770,11 @@ export function SnapshotTables({
 export function OperationsWorkspace({
   module,
   snapshot,
+  documentBasePath,
 }: {
   module: OperationsModule;
   snapshot: Snapshot;
+  documentBasePath?: string;
 }) {
   return (
     <div className="space-y-6">
@@ -790,7 +794,7 @@ export function OperationsWorkspace({
           <SpecialForm kind="upload" snapshot={snapshot} />
         )}
       </div>
-      <SnapshotTables snapshot={snapshot} />
+      <SnapshotTables snapshot={snapshot} documentBasePath={documentBasePath} />
     </div>
   );
 }

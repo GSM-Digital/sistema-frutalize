@@ -2,9 +2,9 @@
 
 ## Separação das telas
 
-- `/dashboard` e `/dashboard/producao`: gestão administrativa. O detalhe `/dashboard/producao/[id]` mostra custos, insumos e lote de saída. Somente `staff_members.role = 'admin'` com `active = true` acessa essas páginas.
+- `/dashboard`, `/dashboard/producao` e `/dashboard/gestao/[module]`: gestão administrativa no mesmo layout. O detalhe `/dashboard/producao/[id]` mostra custos, insumos e lote de saída. Somente `staff_members.role = 'admin'` com `active = true` acessa essas páginas.
 - `/terminal`: execução da produção. Administrador, gestor e colaborador ativos podem entrar; os comandos e dados disponíveis dependem do papel e das regras do banco. O terminal não mostra custos.
-- Os links entre as áreas são explícitos. Entrar no dashboard de produção ou no detalhe da ordem não inicia nem redireciona para o terminal.
+- O dashboard e o terminal não possuem links entre si. Entrar no dashboard de produção, em um módulo de gestão ou no detalhe da ordem não redireciona para o terminal. A rota `/gestao/[module]` continua disponível para os papéis autorizados e usa o mesmo conteúdo de gestão.
 
 ## Passos no Supabase
 

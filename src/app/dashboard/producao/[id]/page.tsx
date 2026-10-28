@@ -51,14 +51,6 @@ export default async function ProductionDetailPage({
         <Link className="btn btn-secondary" href="/dashboard/producao">
           Voltar às ordens
         </Link>
-        {run.status === "in_progress" && status !== "cancelled" && (
-          <Link
-            className="btn btn-primary"
-            href={`/terminal?${new URLSearchParams({ ordem: id })}`}
-          >
-            Abrir no terminal
-          </Link>
-        )}
       </PageHeading>
       <Panel title="Resumo da ordem">
         <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

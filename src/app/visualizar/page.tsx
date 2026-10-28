@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DashboardOperations } from "@/components/production/dashboard-operations";
 import { ProductionTerminal } from "@/components/production/terminal";
+import { Navigation } from "@/components/inventory/navigation";
 import { previewRunId, previewSnapshot } from "@/lib/production/preview";
 
 export const instant = false;
@@ -60,21 +61,7 @@ export default async function VisualizarPage({
                 Frutalize<small>Gestão da fábrica</small>
               </span>
             </div>
-            <nav className="main-nav" aria-label="Menu demonstrativo">
-              <section className="nav-section">
-                <p className="nav-section-title">Rotina</p>
-                <div className="nav-section-items">
-                  <span className="nav-item nav-active">Produção</span>
-                </div>
-              </section>
-              <section className="nav-section">
-                <p className="nav-section-title">Gestão</p>
-                <div className="nav-section-items">
-                  <span className="nav-item">Estoque</span>
-                  <span className="nav-item">Financeiro</span>
-                </div>
-              </section>
-            </nav>
+            <Navigation />
           </aside>
           <div className="app-body">
             <header className="app-header">

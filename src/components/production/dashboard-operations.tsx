@@ -7,6 +7,7 @@ import {
   sendProductionCommand,
 } from "@/app/terminal/actions";
 import { dateTime, quantity } from "@/lib/inventory/format";
+import { productionStatusLabel } from "@/lib/production/status";
 import type { Json } from "@/lib/inventory/types";
 import type {
   ProductionCommand,
@@ -14,7 +15,6 @@ import type {
 } from "@/lib/production/ui-types";
 import { OrderConfiguration } from "./order-configuration";
 import { CompleteForm, QualityForm } from "./terminal";
-import styles from "./dashboard-operations.module.css";
 
 type Action =
   | "create"
@@ -153,12 +153,12 @@ export function DashboardOperations({
 
   return (
     <section
-      className={styles.shell}
+      className="dashboard-shell"
       aria-label={
         run ? "Operação da ordem no dashboard" : "Nova ordem no dashboard"
       }
     >
-      <div className={styles.heading}>
+      <div className="dashboard-heading">
         <div>
           <p className="eyebrow">Operação administrativa</p>
           <h2>{run ? `Ordem ${run.code}` : "Criar ordem de produção"}</h2>
@@ -192,12 +192,12 @@ export function DashboardOperations({
         </div>
       )}
       {run ? (
-        <div className={styles.grid}>
-          <div className={styles.main}>
-            <div className={styles.facts}>
+        <div className="dashboard-grid">
+          <div className="dashboard-main">
+            <div className="dashboard-facts">
               <div>
                 <span>Situação</span>
-                <strong>{run.operational_status.replaceAll("_", " ")}</strong>
+                <strong>{productionStatusLabel(run.operational_status)}</strong>
               </div>
               <div>
                 <span>Responsável</span>
@@ -217,7 +217,7 @@ export function DashboardOperations({
             {run.status !== "completed" &&
               run.operational_status !== "cancelled" && (
                 <>
-                  <div className={styles.currentStep}>
+                  <div className="dashboard-currentStep">
                     <p className="eyebrow">
                       Instrução vigente · {run.phase}.{run.step}
                     </p>
@@ -230,7 +230,10 @@ export function DashboardOperations({
                         "Consulte as revisões aprovadas e as medições antes de prosseguir."}
                     </p>
                   </div>
-                  <div className={styles.actions} aria-label="Ações da ordem">
+                  <div
+                    className="dashboard-actions"
+                    aria-label="Ações da ordem"
+                  >
                     {!run.procedure && (
                       <button
                         className="btn btn-primary"
@@ -327,8 +330,8 @@ export function DashboardOperations({
                 </>
               )}
             {selected && (
-              <div className={styles.formPanel}>
-                <div className={styles.formHeading}>
+              <div className="dashboard-formPanel">
+                <div className="dashboard-formHeading">
                   <h3>
                     {(
                       {
@@ -404,7 +407,7 @@ export function DashboardOperations({
                       />
                     </div>
                     {selected === "pause" && (
-                      <label className={styles.check}>
+                      <label className="dashboard-check">
                         <input
                           type="checkbox"
                           name="safe_point_confirmed"
@@ -454,7 +457,7 @@ export function DashboardOperations({
               </div>
             )}
           </div>
-          <aside className={styles.side}>
+          <aside className="dashboard-side">
             <h3>Rastreabilidade e conferência</h3>
             <dl>
               {run.inputs.map((input) => (
@@ -467,7 +470,7 @@ export function DashboardOperations({
               ))}
             </dl>
             {run.profile && (
-              <div className={styles.section}>
+              <div className="dashboard-section">
                 <h4>
                   {run.profile.name} · rev. {run.profile.revision}
                 </h4>
@@ -481,7 +484,7 @@ export function DashboardOperations({
               </div>
             )}
             {run.qualityChecks.length > 0 && (
-              <div className={styles.section}>
+              <div className="dashboard-section">
                 <h4>Medições</h4>
                 {run.qualityChecks.map((item) => (
                   <p key={item.id}>
@@ -493,10 +496,10 @@ export function DashboardOperations({
               </div>
             )}
             {run.nonconformities.length > 0 && (
-              <div className={styles.section}>
+              <div className="dashboard-section">
                 <h4>Desvios e decisões</h4>
                 {run.nonconformities.map((item) => (
-                  <div key={item.id} className={styles.deviation}>
+                  <div key={item.id} className="dashboard-deviation">
                     <p>
                       <strong>{item.status}</strong> · {item.reason}
                     </p>
@@ -557,7 +560,7 @@ export function DashboardOperations({
           </aside>
         </div>
       ) : (
-        <div className={styles.formPanel}>
+        <div className="dashboard-formPanel">
           <OrderConfiguration
             snapshot={snapshot}
             create

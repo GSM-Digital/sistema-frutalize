@@ -40,13 +40,16 @@ export default async function ProductionPage() {
       <PageHeading
         eyebrow="Dashboard administrativo"
         title="Produção"
-        description="Acompanhe ordens, insumos e lotes produzidos. O terminal é a área de execução operacional."
+        description="Acompanhe e opere ordens nesta visualização administrativa. O terminal oferece a rotina touch para a fábrica."
       >
         <Link
           className="btn btn-secondary"
           href="/dashboard/producao/configuracao"
         >
           Procedimentos e qualidade
+        </Link>
+        <Link className="btn btn-primary" href="/dashboard/producao/nova">
+          Nova ordem
         </Link>
       </PageHeading>
       <Panel
@@ -56,7 +59,7 @@ export default async function ProductionPage() {
         {runs.length === 0 ? (
           <EmptyState
             title="Nenhuma ordem registrada"
-            description="As ordens criadas no terminal aparecerão aqui para acompanhamento."
+            description="Crie uma ordem no dashboard ou no terminal para iniciar a produção."
           />
         ) : (
           <div className="table-scroll">

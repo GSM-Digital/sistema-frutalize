@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   loadTerminalSnapshot,
@@ -235,6 +236,11 @@ export function ProductionTerminal({
           </div>
         </div>
         <div className={styles.toolbar}>
+          {snapshot.actor.role === "admin" && (
+            <Link className="btn btn-secondary" href="/dashboard/producao">
+              Dashboard
+            </Link>
+          )}
           <span className={`badge ${online ? "badge-green" : "badge-danger"}`}>
             {online ? "Online" : "Sem conexão"}
           </span>
@@ -777,7 +783,7 @@ export function ProductionTerminal({
   );
 }
 
-function QualityForm({
+export function QualityForm({
   run,
   snapshot,
   disabled,
@@ -852,7 +858,7 @@ function QualityForm({
     </form>
   );
 }
-function CompleteForm({
+export function CompleteForm({
   snapshot,
   disabled,
   onSubmit,

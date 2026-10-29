@@ -61,15 +61,12 @@ export function ProductionTerminal({
   const [busy, startTransition] = useTransition();
   const [now, setNow] = useState(() => Date.parse(initial.serverTime));
   const [online, setOnline] = useState(true);
-  const [locked, setLocked] = useState(false);
   const [dialog, setDialog] = useState<
     "pause" | "issue" | "complete" | "create" | "cancel" | null
   >(null);
   const inFlight = useRef(false),
-    lastActivity = useRef(0),
     serverOffset = useRef(0);
   const storageKey = `frutalize.production.pending.${initial.actor.id}`;
-  const activityKey = `frutalize.production.activity.${initial.actor.id}`;
   const canManage = ["admin", "manager"].includes(snapshot.actor.role);
   const run = snapshot.runs.find((item) => item.id === runId);
   const step = run?.procedure?.steps.find(
@@ -81,8 +78,6 @@ export function ProductionTerminal({
   useEffect(() => {
     if (preview) return;
     serverOffset.current = Date.parse(initial.serverTime) - Date.now();
-    lastActivity.current =
-      Number(sessionStorage.getItem(activityKey)) || Date.now();
     const command = restoreCommand(
       sessionStorage.getItem(storageKey),
       initial.actor.id,
@@ -96,38 +91,19 @@ export function ProductionTerminal({
         );
       }
     }, 0);
-    const activity = () => {
-      lastActivity.current = Date.now();
-      sessionStorage.setItem(activityKey, String(lastActivity.current));
-    };
     const connectivity = () => setOnline(navigator.onLine);
     const timer = window.setInterval(() => {
       setNow(Date.now() + serverOffset.current);
-      if (Date.now() - lastActivity.current >= 5 * 60 * 1000) {
-        setLocked(true);
-        window.clearInterval(timer);
-        startTransition(async () => {
-          try {
-            await lockTerminal();
-          } catch {
-            /* Offline: preserve the local lock. */
-          }
-        });
-      }
     }, 1000);
-    window.addEventListener("pointerdown", activity);
-    window.addEventListener("keydown", activity);
     window.addEventListener("online", connectivity);
     window.addEventListener("offline", connectivity);
     return () => {
       window.clearTimeout(restoreTimer);
       window.clearInterval(timer);
-      window.removeEventListener("pointerdown", activity);
-      window.removeEventListener("keydown", activity);
       window.removeEventListener("online", connectivity);
       window.removeEventListener("offline", connectivity);
     };
-  }, [activityKey, initial.actor.id, initial.serverTime, preview, storageKey]);
+  }, [initial.actor.id, initial.serverTime, preview, storageKey]);
 
   function dispatch(
     kind: string,
@@ -135,7 +111,7 @@ export function ProductionTerminal({
     target: TerminalRun | undefined = run,
     retry?: ProductionCommand,
   ) {
-    if (preview || inFlight.current || locked || (!retry && pending)) return;
+    if (preview || inFlight.current || (!retry && pending)) return;
     const command: ProductionCommand = retry ?? {
       commandId: crypto.randomUUID(),
       runId: kind === "create" ? null : (target?.id ?? crypto.randomUUID()),
@@ -190,7 +166,7 @@ export function ProductionTerminal({
     });
   }
   function refresh() {
-    if (preview || disabled || locked) return;
+    if (preview || disabled) return;
     startTransition(async () => {
       try {
         const current = await loadTerminalSnapshot();
@@ -204,26 +180,6 @@ export function ProductionTerminal({
       }
     });
   }
-
-  if (locked)
-    return (
-      <main className="terminal-shell terminal-locked">
-        <section className="panel p-8">
-          <p className="eyebrow">Terminal bloqueado</p>
-          <h1 className="mt-3 text-3xl font-semibold">
-            Identifique-se novamente
-          </h1>
-          <p className="muted mt-4">
-            O terminal foi bloqueado após cinco minutos sem interação.
-          </p>
-          <form action={lockTerminal} className="mt-6">
-            <button className="btn btn-primary">
-              Entrar com e-mail e senha
-            </button>
-          </form>
-        </section>
-      </main>
-    );
 
   return (
     <div className="terminal-shell">

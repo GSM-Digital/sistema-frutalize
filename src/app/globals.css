@@ -195,6 +195,16 @@ textarea {
   gap: 1.4rem;
   margin-top: 2.4rem;
 }
+@media (min-width: 1024px) {
+  .sidebar .main-nav {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 0.25rem;
+    scrollbar-width: thin;
+  }
+}
 .nav-section-title {
   margin: 0 0.75rem 0.55rem;
   color: #899384;

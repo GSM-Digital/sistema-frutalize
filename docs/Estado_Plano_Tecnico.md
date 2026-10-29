@@ -1,6 +1,6 @@
 # Estado local do plano técnico da Frutalize
 
-Revisão do checkout em 28/10/2026. Referência: `FRUTALIZE-PLANO-TECNICO-FUTURAS-IMPLEMENTACOES.md` recebido pelo responsável. O plano descreve o commit `60d6f0a` de 27/10; esta revisão parte da `main` em `c9f83f4`. Os estados abaixo dizem respeito **ao código local**. Não comprovam implantação, migração remota ou aceite da fábrica.
+Revisão inicial do checkout em 28/10/2026, com estado de implantação atualizado em 29/10/2026. Referência: `FRUTALIZE-PLANO-TECNICO-FUTURAS-IMPLEMENTACOES.md` recebido pelo responsável. O plano descreve o commit `60d6f0a` de 27/10; a revisão inicial partiu da `main` em `c9f83f4`. Os estados da tabela dizem respeito **ao código**. A implantação das três migrações mais recentes no Supabase de desenvolvimento está registrada em [Implantação das migrações no Supabase](Implantacao_Supabase_2026-10-29.md); ela não comprova o aceite da fábrica.
 
 | Item do plano                           | Estado no código local                                        | Evidência principal                                                                            | Próximo passo                                                                            |
 | --------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
@@ -25,4 +25,4 @@ Revisão do checkout em 28/10/2026. Referência: `FRUTALIZE-PLANO-TECNICO-FUTURA
 
 ## Limites da revisão
 
-O checkout não contém `.env.local` nem prova da versão em Vercel/Supabase. Build e análise estática locais verificam o código, mas não validam regras sanitárias, perfis reais, conexão com serviços, RLS em múltiplas sessões ou uso no equipamento da fábrica. As decisões pendentes do plano continuam pendentes; nenhum peso, temperatura, validade, parâmetro de máquina ou remuneração foi presumido.
+O checkout agora contém um `.env.local` ignorado pelo Git, configurado apenas com URL e chave publicável do projeto Supabase de desenvolvimento. O histórico remoto confirma as três migrações de 28/10, mas ainda faltam validação autenticada com múltiplas sessões, restauração ensaiada, perfis reais e aceite em equipamento da fábrica. Build e análise estática não validam regras sanitárias. As decisões pendentes do plano continuam pendentes; nenhum peso, temperatura, validade, parâmetro de máquina ou remuneração foi presumido.

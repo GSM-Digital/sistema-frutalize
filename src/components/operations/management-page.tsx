@@ -95,17 +95,22 @@ export async function ManagementPage({
           </div>
         </header>
       )}
-      <nav className="mb-8 flex flex-wrap gap-2" aria-label="Módulos de gestão">
-        {allowed.map((item) => (
-          <Link
-            className={`btn ${item === selectedModule ? "btn-primary" : "btn-secondary"}`}
-            href={`${surface === "dashboard" ? "/dashboard" : ""}/gestao/${item}`}
-            key={item}
-          >
-            {moduleNames[item as OperationsModule]}
-          </Link>
-        ))}
-      </nav>
+      {surface === "standalone" && (
+        <nav
+          className="mb-8 flex flex-wrap gap-2"
+          aria-label="Módulos de gestão"
+        >
+          {allowed.map((item) => (
+            <Link
+              className={`btn ${item === selectedModule ? "btn-primary" : "btn-secondary"}`}
+              href={`/gestao/${item}`}
+              key={item}
+            >
+              {moduleNames[item as OperationsModule]}
+            </Link>
+          ))}
+        </nav>
+      )}
       <div className="page-heading">
         <div>
           <p className="eyebrow">Gestão Frutalize</p>

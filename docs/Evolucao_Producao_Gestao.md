@@ -28,3 +28,7 @@ Com Node 22: `npm ci`, `npm run lint`, `npm run format:check`, `npm test`, `npm 
 ## Acompanhamento de incidentes
 
 Em erro ou conflito de checkpoint, consultar a ordem e o `command_id` antes de reenviar a mesma intenção. Em divergência de saldo, suspender expedição e contar o local/lote; usar movimento compensatório com motivo e aprovador, preservando o registro original. Em indisponibilidade do Supabase, manter a produção em ponto físico seguro definido no POP e registrar o incidente no procedimento operacional. Não continuar a produção com telemetria ou checkpoint presumidos.
+
+## Correção de navegação dashboard/terminal — 29/10/2026
+
+As regras visuais e o bloqueio de rolagem do terminal ficam limitados a `.production-terminal-route`; estilos globais no `body` não devem ocultar a navegação, o cabeçalho ou o rodapé do dashboard em transições do App Router. O retorno de uma ordem do terminal para `/dashboard/producao` foi conferido no navegador local, preservando o layout administrativo. O comando `npm test` agora descobre os arquivos `.test.ts` em `tests/` via `scripts/run-tests.mjs`, inclusive no Windows. Para desfazer a alteração após o merge, use `git revert <commit-da-correcao>`.

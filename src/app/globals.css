@@ -1859,29 +1859,10 @@ tbody tr:hover {
     display: block;
   }
 }
-/* Terminal touch de produção */
-body:has(.production-terminal-route) {
-  background: #f2f5ee;
-}
-body:has(.production-terminal-route) .app-shell {
-  display: block;
-  min-height: 100dvh;
-  padding: 0;
-}
-body:has(.production-terminal-route) .sidebar,
-body:has(.production-terminal-route) .app-header,
-body:has(.production-terminal-route) .app-footer {
-  display: none;
-}
-body:has(.production-terminal-route) .app-content {
-  width: 100%;
-  max-width: none;
-  min-height: 100dvh;
-  margin: 0;
-  padding: 0;
-}
+/* Terminal touch de produção. A superfície fica isolada do layout do dashboard. */
 .production-terminal-route {
   min-height: 100dvh;
+  background: #f2f5ee;
 }
 .terminal-shell {
   min-height: 100dvh;
@@ -2761,7 +2742,8 @@ body:has(.production-terminal-route) .app-content {
  * altura disponível: nenhuma ação operacional pode ficar abaixo da dobra.
  */
 @media (min-width: 800px) and (orientation: landscape) {
-  body:has(.terminal-workspace .terminal-running) {
+  .production-terminal-route:has(.terminal-workspace .terminal-running) {
+    height: 100dvh;
     overflow: hidden;
   }
 

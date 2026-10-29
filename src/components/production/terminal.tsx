@@ -68,6 +68,10 @@ export function ProductionTerminal({
     serverOffset = useRef(0);
   const storageKey = `frutalize.production.pending.${initial.actor.id}`;
   const canManage = ["admin", "manager"].includes(snapshot.actor.role);
+  const activeRuns = snapshot.runs.filter(
+    (item) =>
+      item.status === "in_progress" && item.operational_status !== "cancelled",
+  );
   const run = snapshot.runs.find((item) => item.id === runId);
   const step = run?.procedure?.steps.find(
     (item) => item.phase === run.phase && item.step === run.step,
@@ -250,60 +254,59 @@ export function ProductionTerminal({
                 As instruções são vinculadas à revisão aprovada para cada ordem.
               </p>
             </div>
-            {canManage && (
-              <button
-                className="terminal-btn terminal-btn-primary"
-                onClick={() => setDialog("create")}
-                disabled={disabled}
-              >
-                Nova ordem
-              </button>
-            )}
-          </div>
-          <div className="terminal-order-grid">
-            {snapshot.runs
-              .filter(
-                (item) =>
-                  item.status === "in_progress" &&
-                  item.operational_status !== "cancelled",
-              )
-              .map((item) => (
+            <div className="terminal-queue-actions">
+              <div className="terminal-count">
+                <strong>{activeRuns.length}</strong>
+                <span>
+                  {activeRuns.length === 1 ? "ordem na fila" : "ordens na fila"}
+                </span>
+              </div>
+              {canManage && (
                 <button
-                  key={item.id}
-                  className="terminal-order-card"
-                  onClick={() => setRunId(item.id)}
+                  className="terminal-btn terminal-btn-primary"
+                  onClick={() => setDialog("create")}
                   disabled={disabled}
                 >
-                  <span className="terminal-order-status">
-                    {states[item.operational_status] ?? item.operational_status}
-                  </span>
-                  <h2>{item.code}</h2>
-                  <p>
-                    {item.procedure?.name ?? "Procedimento ainda não vinculado"}
-                  </p>
-                  <dl>
-                    <div>
-                      <dt>Responsável</dt>
-                      <dd>
-                        {item.operator_name ?? "Aguardando identificação"}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Instrução</dt>
-                      <dd>
-                        {item.phase}.{item.step}
-                      </dd>
-                    </div>
-                  </dl>
-                  <span className="terminal-order-open">Abrir ordem →</span>
+                  Nova ordem
                 </button>
-              ))}
+              )}
+            </div>
           </div>
-          {!snapshot.runs.some(
-            (item) =>
-              item.status === "in_progress" &&
-              item.operational_status !== "cancelled",
-          ) && (
+          <div className="terminal-order-grid">
+            {activeRuns.map((item) => (
+              <button
+                key={item.id}
+                className="terminal-order-card"
+                onClick={() => setRunId(item.id)}
+                disabled={disabled}
+              >
+                <span
+                  className="terminal-order-status"
+                  data-status={item.operational_status}
+                >
+                  {states[item.operational_status] ?? item.operational_status}
+                </span>
+                <h2>{item.code}</h2>
+                <p>
+                  {item.procedure?.name ?? "Procedimento ainda não vinculado"}
+                </p>
+                <dl>
+                  <div>
+                    <dt>Responsável</dt>
+                    <dd>{item.operator_name ?? "Aguardando identificação"}</dd>
+                  </div>
+                  <div>
+                    <dt>Instrução</dt>
+                    <dd>
+                      {item.phase}.{item.step}
+                    </dd>
+                  </div>
+                </dl>
+                <span className="terminal-order-open">Abrir ordem →</span>
+              </button>
+            ))}
+          </div>
+          {activeRuns.length === 0 && (
             <div className="terminal-empty">
               <h2>Nenhuma ordem aguardando</h2>
               <p>

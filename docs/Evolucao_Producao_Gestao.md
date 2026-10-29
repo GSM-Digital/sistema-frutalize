@@ -19,7 +19,7 @@ Devolução comercial registra o material recebido sem recolocá-lo no saldo dis
 4. Cadastrar e aprovar POPs, equipamentos, perfis e regras de qualidade reais. Validar os fluxos em tablet e com dados sintéticos. Definir critérios de liberação com os responsáveis técnicos antes de operação física.
 5. Conferir todos os módulos e saldos no ambiente isolado. A migração de banco exige plano de restauração próprio; rollback do frontend não desfaz migrações.
 
-O repositório só contém chaves publicáveis de exemplo. Não há acesso neste checkout aos projetos Supabase/Vercel, a configuração de homologação, a backup real, a equipamento ou a parâmetros sanitários aprovados. Por isso a branch pode ser revisada e testada localmente, mas não certifica prontidão operacional nem foi aplicada ao banco remoto.
+Em 29/10/2026, as três migrações desta evolução foram aplicadas ao projeto Supabase de desenvolvimento. Uma cópia anterior às migrações foi salva fora do Git e o procedimento de reversão está em [Implantação das migrações no Supabase](Implantacao_Supabase_2026-10-29.md). Ainda não há projeto de homologação separado, restauração ensaiada, parâmetros sanitários aprovados ou aceite em equipamento físico. A instalação técnica não certifica prontidão operacional.
 
 ## Validação reproduzível
 

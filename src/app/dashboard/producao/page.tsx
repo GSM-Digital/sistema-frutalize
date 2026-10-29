@@ -59,7 +59,7 @@ export default async function ProductionPage({
     },
     {
       key: "finalizadas",
-      label: "Finalizadas",
+      label: "Encerradas",
       count: runs.filter((run) => !isActive(run)).length,
     },
     { key: "todas", label: "Todas", count: runs.length },
@@ -83,7 +83,7 @@ export default async function ProductionPage({
         </Link>
       </PageHeading>
       <nav
-        className="flex flex-wrap gap-2"
+        className="production-view-tabs flex flex-wrap gap-2"
         aria-label="Filtrar ordens de produção"
       >
         {views.map((view) => (
@@ -115,53 +115,100 @@ export default async function ProductionPage({
             }
           />
         ) : (
-          <div className="table-scroll">
-            <table>
-              <caption className="sr-only">Ordens de produção recentes</caption>
-              <thead>
-                <tr>
-                  <th>Ordem</th>
-                  <th>Situação</th>
-                  <th>Início</th>
-                  <th>Insumos</th>
-                  <th>Saída</th>
-                  <th>
-                    <span className="sr-only">Ações</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleRuns.map((run) => (
-                  <tr key={run.id}>
-                    <td>
-                      <Link
-                        className="text-link font-semibold"
-                        href={`/dashboard/producao/${run.id}`}
-                      >
-                        {run.code}
-                      </Link>
-                    </td>
-                    <td>
+          <>
+            <ul
+              className="production-mobile-list"
+              aria-label="Ordens de produção recentes"
+            >
+              {visibleRuns.map((run) => (
+                <li className="production-mobile-card" key={run.id}>
+                  <div className="production-mobile-card-heading">
+                    <div>
+                      <span className="eyebrow">Ordem de produção</span>
+                      <h3>{run.code}</h3>
+                    </div>
+                    <span
+                      className="production-mobile-status"
+                      data-status={statuses.get(run.id) ?? run.status}
+                    >
                       {productionStatusLabel(
                         statuses.get(run.id) ?? run.status,
                       )}
-                    </td>
-                    <td>{dateTime(run.started_at)}</td>
-                    <td>{run.input_count}</td>
-                    <td>{run.output_lot_code ?? "—"}</td>
-                    <td>
-                      <Link
-                        className="text-link"
-                        href={`/dashboard/producao/${run.id}`}
-                      >
-                        Ver detalhes
-                      </Link>
-                    </td>
+                    </span>
+                  </div>
+                  <dl>
+                    <div>
+                      <dt>Início</dt>
+                      <dd>{dateTime(run.started_at)}</dd>
+                    </div>
+                    <div>
+                      <dt>Insumos</dt>
+                      <dd>{run.input_count}</dd>
+                    </div>
+                    <div>
+                      <dt>Lote produzido</dt>
+                      <dd>{run.output_lot_code ?? "Ainda não registrado"}</dd>
+                    </div>
+                  </dl>
+                  <Link
+                    className="btn btn-secondary production-mobile-card-action"
+                    href={`/dashboard/producao/${run.id}`}
+                  >
+                    Abrir ordem <span aria-hidden="true">→</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <div className="table-scroll production-desktop-table">
+              <table>
+                <caption className="sr-only">
+                  Ordens de produção recentes
+                </caption>
+                <thead>
+                  <tr>
+                    <th>Ordem</th>
+                    <th>Situação</th>
+                    <th>Início</th>
+                    <th>Insumos</th>
+                    <th>Saída</th>
+                    <th>
+                      <span className="sr-only">Ações</span>
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {visibleRuns.map((run) => (
+                    <tr key={run.id}>
+                      <td>
+                        <Link
+                          className="text-link font-semibold"
+                          href={`/dashboard/producao/${run.id}`}
+                        >
+                          {run.code}
+                        </Link>
+                      </td>
+                      <td>
+                        {productionStatusLabel(
+                          statuses.get(run.id) ?? run.status,
+                        )}
+                      </td>
+                      <td>{dateTime(run.started_at)}</td>
+                      <td>{run.input_count}</td>
+                      <td>{run.output_lot_code ?? "—"}</td>
+                      <td>
+                        <Link
+                          className="text-link"
+                          href={`/dashboard/producao/${run.id}`}
+                        >
+                          Ver detalhes
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </Panel>
     </>

@@ -4,7 +4,7 @@ Esta branch implementa a base de software para os módulos descritos no plano t�
 
 ## Funcionalidades
 
-- `/terminal`: operador autenticado com a própria conta, uma instrução aprovada por vez, revisão do checkpoint, reenvio idempotente, pausa, problema, medição, desvio e finalização. A tela não mostra custos. A autenticação e a autorização são reavaliadas nas ações e RPCs.
+- `/terminal`: operador autenticado com a própria conta, uma instrução aprovada por vez, revisão do checkpoint, reenvio idempotente, pausa, problema, medição, desvio e finalização. A tela não mostra custos. Não há logout automático por inatividade; a troca de operador é manual. A autenticação e a autorização são reavaliadas nas ações e RPCs.
 - `/dashboard/producao/configuracao`: equipamentos, embalagens, POPs, perfis e regras de qualidade versionados, revisão e aprovação. A ordem congela as versões usadas. Ordens podem consumir mais de um lote, com locks em ordem estável e genealogia de entrada e saída.
 - `/dashboard/gestao/inventory`, `/dashboard/gestao/receiving`, `/dashboard/gestao/staff`, `/dashboard/gestao/alerts`, `/dashboard/gestao/finance`, `/dashboard/gestao/commercial` e `/dashboard/gestao/time`: contagem e ajustes compensatórios, checklist de inspeção, documentos privados, vínculo de equipe e bloqueio imediato, alertas configuráveis, títulos e baixas financeiras, pedidos com reservas e expedição atômica, e apontamentos pessoais. Essas rotas usam o layout do dashboard para administradores. `/gestao/[module]` continua acessível diretamente aos papéis autorizados, com o mesmo conteúdo de módulo, sem navegação para o terminal.
 - `/portal`: leitura de pedidos e rastreabilidade permitida ao cliente vinculado. Não há checkout, pagamento ou dados de custos/fornecedores.

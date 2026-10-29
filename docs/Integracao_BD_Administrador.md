@@ -4,7 +4,7 @@
 
 - `/dashboard`, `/dashboard/producao` e `/dashboard/gestao/[module]`: gestão administrativa no mesmo layout. O detalhe `/dashboard/producao/[id]` mostra custos, insumos e lote de saída. Somente `staff_members.role = 'admin'` com `active = true` acessa essas páginas.
 - `/terminal`: execução da produção. Administrador, gestor e colaborador ativos podem entrar; os comandos e dados disponíveis dependem do papel e das regras do banco. O terminal não mostra custos.
-- O dashboard e o terminal não possuem links entre si. Entrar no dashboard de produção, em um módulo de gestão ou no detalhe da ordem não redireciona para o terminal. A rota `/gestao/[module]` continua disponível para os papéis autorizados e usa o mesmo conteúdo de gestão.
+- O dashboard mantém o menu lateral como navegação principal em todas as páginas de gestão; no desktop, a lista de itens possui rolagem própria. A barra horizontal de módulos aparece somente na rota independente `/gestao/[module]`. Dashboard e terminal possuem links explícitos entre si, mas entrar em produção ou gestão não redireciona automaticamente para o terminal.
 
 ## Passos no Supabase
 

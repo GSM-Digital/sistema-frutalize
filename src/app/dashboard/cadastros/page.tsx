@@ -72,9 +72,6 @@ export default function CatalogsPage() {
               <h2>{catalog.title}</h2>
               <p>{catalog.description}</p>
             </div>
-            <span className="catalog-hub-arrow" aria-hidden="true">
-              →
-            </span>
           </Link>
         ))}
       </section>
@@ -86,7 +83,7 @@ export default function CatalogsPage() {
           separado. Depois, informe o local físico onde o lote ficará guardado.
         </p>
         <Link className="text-link" href="/dashboard/recebimentos/novo">
-          Ir para recebimento →
+          Ir para recebimento
         </Link>
       </aside>
     </>

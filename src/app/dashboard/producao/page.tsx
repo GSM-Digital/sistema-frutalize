@@ -154,7 +154,7 @@ export default async function ProductionPage({
                     className="btn btn-secondary production-mobile-card-action"
                     href={`/dashboard/producao/${run.id}`}
                   >
-                    Abrir ordem <span aria-hidden="true">→</span>
+                    Abrir ordem
                   </Link>
                 </li>
               ))}

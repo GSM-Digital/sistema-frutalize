@@ -293,6 +293,8 @@ export function Navigation({
     { href: "/dashboard/lotes", label: "Estoque", icon: "inventory" },
     { href: "/terminal", label: "Terminal", icon: "production" },
   ];
+  const shortcutIndex = shortcuts.findIndex((item) => isActive(item.href!));
+  const activeIndex = menuOpen || shortcutIndex < 0 ? 4 : shortcutIndex;
   return (
     <>
       <nav className="main-nav" aria-label="Menu principal">
@@ -354,6 +356,13 @@ export function Navigation({
         ))}
       </nav>
       <nav className="mobile-nav" aria-label="Menu móvel">
+        <span
+          className="mobile-nav-indicator"
+          aria-hidden="true"
+          style={{
+            transform: `translateX(calc(${activeIndex * 100}% + ${activeIndex * 0.15}rem))`,
+          }}
+        />
         {shortcuts.map((item) => (
           <Link
             key={item.href}
@@ -373,7 +382,7 @@ export function Navigation({
         <button
           ref={moreButton}
           type="button"
-          className={`mobile-nav-link mobile-nav-more${menuOpen ? " mobile-nav-active" : ""}`}
+          className={`mobile-nav-link mobile-nav-more${activeIndex === 4 ? " mobile-nav-active" : ""}`}
           aria-expanded={menuOpen}
           aria-controls="mobile-more-sheet"
           onClick={() => {

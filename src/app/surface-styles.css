@@ -28,7 +28,21 @@
     background: rgba(252, 253, 251, 0.98);
     box-shadow: 0 -8px 28px rgba(29, 55, 31, 0.08);
   }
+  .mobile-nav-indicator {
+    position: absolute;
+    z-index: 0;
+    top: 0.35rem;
+    bottom: calc(0.35rem + env(safe-area-inset-bottom));
+    left: 0.35rem;
+    width: calc((100% - 1.3rem) / 5);
+    border-radius: 0.7rem;
+    background: #e8f1e4;
+    pointer-events: none;
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
   .mobile-nav-link {
+    position: relative;
+    z-index: 1;
     display: flex;
     min-width: 0;
     min-height: 54px;
@@ -77,6 +91,9 @@
     background: #e8f1e4;
     color: #1b5d32;
   }
+  .mobile-nav > .mobile-nav-active {
+    background: transparent;
+  }
   .mobile-nav-backdrop {
     position: fixed;
     z-index: 45;
@@ -85,24 +102,18 @@
     width: 100%;
     border: 0;
     background: rgba(20, 35, 22, 0.38);
-    opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transition:
-      opacity 0.25s ease,
-      visibility 0s linear 0.25s;
   }
   .mobile-nav-backdrop-open {
-    opacity: 1;
     visibility: visible;
     pointer-events: auto;
-    transition-delay: 0s;
   }
   .mobile-nav-panel {
     position: fixed;
-    z-index: 60;
+    z-index: 49;
     right: 0;
-    bottom: calc(4.15rem + env(safe-area-inset-bottom));
+    bottom: 0;
     left: 0;
     display: flex;
     flex-direction: column;
@@ -110,19 +121,17 @@
     overflow: hidden;
     border: 1px solid #d9e2d6;
     border-radius: 1rem 1rem 0 0;
+    padding-bottom: calc(4.15rem + env(safe-area-inset-bottom));
     background: #fcfdfb;
     box-shadow: 0 -12px 36px rgba(29, 55, 31, 0.14);
-    opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transform: translateY(calc(100% + 1rem));
+    transform: translateY(100%);
     transition:
       transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
-      opacity 0.25s ease,
       visibility 0s linear 0.28s;
   }
   .mobile-nav-panel-open {
-    opacity: 1;
     visibility: visible;
     pointer-events: auto;
     transition-delay: 0s;
@@ -214,17 +223,19 @@
   }
   .mobile-nav-panel {
     right: 1rem;
-    bottom: calc(4.55rem + env(safe-area-inset-bottom));
+    bottom: 0;
     left: auto;
     width: min(480px, calc(100vw - 2rem));
     border-radius: 1rem;
+    padding-bottom: calc(4.55rem + env(safe-area-inset-bottom));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .mobile-nav-panel,
   .mobile-nav-backdrop,
-  .sidebar {
+  .sidebar,
+  .mobile-nav-indicator {
     transition-duration: 0.01ms !important;
   }
 }

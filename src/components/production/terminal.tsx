@@ -308,7 +308,7 @@ export function ProductionTerminal({
                     </dd>
                   </div>
                 </dl>
-                <span className="terminal-order-open">Abrir ordem →</span>
+                <span className="terminal-order-open">Abrir ordem</span>
               </button>
             ))}
           </div>

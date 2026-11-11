@@ -1,18 +1,18 @@
 import Link from "next/link";
 import { getAccess } from "@/lib/auth";
 import { SubmitButton } from "@/components/submit-button";
-import { changePassword } from "./actions";
+import { changePassword, resetAccountPassword } from "./actions";
 
 export const instant = false;
 
 export default async function AccountPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erro?: string }>;
+  searchParams: Promise<{ erro?: string; enviado?: string }>;
 }) {
   const access = await getAccess();
   if (access.status !== "ready") return null;
-  const { erro } = await searchParams;
+  const { erro, enviado } = await searchParams;
   return (
     <div className="account-page">
       <h1>Minha conta</h1>
@@ -43,54 +43,74 @@ export default async function AccountPage({
           .
         </p>
       </section>
-      <section
-        className="panel account-panel"
-        aria-labelledby="account-password"
-      >
-        <h2 id="account-password">Alterar senha</h2>
-        <p className="muted">
-          Use pelo menos 12 caracteres, com maiúscula, minúscula, número e
-          símbolo. Você entrará novamente após salvar.
-        </p>
-        <form action={changePassword} className="account-password-form">
-          <label>
-            Senha atual
-            <input
-              type="password"
-              name="current_password"
-              autoComplete="current-password"
-              required
-            />
-          </label>
-          <label>
-            Nova senha
-            <input
-              type="password"
-              name="password"
-              autoComplete="new-password"
-              minLength={12}
-              maxLength={128}
-              required
-            />
-          </label>
-          <label>
-            Repita a nova senha
-            <input
-              type="password"
-              name="confirmation"
-              autoComplete="new-password"
-              minLength={12}
-              maxLength={128}
-              required
-            />
-          </label>
-          {erro && (
-            <p role="alert" className="account-error">
-              {erro.slice(0, 200)}
+      <section className="panel account-panel" aria-label="Segurança da conta">
+        <details
+          className="account-password-details"
+          open={Boolean(erro || enviado)}
+        >
+          <summary className="btn btn-secondary account-password-toggle">
+            Trocar senha
+          </summary>
+          <div className="account-password-content">
+            <p className="muted">
+              Use pelo menos 12 caracteres, com maiúscula, minúscula, número e
+              símbolo. Você entrará novamente após salvar.
             </p>
-          )}
-          <SubmitButton>Salvar nova senha</SubmitButton>
-        </form>
+            {enviado === "1" && (
+              <p role="status" className="account-success">
+                Solicitação enviada para {access.user.email}. Confira também a
+                caixa de spam.
+              </p>
+            )}
+            {erro && (
+              <p role="alert" className="account-error">
+                {erro.slice(0, 200)}
+              </p>
+            )}
+            <form action={changePassword} className="account-password-form">
+              <label>
+                Senha atual
+                <input
+                  type="password"
+                  name="current_password"
+                  autoComplete="current-password"
+                  required
+                />
+              </label>
+              <label>
+                Nova senha
+                <input
+                  type="password"
+                  name="password"
+                  autoComplete="new-password"
+                  minLength={12}
+                  maxLength={128}
+                  required
+                />
+              </label>
+              <label>
+                Repita a nova senha
+                <input
+                  type="password"
+                  name="confirmation"
+                  autoComplete="new-password"
+                  minLength={12}
+                  maxLength={128}
+                  required
+                />
+              </label>
+              <SubmitButton>Salvar nova senha</SubmitButton>
+            </form>
+            <form
+              action={resetAccountPassword}
+              className="account-recovery-form"
+            >
+              <button type="submit" className="account-recovery-link">
+                Esqueci a senha
+              </button>
+            </form>
+          </div>
+        </details>
       </section>
     </div>
   );

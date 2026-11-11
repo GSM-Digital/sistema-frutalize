@@ -158,11 +158,13 @@ textarea {
 }
 .brand-logo {
   display: block;
-  width: 190px;
+  width: 133px;
   height: auto;
 }
 .brand-mark {
   display: none;
+  width: 29px;
+  height: auto;
 }
 .sidebar-label {
   margin: 2.8rem 0.75rem 0.8rem;
@@ -410,6 +412,41 @@ textarea {
 .account-error {
   color: #a33029;
 }
+.account-password-details > summary {
+  display: inline-flex;
+  list-style: none;
+  cursor: pointer;
+}
+.account-password-details > summary::-webkit-details-marker {
+  display: none;
+}
+.account-password-content {
+  margin-top: 1.25rem;
+}
+.account-recovery-form {
+  margin-top: 1rem;
+}
+.account-recovery-link {
+  border: 0;
+  background: transparent;
+  padding: 0.3rem 0;
+  color: #667166;
+  font-size: 0.83rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.account-recovery-link:hover {
+  color: var(--brand);
+}
+.account-success {
+  margin-top: 1rem;
+  border: 1px solid #b8d8b5;
+  border-radius: 0.65rem;
+  background: #edf7eb;
+  padding: 0.85rem;
+  color: #235b31;
+  overflow-wrap: anywhere;
+}
 .app-body {
   min-width: 0;
 }
@@ -612,13 +649,6 @@ a.task-card:hover {
   font-size: 0.72rem;
   line-height: 1.7;
 }
-.home-card-arrow {
-  position: absolute;
-  right: 1.3rem;
-  bottom: 1.2rem;
-  color: #4d8158;
-  font-size: 1rem;
-}
 .card-planned {
   border-style: dashed;
   background: #f8faf6;
@@ -732,7 +762,7 @@ a.module-card:hover {
   position: relative;
   display: grid;
   min-height: 155px;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
   gap: 1rem;
   overflow: hidden;
@@ -767,11 +797,6 @@ a.module-card:hover {
   font-weight: 650;
   letter-spacing: -0.08em;
   pointer-events: none;
-}
-.catalog-hub-arrow {
-  position: relative;
-  z-index: 1;
-  color: #4d8158;
 }
 .catalog-flow-note {
   display: flex;
@@ -899,17 +924,6 @@ a.module-card:hover {
   justify-content: center;
   padding: 2rem 1.5rem;
   text-align: center;
-}
-.empty-mark {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  margin-bottom: 1.2rem;
-  place-items: center;
-  border-radius: 12px;
-  background: #f1f6ed;
-  color: #729264;
-  font-size: 1.25rem;
 }
 .empty-state h3 {
   font-weight: 550;
@@ -1801,7 +1815,7 @@ tbody tr:hover {
     font-size: 1.2rem;
   }
   .brand-logo {
-    width: 170px;
+    width: 119px;
   }
   .sidebar-label,
   .sidebar-footer {
@@ -1853,27 +1867,35 @@ tbody tr:hover {
     top: 0;
     display: flex;
     align-items: center;
-    min-height: calc(58px + env(safe-area-inset-top));
+    height: calc(68px + env(safe-area-inset-top));
+    min-height: 0;
     padding: calc(0.65rem + env(safe-area-inset-top)) 1rem 0.65rem;
+    border-bottom: 0;
+    background: transparent;
+  }
+  .sidebar::before {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
     border-bottom: 1px solid #dfe6dc;
     background: #fcfdfb;
-    transition:
-      background-color 0.25s ease,
-      border-color 0.25s ease;
+    content: "";
+    pointer-events: none;
+    transition: transform 0.25s ease;
   }
   .sidebar .brand {
-    transition:
-      transform 0.25s ease,
-      opacity 0.25s ease;
+    position: relative;
+    z-index: 1;
+    transition: transform 0.25s ease;
   }
   .sidebar.sidebar-hidden {
-    border-color: transparent;
-    background: transparent;
     pointer-events: none;
   }
+  .sidebar.sidebar-hidden::before {
+    transform: translateY(-100%);
+  }
   .sidebar.sidebar-hidden .brand {
-    opacity: 0;
-    transform: translateY(calc(-100% - env(safe-area-inset-top)));
+    transform: translateY(calc(-100% - 2rem - env(safe-area-inset-top)));
   }
   .sidebar.sidebar-hidden .mobile-nav,
   .sidebar.sidebar-hidden .mobile-nav-panel-open,
@@ -1885,7 +1907,7 @@ tbody tr:hover {
     font-size: 1.05rem;
   }
   .brand-logo {
-    width: 158px;
+    width: 110px;
   }
   .main-nav {
     position: fixed;
@@ -2185,7 +2207,7 @@ tbody tr:hover {
 }
 .terminal-brand-logo {
   display: block;
-  width: 130px;
+  width: 91px;
   height: auto;
 }
 .terminal-brand div,
@@ -2357,7 +2379,7 @@ tbody tr:hover {
   display: flex;
   min-height: 58px;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   margin-top: auto;
   border-radius: 0.85rem;
   background: #236b3c;
@@ -3428,7 +3450,7 @@ tbody tr:hover {
     padding: 0.8rem;
   }
   .terminal-brand-logo {
-    width: 100px;
+    width: 70px;
   }
   .terminal-brand strong,
   .terminal-clock strong {

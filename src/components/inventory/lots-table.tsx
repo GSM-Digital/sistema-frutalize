@@ -239,7 +239,7 @@ export function LotsTable({
                 href={`/dashboard/lotes/${lot.id}`}
                 aria-label={`Consultar lote ${lot.code}`}
               >
-                Abrir <span aria-hidden="true">→</span>
+                Abrir
               </Link>
             </div>
             <dl className="lot-mobile-details">
@@ -328,7 +328,7 @@ export function LotsTable({
                     href={`/dashboard/lotes/${lot.id}`}
                     aria-label={`Consultar lote ${lot.code}`}
                   >
-                    Abrir →
+                    Abrir
                   </Link>
                 </td>
               </tr>

@@ -206,7 +206,7 @@ export default async function CatalogPage({
                         aria-label={`Editar ${row.name}`}
                         href={`${path}?editar=${row.id}`}
                       >
-                        Editar →
+                        Editar
                       </Link>
                     </td>
                   </tr>

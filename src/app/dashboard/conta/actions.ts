@@ -34,3 +34,21 @@ export async function changePassword(form: FormData) {
   await access.supabase.auth.signOut();
   redirect("/login");
 }
+
+export async function resetAccountPassword() {
+  const access = await requireStaff();
+  const email = access.user.email;
+  const base = process.env.APP_ORIGIN;
+  if (!email || !base || !/^https:\/\/[a-z0-9.-]+(?::\d+)?$/i.test(base))
+    redirect(
+      "/dashboard/conta?erro=O+envio+por+e-mail+não+está+configurado.+Contate+o+administrador.",
+    );
+  const { error } = await access.supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${base}/auth/confirm`,
+  });
+  if (error)
+    redirect(
+      "/dashboard/conta?erro=Não+foi+possível+enviar+o+e-mail+agora.+Tente+novamente+mais+tarde.",
+    );
+  redirect("/dashboard/conta?enviado=1");
+}

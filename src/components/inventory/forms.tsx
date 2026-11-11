@@ -108,12 +108,12 @@ function Result({ state }: { state: ActionState }) {
               className="text-link block mt-2"
               href={`/dashboard/lotes/${state.lotId}`}
             >
-              Abrir o lote recebido →
+              Abrir o lote recebido
             </Link>
           )}
           {state.receiptId && (
             <Link className="text-link block mt-2" href="/dashboard/lotes">
-              Consultar os lotes recebidos →
+              Consultar os lotes recebidos
             </Link>
           )}
           {state.productionId && (
@@ -121,7 +121,7 @@ function Result({ state }: { state: ActionState }) {
               className="text-link block mt-2"
               href={`/dashboard/producao?ordem=${state.productionId}`}
             >
-              Abrir a produção iniciada →
+              Abrir a produção iniciada
             </Link>
           )}
         </p>

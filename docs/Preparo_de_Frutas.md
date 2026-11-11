@@ -10,12 +10,16 @@ O preparo acontece entre o recebimento e a despolpa. A tela `/terminal/preparo` 
 
 ## Fluxo
 
-1. Selecione um lote de fruta, informe a quantidade e inicie com o PIN. O sistema reserva essa quantidade no estoque e começa a contagem regressiva de três segundos.
+1. Selecione um lote de fruta no estoque e toque em **Começar preparo**. Informe seu PIN para identificação; depois informe a quantidade. Ao iniciar, o sistema reserva essa quantidade no estoque e começa a contagem regressiva de três segundos.
 2. As instruções aprovadas ficam visíveis numa única tela. Pessoas adicionais entram com seu próprio PIN. A duração do preparo e a de cada pessoa são contadas no servidor; pausas pessoais não contam como trabalho. O lembrete padrão é de 90 minutos de trabalho e 30 de descanso, configurável pelo administrador. O lembrete não pausa o trabalho automaticamente.
 3. Na conclusão, informe a quantidade efetivamente preparada, o número de baldes e o local físico. Pesos individuais em kg são opcionais e só devem ser informados se medidos. A parte reservada que não foi preparada volta ao lote de fruta recebido.
 4. Cada balde vira um lote intermediário separado, ligado ao lote de origem e ao preparo. Ele não é polpa pronta. Quando existe guia aprovado para a fruta, a despolpa recebe somente esses lotes preparados. A polpa acabada continua a ser criada apenas na finalização da ordem de produção.
 
 O cancelamento só é permitido a gestor ou administrador, com PIN próprio, justificativa e confirmação de que nenhuma fruta foi preparada. A operação devolve toda a quantidade reservada.
+
+## Guia de demonstração
+
+Um administrador pode manter um rascunho editável e conferir sua aparência no terminal por **Visualizar guia de teste**. A prévia não inicia preparo nem libera o uso físico do lote. O guia só libera o botão de início depois que instruções reais forem revisadas e aprovadas.
 
 ## Dados anteriores ao lançamento
 

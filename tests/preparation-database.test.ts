@@ -89,13 +89,55 @@ test("fruit preparation keeps raw and prepared stock separate, with workers and 
   }
   await user(outsider);
   await assert.rejects(() => db.query("select preparation_snapshot()"));
+  await assert.rejects(() =>
+    db.query("select verify_preparation_pin($1)", ["1234"]),
+  );
   await user(admin);
   const draft = await command("save_guide", {
     productId: product,
     steps: ["Conferir a fruta", "Descascar conforme procedimento"],
   });
   assert.equal(draft.ok, true);
+  const identity = (
+    await db.query<{ result: { ok: boolean; name?: string } }>(
+      "select verify_preparation_pin($1) as result",
+      ["1234"],
+    )
+  ).rows[0].result;
+  assert.equal(identity.name, "Admin Preparo");
+  await user(helper);
+  await assert.rejects(() =>
+    db.query("select update_preparation_guide($1,$2)", [
+      draft.id,
+      JSON.stringify(["Instrução indevida"]),
+    ]),
+  );
+  await user(admin);
+  await db.query("select update_preparation_guide($1,$2)", [
+    draft.id,
+    JSON.stringify([
+      "Conferir o lote e os utensílios",
+      "Seguir o POP aprovado",
+    ]),
+  ]);
+  await db.exec("reset role");
+  assert.deepEqual(
+    (
+      await db.query<{ steps: string[] }>(
+        "select steps from preparation_guides where id=$1",
+        [draft.id],
+      )
+    ).rows[0].steps,
+    ["Conferir o lote e os utensílios", "Seguir o POP aprovado"],
+  );
+  await user(admin);
   await command("approve_guide", { guideId: draft.id });
+  await assert.rejects(() =>
+    db.query("select update_preparation_guide($1,$2)", [
+      draft.id,
+      JSON.stringify(["Mudança após aprovação"]),
+    ]),
+  );
   const startId = randomUUID();
   const started = await command(
     "start",

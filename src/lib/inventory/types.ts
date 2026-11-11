@@ -295,6 +295,11 @@ export type Database = {
     };
     Functions: OperationsDatabaseFunctions & {
       preparation_snapshot: { Args: Record<string, never>; Returns: Json };
+      verify_preparation_pin: { Args: { p_pin: string }; Returns: Json };
+      update_preparation_guide: {
+        Args: { p_guide_id: string; p_steps: Json };
+        Returns: Json;
+      };
       preparation_command: {
         Args: {
           p_command_id: string;

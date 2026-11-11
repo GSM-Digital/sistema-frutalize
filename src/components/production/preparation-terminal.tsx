@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   loadPreparation,
   sendPreparationCommand,
+  verifyPreparationPin,
 } from "@/app/terminal/preparo/actions";
 import type {
   PreparationKind,
@@ -15,6 +16,13 @@ import type {
 function minutes(seconds: number) {
   const value = Math.max(0, Math.floor(seconds));
   return `${String(Math.floor(value / 3600)).padStart(2, "0")}:${String(Math.floor((value % 3600) / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`;
+}
+
+function unitLabel(unit: string, quantity?: number) {
+  if (unit === "pct") return quantity === 1 ? "pacote" : "pacotes";
+  if (unit === "un") return quantity === 1 ? "unidade" : "unidades";
+  if (unit === "cx") return quantity === 1 ? "caixa" : "caixas";
+  return unit;
 }
 
 function worked(
@@ -50,6 +58,11 @@ export function PreparationTerminal({
     initial.batches.find((batch) => batch.status === "active")?.id ?? null,
   );
   const [lotId, setLotId] = useState<string | null>(null);
+  const [setupStep, setSetupStep] = useState<"choose" | "quantity">("choose");
+  const [setupPin, setSetupPin] = useState("");
+  const [setupName, setSetupName] = useState("");
+  const [showActive, setShowActive] = useState(false);
+  const [previewGuideId, setPreviewGuideId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState("");
   const [pinAction, setPinAction] = useState<PinAction | null>(null);
   const [pin, setPin] = useState("");
@@ -100,6 +113,12 @@ export function PreparationTerminal({
   const guide = snapshot.guides.find(
     (entry) =>
       entry.productId === lot?.productId && entry.status === "approved",
+  );
+  const draftGuide = snapshot.guides.find(
+    (entry) => entry.productId === lot?.productId && entry.status === "draft",
+  );
+  const previewGuide = snapshot.guides.find(
+    (entry) => entry.id === previewGuideId,
   );
   const active = snapshot.batches.filter((entry) => entry.status === "active");
   const freezerLocations = snapshot.locations.filter((entry) =>
@@ -160,6 +179,9 @@ export function PreparationTerminal({
       setFinishOpen(false);
       setCancelOpen(false);
       setLotId(null);
+      setSetupStep("choose");
+      setSetupPin("");
+      setSetupName("");
       setMessage(
         kind === "finish"
           ? "Preparo concluído. Os baldes foram registrados no estoque."
@@ -183,8 +205,40 @@ export function PreparationTerminal({
     setPinAction({ kind, batchId, payload });
   }
 
-  function submitPin() {
+  async function submitPin() {
     if (!pinAction || pin.length !== 4) return;
+    if (pinAction.kind === "start" && setupStep === "choose") {
+      if (preview) {
+        setSetupName("Operador de demonstração");
+        setSetupPin(pin);
+        setPin("");
+        setPinAction(null);
+        setSetupStep("quantity");
+        return;
+      }
+      if (inFlight.current) return;
+      inFlight.current = true;
+      setBusy(true);
+      try {
+        const result = await verifyPreparationPin(pin);
+        if (!result.ok) {
+          setMessage(result.error ?? "PIN inválido.");
+          return;
+        }
+        setSetupName(result.name ?? "Operador identificado");
+      } catch {
+        setMessage("Não foi possível confirmar o PIN.");
+        return;
+      } finally {
+        inFlight.current = false;
+        setBusy(false);
+      }
+      setSetupPin(pin);
+      setPin("");
+      setPinAction(null);
+      setSetupStep("quantity");
+      return;
+    }
     void run(pinAction.kind, pinAction.batchId, { ...pinAction.payload, pin });
   }
 
@@ -285,85 +339,75 @@ export function PreparationTerminal({
         </p>
       )}
       {!batch ? (
-        <section className="prep-overview">
-          <div className="prep-pane">
-            <h2>O que vamos preparar?</h2>
-            <p>Escolha a fruta e a quantidade que sai do estoque.</p>
-            <div className="prep-list">
-              {snapshot.rawLots.length ? (
-                snapshot.rawLots.map((entry) => {
-                  const ready = snapshot.guides.some(
-                    (item) =>
-                      item.productId === entry.productId &&
-                      item.status === "approved",
-                  );
-                  return (
-                    <button
-                      key={entry.id}
-                      className={`prep-lot${lotId === entry.id ? " prep-selected" : ""}`}
-                      onClick={() => {
-                        setLotId(entry.id);
-                        setQuantity("");
-                      }}
-                    >
-                      <strong>{entry.productName}</strong>
-                      <span>
-                        {entry.quantity} {entry.unit} · {entry.locationName}
-                      </span>
-                      <small>{entry.code}</small>
-                      {!ready && <em>Guia ainda não aprovado</em>}
-                    </button>
-                  );
-                })
-              ) : (
-                <p>Nenhuma fruta disponível no estoque.</p>
-              )}
-            </div>
-          </div>
-          <div className="prep-pane">
-            <h2>{lot ? lot.productName : "Preparos em andamento"}</h2>
-            {lot ? (
-              <div className="prep-start">
-                <p>
-                  {guide
-                    ? `${guide.steps.length} instruções aprovadas · revisão ${guide.revision}`
-                    : "Esta fruta ainda não tem instruções aprovadas. Peça ao administrador para cadastrar o guia."}
-                </p>
-                <label>
-                  Quantidade a preparar ({lot.unit})
-                  <input
-                    inputMode="decimal"
-                    value={quantity}
-                    onChange={(event) => setQuantity(event.target.value)}
-                    placeholder={`Até ${lot.quantity} ${lot.unit}`}
-                  />
-                </label>
+        <section className="prep-overview prep-overview-single">
+          {setupStep === "choose" ? (
+            <div className="prep-pane">
+              <h2>O que vamos preparar?</h2>
+              <p>Escolha um lote de fruta disponível no estoque.</p>
+              <div className="prep-list">
+                {snapshot.rawLots.length ? (
+                  snapshot.rawLots.map((entry) => {
+                    const ready = snapshot.guides.some(
+                      (item) =>
+                        item.productId === entry.productId &&
+                        item.status === "approved",
+                    );
+                    return (
+                      <button
+                        key={entry.id}
+                        className={`prep-lot${lotId === entry.id ? " prep-selected" : ""}`}
+                        onClick={() => {
+                          setLotId(entry.id);
+                          setQuantity("");
+                          setSetupPin("");
+                          setSetupName("");
+                        }}
+                      >
+                        <strong>{entry.productName}</strong>
+                        <span>
+                          {entry.quantity}{" "}
+                          {unitLabel(entry.unit, entry.quantity)} ·{" "}
+                          {entry.locationName}
+                        </span>
+                        <small>{entry.code}</small>
+                        {!ready && <em>Guia ainda não aprovado</em>}
+                      </button>
+                    );
+                  })
+                ) : (
+                  <p>Nenhuma fruta disponível no estoque.</p>
+                )}
+              </div>
+              <div className="prep-selection-actions">
                 <button
                   className="prep-button prep-primary"
-                  disabled={!guide || !quantity || busy}
+                  disabled={!lot || !guide || busy}
                   onClick={() => {
-                    const amount = Number(quantity.replace(",", "."));
-                    if (
-                      !Number.isFinite(amount) ||
-                      amount <= 0 ||
-                      amount > lot.quantity
-                    ) {
-                      setMessage("Informe uma quantidade dentro do saldo.");
-                      return;
-                    }
-                    askPin("start", null, { lotId: lot.id, quantity: amount });
+                    if (lot) askPin("start", null, { lotId: lot.id });
                   }}
                 >
                   Começar preparo
                 </button>
-                <p className="prep-help">
-                  Após o PIN, a contagem 3 · 2 · 1 inicia o cronômetro.
-                </p>
+                {!guide && draftGuide && (
+                  <button
+                    className="prep-button prep-light"
+                    onClick={() => setPreviewGuideId(draftGuide.id)}
+                  >
+                    Visualizar guia de teste
+                  </button>
+                )}
+                {active.length > 0 && (
+                  <button
+                    className="prep-button prep-light"
+                    onClick={() => setShowActive((current) => !current)}
+                  >
+                    {active.length} preparo(s) em andamento
+                  </button>
+                )}
               </div>
-            ) : (
-              <div className="prep-list">
-                {active.length ? (
-                  active.map((item) => (
+              {showActive && active.length > 0 && (
+                <div className="prep-resume-list">
+                  {active.map((item) => (
                     <button
                       key={item.id}
                       className="prep-lot"
@@ -371,30 +415,120 @@ export function PreparationTerminal({
                     >
                       <strong>{item.productName}</strong>
                       <span>
-                        {item.inputQuantity} {item.inputUnit} ·{" "}
-                        {
-                          item.workers.filter((worker) => !worker.endedAt)
-                            .length
-                        }{" "}
-                        pessoa(s)
+                        {item.inputQuantity}{" "}
+                        {unitLabel(item.inputUnit, item.inputQuantity)} · Em
+                        andamento
                       </span>
                       <small>{item.code}</small>
                     </button>
-                  ))
-                ) : (
-                  <p>Nenhum preparo em andamento.</p>
-                )}
-              </div>
-            )}
-            {lot && (
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="prep-pane">
               <button
-                className="prep-button prep-light"
-                onClick={() => setLotId(null)}
+                className="prep-back"
+                onClick={() => {
+                  setSetupPin("");
+                  setSetupName("");
+                  setSetupStep("choose");
+                }}
               >
-                Ver preparos em andamento
+                ← Voltar aos lotes
               </button>
-            )}
-          </div>
+              <h2>{lot ? lot.productName : "Escolha um lote"}</h2>
+              {lot ? (
+                <div className="prep-start">
+                  <p>
+                    {lot.quantity} {unitLabel(lot.unit, lot.quantity)}{" "}
+                    disponíveis · {lot.locationName}
+                  </p>
+                  <p>
+                    Responsável: <strong>{setupName}</strong>
+                  </p>
+                  <p>
+                    {guide
+                      ? `${guide.steps.length} instruções aprovadas · revisão ${guide.revision}`
+                      : "Esta fruta ainda não tem instruções aprovadas. Peça ao administrador para cadastrar o guia."}
+                  </p>
+                  <label>
+                    Quantidade a preparar ({unitLabel(lot.unit)})
+                    <input
+                      inputMode="decimal"
+                      value={quantity}
+                      onChange={(event) => setQuantity(event.target.value)}
+                      placeholder={`Até ${lot.quantity} ${unitLabel(lot.unit, lot.quantity)}`}
+                    />
+                  </label>
+                  <button
+                    className="prep-button prep-primary"
+                    disabled={!guide || !quantity || !setupPin || busy}
+                    onClick={() => {
+                      const amount = Number(quantity.replace(",", "."));
+                      if (
+                        !Number.isFinite(amount) ||
+                        amount <= 0 ||
+                        amount > lot.quantity
+                      ) {
+                        setMessage("Informe uma quantidade dentro do saldo.");
+                        return;
+                      }
+                      void run("start", null, {
+                        lotId: lot.id,
+                        quantity: amount,
+                        pin: setupPin,
+                      });
+                    }}
+                  >
+                    Iniciar cronômetro e preparo
+                  </button>
+                  <p className="prep-help">
+                    Identificação concluída. Após informar a quantidade, a
+                    contagem 3 · 2 · 1 inicia o cronômetro.
+                  </p>
+                </div>
+              ) : (
+                <div className="prep-list">
+                  {active.length ? (
+                    active.map((item) => (
+                      <button
+                        key={item.id}
+                        className="prep-lot"
+                        onClick={() => setSelectedId(item.id)}
+                      >
+                        <strong>{item.productName}</strong>
+                        <span>
+                          {item.inputQuantity} {item.inputUnit} ·{" "}
+                          {
+                            item.workers.filter((worker) => !worker.endedAt)
+                              .length
+                          }{" "}
+                          pessoa(s)
+                        </span>
+                        <small>{item.code}</small>
+                      </button>
+                    ))
+                  ) : (
+                    <p>Nenhum preparo em andamento.</p>
+                  )}
+                </div>
+              )}
+              {lot && (
+                <button
+                  className="prep-button prep-light"
+                  onClick={() => {
+                    setLotId(null);
+                    setSetupPin("");
+                    setSetupName("");
+                    setSetupStep("choose");
+                  }}
+                >
+                  Escolher outro lote
+                </button>
+              )}
+            </div>
+          )}
         </section>
       ) : (
         <section className="prep-active">
@@ -699,11 +833,48 @@ export function PreparationTerminal({
               <button
                 className="prep-button prep-primary"
                 disabled={pin.length !== 4 || busy}
-                onClick={submitPin}
+                onClick={() => void submitPin()}
               >
                 OK
               </button>
             </div>
+          </section>
+        </div>
+      )}
+      {previewGuide && (
+        <div
+          className="prep-modal-backdrop"
+          onClick={() => setPreviewGuideId(null)}
+        >
+          <section
+            className="prep-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Prévia do guia de preparo"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2>Prévia · {previewGuide.productName}</h2>
+            <p>
+              Rascunho de demonstração. O preparo real continua bloqueado até a
+              aprovação do guia.
+            </p>
+            <div className="prep-steps">
+              <h3>Como preparar</h3>
+              <ol>
+                {previewGuide.steps.map((step, index) => (
+                  <li key={index}>
+                    <b>{index + 1}</b>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+            <button
+              className="prep-button prep-light"
+              onClick={() => setPreviewGuideId(null)}
+            >
+              Fechar prévia
+            </button>
           </section>
         </div>
       )}

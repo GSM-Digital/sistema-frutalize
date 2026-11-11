@@ -18,6 +18,53 @@ export async function loadPreparation(): Promise<PreparationSnapshot> {
   return data as unknown as PreparationSnapshot;
 }
 
+export async function verifyPreparationPin(
+  pin: string,
+): Promise<{ ok: boolean; name?: string; error?: string }> {
+  const access = await getProductionAccess();
+  if (access.status !== "ready")
+    return { ok: false, error: "Seu acesso ao terminal não está ativo." };
+  if (!/^\d{4}$/.test(pin))
+    return { ok: false, error: "Informe um PIN de 4 dígitos." };
+  const { data, error } = await access.supabase.rpc("verify_preparation_pin", {
+    p_pin: pin,
+  });
+  if (error || !data || typeof data !== "object" || Array.isArray(data))
+    return { ok: false, error: "Não foi possível confirmar o PIN." };
+  return data as { ok: boolean; name?: string; error?: string };
+}
+
+export async function updatePreparationGuide(
+  guideId: string,
+  steps: string[],
+): Promise<PreparationResult> {
+  const access = await getProductionAccess();
+  if (access.status !== "ready")
+    return { ok: false, error: "Seu acesso não está ativo." };
+  if (
+    !isUuid(guideId) ||
+    steps.length < 1 ||
+    steps.length > 6 ||
+    steps.some((step) => step.trim().length < 5 || step.trim().length > 140)
+  )
+    return { ok: false, error: "Confira as instruções do guia." };
+  const { data, error } = await access.supabase.rpc(
+    "update_preparation_guide",
+    { p_guide_id: guideId, p_steps: steps.map((step) => step.trim()) },
+  );
+  if (error)
+    return {
+      ok: false,
+      error:
+        error.code === "42501"
+          ? "Somente administradores podem editar o guia."
+          : error.code === "P0001"
+            ? error.message
+            : "Não foi possível salvar o guia.",
+    };
+  return data as PreparationResult;
+}
+
 export async function sendPreparationCommand(
   command: PreparationCommand,
 ): Promise<PreparationResult> {

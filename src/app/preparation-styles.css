@@ -78,6 +78,23 @@
   gap: 16px;
   min-height: calc(100dvh - 124px);
 }
+.prep-overview-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+.prep-overview-single .prep-list {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  align-content: start;
+}
+.prep-selection-actions,
+.prep-resume-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+.prep-resume-list .prep-lot {
+  min-width: min(100%, 320px);
+}
 .prep-pane {
   min-width: 0;
   padding: clamp(18px, 2.4vw, 30px);

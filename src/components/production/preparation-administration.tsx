@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import {
   loadPreparation,
   sendPreparationCommand,
+  updatePreparationGuide,
 } from "@/app/terminal/preparo/actions";
 import type { PreparationSnapshot } from "@/lib/preparation/types";
 
@@ -15,6 +16,7 @@ export function PreparationAdministration({
   const [snapshot, setSnapshot] = useState(initial);
   const [productId, setProductId] = useState(initial.products[0]?.id ?? "");
   const [steps, setSteps] = useState([""]);
+  const [editingGuideId, setEditingGuideId] = useState<string | null>(null);
   const [workMinutes, setWorkMinutes] = useState(
     String(initial.reminders.workMinutes),
   );
@@ -25,6 +27,44 @@ export function PreparationAdministration({
   const [message, setMessage] = useState("");
   const inFlight = useRef(false);
   const pendingIntent = useRef<{ key: string; id: string } | null>(null);
+  const editingGuide = snapshot.guides.find(
+    (guide) => guide.id === editingGuideId,
+  );
+  const canSaveGuide =
+    !!productId &&
+    steps.every((step) => step.trim().length >= 5) &&
+    (!editingGuide ||
+      JSON.stringify(steps.map((step) => step.trim())) !==
+        JSON.stringify(editingGuide.steps));
+  async function saveGuide() {
+    if (!editingGuideId) {
+      await execute("save_guide", {
+        productId,
+        steps: steps.map((step) => step.trim()),
+      });
+      return;
+    }
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setBusy(true);
+    setMessage("");
+    try {
+      const result = await updatePreparationGuide(editingGuideId, steps);
+      if (!result.ok) {
+        setMessage(result.error ?? "Não foi possível salvar o rascunho.");
+        return;
+      }
+      setSnapshot(await loadPreparation());
+      setEditingGuideId(null);
+      setSteps([""]);
+      setMessage("Rascunho atualizado.");
+    } catch {
+      setMessage("Não foi possível atualizar. Verifique a conexão.");
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
+    }
+  }
   async function execute(
     kind: "save_guide" | "approve_guide" | "set_reminders",
     payload: Record<string, unknown>,
@@ -75,7 +115,12 @@ export function PreparationAdministration({
           Fruta
           <select
             value={productId}
-            onChange={(event) => setProductId(event.target.value)}
+            onChange={(event) => {
+              setProductId(event.target.value);
+              setEditingGuideId(null);
+              setSteps([""]);
+            }}
+            disabled={busy}
           >
             {snapshot.products.map((product) => (
               <option key={product.id} value={product.id}>
@@ -119,20 +164,26 @@ export function PreparationAdministration({
               Remover última
             </button>
           )}
-          <button
-            className="btn btn-primary"
-            disabled={
-              busy || !productId || steps.some((step) => step.trim().length < 5)
-            }
-            onClick={() =>
-              void execute("save_guide", {
-                productId,
-                steps: steps.map((step) => step.trim()),
-              })
-            }
-          >
-            Salvar rascunho
-          </button>
+          {canSaveGuide && (
+            <button
+              className="btn btn-primary"
+              disabled={busy}
+              onClick={() => void saveGuide()}
+            >
+              {editingGuideId ? "Salvar alterações" : "Salvar rascunho"}
+            </button>
+          )}
+          {editingGuideId && (
+            <button
+              className="btn btn-secondary"
+              onClick={() => {
+                setEditingGuideId(null);
+                setSteps([""]);
+              }}
+            >
+              Cancelar edição
+            </button>
+          )}
         </div>
         <h3 className="mt-8 text-xl font-bold">Versões</h3>
         <div className="mt-3 grid gap-3">
@@ -147,15 +198,29 @@ export function PreparationAdministration({
                   {guide.status === "approved" ? "Aprovado" : "Rascunho"}
                 </strong>
                 {guide.status === "draft" && (
-                  <button
-                    className="btn btn-primary"
-                    disabled={busy}
-                    onClick={() =>
-                      void execute("approve_guide", { guideId: guide.id })
-                    }
-                  >
-                    Aprovar guia
-                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      className="btn btn-secondary"
+                      disabled={busy}
+                      onClick={() => {
+                        setProductId(guide.productId);
+                        setEditingGuideId(guide.id);
+                        setSteps([...guide.steps]);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                    >
+                      Editar rascunho
+                    </button>
+                    <button
+                      className="btn btn-primary"
+                      disabled={busy}
+                      onClick={() =>
+                        void execute("approve_guide", { guideId: guide.id })
+                      }
+                    >
+                      Aprovar guia
+                    </button>
+                  </div>
                 )}
               </div>
               <ol className="mt-3 list-decimal pl-5">

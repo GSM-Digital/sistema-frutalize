@@ -83,7 +83,7 @@ export default async function ProductionPage({
         </Link>
       </PageHeading>
       <nav
-        className="production-view-tabs flex flex-wrap gap-2"
+        className="production-view-tabs"
         aria-label="Filtrar ordens de produção"
       >
         {views.map((view) => (
@@ -93,7 +93,8 @@ export default async function ProductionPage({
             aria-current={selectedView === view.key ? "page" : undefined}
             className={`btn ${selectedView === view.key ? "btn-primary" : "btn-secondary"}`}
           >
-            {view.label} <span className="ml-1 opacity-70">{view.count}</span>
+            {view.label}{" "}
+            <span className="opacity-70 tabular-nums">{view.count}</span>
           </Link>
         ))}
       </nav>

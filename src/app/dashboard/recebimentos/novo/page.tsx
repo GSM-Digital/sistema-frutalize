@@ -11,7 +11,7 @@ export default async function NewReceiptPage() {
   const options = await catalogOptions(access.supabase).catch(() => null);
   if (!options) return <DataNotice />;
   return (
-    <div className="receipt-page">
+    <div className="receipt-page layout-stack">
       <PageHeading
         title="Novo recebimento"
         description="Registre a entrada, a conferência e o custo do material recebido."
@@ -27,7 +27,7 @@ export default async function NewReceiptPage() {
         title="Comece pela entrega"
         description="Uma entrega pode incluir frutas, embalagens, uniformes, limpeza e outros itens."
       >
-        <div className="receipt-panel-body">
+        <div className="panel-inset">
           <ReceiptForm
             options={options}
             requestId={crypto.randomUUID()}

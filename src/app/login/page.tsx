@@ -46,7 +46,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </p>
       </section>
 
-      <section className="flex min-h-screen items-center justify-center px-5 py-10 sm:px-10">
+      <section className="page-inset flex min-h-screen items-center justify-center">
         <div className="w-full max-w-md">
           <div className="mb-10 flex items-center gap-3 lg:hidden">
             <span

@@ -88,27 +88,25 @@ export default async function CatalogPage({
         </div>
       </PageHeading>
       {showForm && (
-        <div className="mb-6">
-          <Panel
-            title={
-              record
-                ? `Editar ${config.singular}`
-                : `Cadastrar ${config.singular}`
-            }
-            description="Campos com * são obrigatórios. Alterações preservam o histórico."
-          >
-            <div className="p-5 sm:p-6">
-              <CatalogForm
-                key={record?.id ?? `new-${tipo}`}
-                entity={config.entity}
-                record={record}
-                options={options}
-                skuSuggestion={`FRU-${crypto.randomUUID().slice(0, 8).toUpperCase()}`}
-                cancelHref={path}
-              />
-            </div>
-          </Panel>
-        </div>
+        <Panel
+          title={
+            record
+              ? `Editar ${config.singular}`
+              : `Cadastrar ${config.singular}`
+          }
+          description="Campos com * são obrigatórios. Alterações preservam o histórico."
+        >
+          <div className="panel-inset">
+            <CatalogForm
+              key={record?.id ?? `new-${tipo}`}
+              entity={config.entity}
+              record={record}
+              options={options}
+              skuSuggestion={`FRU-${crypto.randomUUID().slice(0, 8).toUpperCase()}`}
+              cancelHref={path}
+            />
+          </div>
+        </Panel>
       )}
       <Panel
         title="Cadastros da fábrica"

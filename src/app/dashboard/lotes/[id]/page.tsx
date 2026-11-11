@@ -132,7 +132,7 @@ export default async function LotPage({
             </div>
           ))}
         </dl>
-        <div className="border-t border-line p-5 sm:p-6">
+        <div className="border-t border-line panel-inset">
           <h3 className="text-sm font-semibold">
             {lot.origin === "production"
               ? "Observações da produção"
@@ -143,35 +143,31 @@ export default async function LotPage({
           </p>
         </div>
       </Panel>
-      <div className="mt-6">
-        <Panel
-          title="Movimentar este lote"
-          description="Envie para produção, registre uma saída externa ou dê baixa por perda."
-        >
-          <div className="p-5 sm:p-6">
-            <MovementForm
-              lot={lot}
-              requestId={crypto.randomUUID()}
-              now={now}
-              today={today}
-            />
-          </div>
-        </Panel>
-      </div>
-      <div className="mt-6">
-        <Panel
-          title="Histórico deste lote"
-          description="A data operacional e a data real de cada registro são mantidas separadamente."
-        >
-          <MovementsTable movements={movements.data} />
-          <Pagination
-            count={movements.count ?? 0}
-            page={page}
-            path={`/dashboard/lotes/${id}`}
-            params={search}
+      <Panel
+        title="Movimentar este lote"
+        description="Envie para produção, registre uma saída externa ou dê baixa por perda."
+      >
+        <div className="panel-inset">
+          <MovementForm
+            lot={lot}
+            requestId={crypto.randomUUID()}
+            now={now}
+            today={today}
           />
-        </Panel>
-      </div>
+        </div>
+      </Panel>
+      <Panel
+        title="Histórico deste lote"
+        description="A data operacional e a data real de cada registro são mantidas separadamente."
+      >
+        <MovementsTable movements={movements.data} />
+        <Pagination
+          count={movements.count ?? 0}
+          page={page}
+          path={`/dashboard/lotes/${id}`}
+          params={search}
+        />
+      </Panel>
     </>
   );
 }

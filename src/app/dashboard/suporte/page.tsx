@@ -104,10 +104,10 @@ export default async function SupportPage({
       ) : (
         <section className="space-y-3" aria-label="Relatos recebidos">
           {reports.length === 0 && (
-            <p className="panel p-5">Nenhum relato encontrado.</p>
+            <p className="panel panel-inset">Nenhum relato encontrado.</p>
           )}
           {reports.map((report) => (
-            <article key={report.id} className="panel space-y-3 p-5">
+            <article key={report.id} className="panel panel-inset space-y-3">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="font-semibold">
                   {reportCategories[report.category]}

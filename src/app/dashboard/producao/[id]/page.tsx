@@ -57,7 +57,7 @@ export default async function ProductionDetailPage({
         </Link>
       </PageHeading>
       <Panel title="Resumo da ordem">
-        <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <dl className="details-grid">
           <div>
             <dt className="muted text-sm">Situação</dt>
             <dd className="font-semibold">{productionStatusLabel(status)}</dd>
@@ -100,7 +100,9 @@ export default async function ProductionDetailPage({
       )}
       <Panel title="Insumos consumidos">
         {inputs.length === 0 ? (
-          <p className="muted text-sm">Nenhum insumo consumido até agora.</p>
+          <p className="panel-inset muted text-sm">
+            Nenhum insumo consumido até agora.
+          </p>
         ) : (
           <div className="table-scroll">
             <table>

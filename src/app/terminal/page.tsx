@@ -16,8 +16,8 @@ export default async function TerminalPage({
   const access = await getProductionAccess();
   if (access.status !== "ready")
     return (
-      <main className="mx-auto flex min-h-screen max-w-xl items-center px-5">
-        <section className="panel p-7">
+      <main className="page-inset mx-auto flex min-h-screen max-w-xl items-center">
+        <section className="panel panel-inset">
           <h1 className="mt-3 text-2xl font-semibold">
             Acesso aguardando liberação
           </h1>
@@ -35,7 +35,7 @@ export default async function TerminalPage({
   );
   if (error)
     return (
-      <main className="mx-auto flex min-h-screen max-w-xl items-center px-5">
+      <main className="page-inset mx-auto flex min-h-screen max-w-xl items-center">
         <section className="notice">
           <h1 className="text-xl font-semibold">Terminal indisponível</h1>
           <p className="mt-3">

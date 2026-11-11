@@ -1,22 +1,24 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState } from "react";
 import { reportCategories, supportImageLimit } from "@/lib/support/types";
 import { SubmitButton } from "@/components/submit-button";
-import { sendReport } from "./actions";
 
-export function ReportForm({ sourcePath }: { sourcePath: string }) {
-  const [state, action, pending] = useActionState(sendReport, {});
+export function ReportForm({
+  sourcePath,
+  action,
+  pending,
+  error,
+}: {
+  sourcePath: string;
+  action: (data: FormData) => void;
+  pending: boolean;
+  error?: string;
+}) {
   const [fileError, setFileError] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("problem");
 
-  if (state.success)
-    return (
-      <p role="status" className="form-success">
-        Relato enviado para o Suporte.
-      </p>
-    );
   return (
     <form action={action} className="inventory-form report-form">
       <input type="hidden" name="source_path" value={sourcePath} />
@@ -65,14 +67,14 @@ export function ReportForm({ sourcePath }: { sourcePath: string }) {
               );
             }}
           />
+          <span id="support-image-limit" className="report-field-help muted">
+            Até 5 imagens PNG, JPG ou WebP, com 3,5 MB no total.
+          </span>
         </label>
-        <p id="support-image-limit" className="muted text-sm">
-          Até 5 imagens PNG, JPG ou WebP, com 3,5 MB no total.
-        </p>
       </fieldset>
-      {(fileError || state.error) && (
+      {(fileError || error) && (
         <p role="alert" className="form-error">
-          {fileError || state.error}
+          {fileError || error}
         </p>
       )}
       <fieldset disabled={!description.trim() || Boolean(fileError) || pending}>

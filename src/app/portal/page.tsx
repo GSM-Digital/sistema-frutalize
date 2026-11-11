@@ -20,8 +20,8 @@ export default async function CustomerPortal() {
     p_module: "commercial",
   });
   return (
-    <main className="mx-auto max-w-5xl space-y-6 p-6">
-      <header className="flex items-center justify-between gap-4">
+    <main className="layout-stack page-inset mx-auto max-w-5xl">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold">Meus pedidos</h1>
         </div>

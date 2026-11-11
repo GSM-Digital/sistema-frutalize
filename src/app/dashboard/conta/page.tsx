@@ -37,10 +37,10 @@ export default async function AccountPage({
         ? "Gestor"
         : "Colaborador";
   return (
-    <div className="account-page">
+    <div className="account-page layout-stack">
       <h1>Minha conta</h1>
       <section
-        className="panel account-panel"
+        className="panel panel-inset account-panel"
         aria-labelledby="account-details"
       >
         <h2 id="account-details">Dados da conta</h2>
@@ -168,7 +168,10 @@ export default async function AccountPage({
           </div>
         </details>
       </section>
-      <section className="panel account-panel" aria-label="Segurança da conta">
+      <section
+        className="panel panel-inset account-panel"
+        aria-label="Segurança da conta"
+      >
         <details
           className="account-password-details"
           open={Boolean(erro || enviado)}

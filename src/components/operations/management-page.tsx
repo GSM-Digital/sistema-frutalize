@@ -79,16 +79,16 @@ export async function ManagementPage({
     <div
       className={
         surface === "standalone"
-          ? "mx-auto min-h-screen max-w-7xl px-4 py-7 sm:px-8"
-          : "space-y-6"
+          ? "layout-stack page-inset mx-auto max-w-7xl"
+          : "layout-stack"
       }
     >
       {surface === "standalone" && (
-        <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <header className="flex flex-wrap items-center justify-between gap-4">
           <Link className="text-xl font-bold text-brand" href="/gestao">
             Frutalize
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3">
             <span className="text-sm">{access.member.display_name}</span>
             <ReportTrigger className="text-link">
               Reportar problema
@@ -100,10 +100,7 @@ export async function ManagementPage({
         </header>
       )}
       {surface === "standalone" && (
-        <nav
-          className="mb-8 flex flex-wrap gap-2"
-          aria-label="Módulos de gestão"
-        >
+        <nav className="flex flex-wrap gap-2" aria-label="Módulos de gestão">
           {allowed.map((item) => (
             <Link
               className={`btn ${item === selectedModule ? "btn-primary" : "btn-secondary"}`}

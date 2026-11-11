@@ -16,8 +16,8 @@ export default async function DashboardLayout({
   const access = await getAccess();
   if (access.status !== "ready")
     return (
-      <main className="mx-auto flex min-h-screen max-w-xl items-center px-5">
-        <section className="panel p-7">
+      <main className="page-inset mx-auto flex min-h-screen max-w-xl items-center">
+        <section className="panel panel-inset">
           <h1 className="mt-3 text-2xl font-semibold">
             {access.status === "forbidden"
               ? "Acesso aguardando liberação"
@@ -87,7 +87,7 @@ export default async function DashboardLayout({
         />
       </aside>
       <div className="app-body">
-        <main id="conteudo" className="app-content">
+        <main id="conteudo" className="app-content layout-stack">
           {children}
         </main>
         <footer className="app-footer">

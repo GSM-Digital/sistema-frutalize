@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useActionState,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { sendReport } from "@/app/suporte/relatar/actions";
 import { ReportForm } from "@/app/suporte/relatar/report-form";
 
 const ReportDialogContext = createContext<
@@ -58,11 +66,21 @@ function ReportDialog({
   onClose: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const confirmation = useRef<HTMLHeadingElement>(null);
+  const [state, action, pending] = useActionState(sendReport, {});
 
   useEffect(() => {
     const element = dialog.current;
     if (element && !element.open) element.showModal();
   }, []);
+
+  useEffect(() => {
+    if (!state.success) return;
+    const element = dialog.current;
+    confirmation.current?.focus({ preventScroll: true });
+    const timer = window.setTimeout(() => element?.close(), 9000);
+    return () => window.clearTimeout(timer);
+  }, [state.success]);
 
   return (
     <dialog
@@ -71,18 +89,37 @@ function ReportDialog({
       aria-labelledby="report-dialog-title"
       onClose={onClose}
     >
-      <header className="report-dialog-header">
-        <h2 id="report-dialog-title">Reportar problema</h2>
-        <button
-          type="button"
-          className="receipt-picker-close"
-          aria-label="Fechar relato"
-          onClick={() => dialog.current?.close()}
-        >
-          ×
-        </button>
-      </header>
-      <ReportForm sourcePath={sourcePath} />
+      {state.success ? (
+        <div className="report-confirmation">
+          <h2 id="report-dialog-title" ref={confirmation} tabIndex={-1}>
+            Obrigado pelo feedback!
+          </h2>
+          <p role="status">
+            Em breve, alguém da equipe entrará em contato para dar retorno e, se
+            for o caso, pedir que você teste novamente.
+          </p>
+        </div>
+      ) : (
+        <>
+          <header className="report-dialog-header">
+            <h2 id="report-dialog-title">Reportar problema</h2>
+            <button
+              type="button"
+              className="receipt-picker-close"
+              aria-label="Fechar relato"
+              onClick={() => dialog.current?.close()}
+            >
+              ×
+            </button>
+          </header>
+          <ReportForm
+            sourcePath={sourcePath}
+            action={action}
+            pending={pending}
+            error={state.error}
+          />
+        </>
+      )}
     </dialog>
   );
 }

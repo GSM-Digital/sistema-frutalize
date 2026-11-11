@@ -259,7 +259,7 @@ function CommandForm({
     }
   }
   return (
-    <details className="rounded-xl border border-line bg-surface p-5">
+    <details className="panel panel-inset">
       <summary className="cursor-pointer font-semibold">
         {definition.title}
       </summary>
@@ -371,7 +371,7 @@ function SpecialForm({
     }
   }
   return (
-    <details className="rounded-xl border border-line bg-surface p-5">
+    <details className="panel panel-inset">
       <summary className="cursor-pointer font-semibold">
         {kind === "invite"
           ? "Convidar pessoa por e-mail"
@@ -712,7 +712,7 @@ export function SnapshotTables({
   documentBasePath?: string;
 }) {
   return (
-    <div className="space-y-5">
+    <div className="layout-stack">
       {Object.entries(tableDefinitions)
         .filter(
           ([list]) =>
@@ -781,7 +781,7 @@ export function OperationsWorkspace({
   documentBasePath?: string;
 }) {
   return (
-    <div className="space-y-6">
+    <div className="layout-stack">
       <div className="grid gap-3 lg:grid-cols-2">
         {operationForms[module].map((definition) => (
           <CommandForm

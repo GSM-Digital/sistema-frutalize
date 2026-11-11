@@ -90,7 +90,7 @@ export default async function VisualizarPage({
             />
           </aside>
           <div className="app-body">
-            <main className="app-content">
+            <main className="app-content layout-stack">
               <div className="page-heading">
                 <div>
                   <h1>Ordem {previewSnapshot.runs[0].code}</h1>

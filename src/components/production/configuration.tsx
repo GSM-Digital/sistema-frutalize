@@ -78,7 +78,7 @@ function ActionForm({
     {},
   );
   return (
-    <form action={action} className="inventory-form space-y-4">
+    <form action={action} className="inventory-form">
       <input type="hidden" name="kind" value={kind} />
       {children}
       {state.error && (
@@ -301,13 +301,13 @@ export function ProductionConfigurationPanel({
     })),
   ];
   return (
-    <div className="space-y-6">
+    <div className="layout-stack">
       <p className="notice">
         Cadastre somente informações verificadas com os responsáveis. Cada
         alteração gera um rascunho de revisão; a liberação exige revisão e
         aprovação registradas.
       </p>
-      <section className="panel p-5 sm:p-7">
+      <section className="panel panel-inset">
         <h2 className="text-lg font-semibold">Revisões e aprovações</h2>
         {versions.length === 0 && (
           <p className="muted mt-3">
@@ -413,7 +413,7 @@ export function ProductionConfigurationPanel({
           ))}
         </div>
       </section>
-      <section className="panel p-5 sm:p-7">
+      <section className="panel panel-inset">
         <h2 className="text-lg font-semibold">Equipamentos e instrumentos</h2>
         <ul className="my-4 space-y-2 text-sm">
           {data.equipment.map((item) => (
@@ -467,7 +467,7 @@ export function ProductionConfigurationPanel({
           </div>
         </details>
       </section>
-      <section className="panel p-5 sm:p-7">
+      <section className="panel panel-inset">
         <h2 className="text-lg font-semibold">Embalagens</h2>
         <ul className="my-4 space-y-2 text-sm">
           {data.packaging.map((item) => (
@@ -502,7 +502,7 @@ export function ProductionConfigurationPanel({
           </div>
         </details>
       </section>
-      <section className="panel p-5 sm:p-7">
+      <section className="panel panel-inset">
         <h2 className="text-lg font-semibold">Novo procedimento</h2>
         <p className="muted mt-2 text-sm">
           Para alterar um procedimento existente, cadastre uma nova revisão com
@@ -522,7 +522,7 @@ export function ProductionConfigurationPanel({
           </div>
         </details>
       </section>
-      <section className="panel p-5 sm:p-7">
+      <section className="panel panel-inset">
         <h2 className="text-lg font-semibold">Novo perfil de máquina</h2>
         <details className="mt-4">
           <summary className="text-link cursor-pointer">
@@ -557,7 +557,7 @@ export function ProductionConfigurationPanel({
           </div>
         </details>
       </section>
-      <section className="panel p-5 sm:p-7">
+      <section className="panel panel-inset">
         <h2 className="text-lg font-semibold">Nova regra de qualidade</h2>
         <details className="mt-4">
           <summary className="text-link cursor-pointer">
@@ -601,7 +601,7 @@ export function ProductionConfigurationPanel({
           </div>
         </details>
       </section>
-      <section className="panel p-5 sm:p-7">
+      <section className="panel panel-inset">
         <h2 className="text-lg font-semibold">Calibrações dos instrumentos</h2>
         <ul className="my-4 space-y-2 text-sm">
           {data.calibrations.map((item) => (

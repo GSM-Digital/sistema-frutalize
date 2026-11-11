@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   loadTerminalSnapshot,
@@ -189,11 +190,16 @@ export function ProductionTerminal({
     <div className="terminal-shell">
       <header className="terminal-topbar">
         <div className="terminal-brand">
-          <span className="terminal-brand-mark" aria-hidden="true">
-            F
-          </span>
+          <Image
+            className="terminal-brand-logo"
+            src="/frutalize-logo.svg"
+            alt="Frutalize, polpas de frutas"
+            width={130}
+            height={53}
+            unoptimized
+          />
           <div>
-            <strong>Frutalize · Produção</strong>
+            <strong>Produção</strong>
             <span>{snapshot.actor.name}</span>
           </div>
         </div>

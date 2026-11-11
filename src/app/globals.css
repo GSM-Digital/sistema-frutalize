@@ -156,31 +156,10 @@ textarea {
   font-weight: 700;
   letter-spacing: -0.04em;
 }
-.brand small {
+.brand-logo {
   display: block;
-  margin-top: 0.1rem;
-  font-size: 0.67rem;
-  color: #7b867b;
-  font-weight: 400;
-  letter-spacing: 0.01em;
-}
-.brand-mark {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 42px;
-  border-radius: 12px 12px 18px 12px;
-  background: #236b3c;
-  color: white;
-  font-size: 1.5rem;
-}
-.brand-mark span {
-  position: absolute;
-  right: 6px;
-  top: -4px;
-  color: #c4dd79;
-  font-size: 1.1rem;
+  width: 190px;
+  height: auto;
 }
 .sidebar-label {
   margin: 2.8rem 0.75rem 0.8rem;
@@ -1661,10 +1640,8 @@ tbody tr:hover {
   .brand {
     font-size: 1.2rem;
   }
-  .brand-mark {
-    width: 34px;
-    height: 36px;
-    font-size: 1.3rem;
+  .brand-logo {
+    width: 170px;
   }
   .sidebar-label,
   .sidebar-footer {
@@ -1720,17 +1697,35 @@ tbody tr:hover {
     padding: calc(0.65rem + env(safe-area-inset-top)) 1rem 0.65rem;
     border-bottom: 1px solid #dfe6dc;
     background: #fcfdfb;
+    transition:
+      background-color 0.25s ease,
+      border-color 0.25s ease;
+  }
+  .sidebar .brand {
+    transition:
+      transform 0.25s ease,
+      opacity 0.25s ease;
+  }
+  .sidebar.sidebar-hidden {
+    border-color: transparent;
+    background: transparent;
+    pointer-events: none;
+  }
+  .sidebar.sidebar-hidden .brand {
+    opacity: 0;
+    transform: translateY(calc(-100% - env(safe-area-inset-top)));
+  }
+  .sidebar.sidebar-hidden .mobile-nav,
+  .sidebar.sidebar-hidden .mobile-nav-panel-open,
+  .sidebar.sidebar-hidden .mobile-nav-backdrop-open {
+    pointer-events: auto;
   }
   .brand {
     padding: 0;
     font-size: 1.05rem;
   }
-  .brand small {
-    font-size: 0.6rem;
-  }
-  .brand-mark {
-    width: 34px;
-    height: 36px;
+  .brand-logo {
+    width: 158px;
   }
   .main-nav {
     position: fixed;
@@ -2028,16 +2023,10 @@ tbody tr:hover {
   align-items: center;
   gap: 0.9rem;
 }
-.terminal-brand-mark {
-  display: grid;
-  width: 54px;
-  height: 54px;
-  place-items: center;
-  border-radius: 16px 16px 22px 16px;
-  background: #236b3c;
-  color: white;
-  font-size: 1.55rem;
-  font-weight: 750;
+.terminal-brand-logo {
+  display: block;
+  width: 130px;
+  height: auto;
 }
 .terminal-brand div,
 .terminal-clock,
@@ -3278,9 +3267,8 @@ tbody tr:hover {
     gap: 0.8rem;
     padding: 0.8rem;
   }
-  .terminal-brand-mark {
-    width: 44px;
-    height: 44px;
+  .terminal-brand-logo {
+    width: 100px;
   }
   .terminal-brand strong,
   .terminal-clock strong {

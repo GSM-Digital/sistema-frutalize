@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { connection } from "next/server";
 import { getAccess } from "@/lib/auth";
 import { Navigation } from "@/components/inventory/navigation";
@@ -42,12 +43,15 @@ export default async function DashboardLayout({
       </a>
       <aside className="sidebar">
         <Link href="/dashboard" className="brand">
-          <span className="brand-mark" aria-hidden="true">
-            F<span>•</span>
-          </span>
-          <span>
-            Frutalize<small>Gestão da fábrica</small>
-          </span>
+          <Image
+            className="brand-logo"
+            src="/frutalize-logo.svg"
+            alt="Frutalize, polpas de frutas"
+            width={190}
+            height={77}
+            priority
+            unoptimized
+          />
         </Link>
         <Navigation />
         <div className="sidebar-footer">

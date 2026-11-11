@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { DashboardOperations } from "@/components/production/dashboard-operations";
 import { ProductionTerminal } from "@/components/production/terminal";
@@ -54,12 +55,14 @@ export default async function VisualizarPage({
         <div className="app-shell">
           <aside className="sidebar">
             <div className="brand">
-              <span className="brand-mark">
-                F<span>•</span>
-              </span>
-              <span>
-                Frutalize<small>Gestão da fábrica</small>
-              </span>
+              <Image
+                className="brand-logo"
+                src="/frutalize-logo.svg"
+                alt="Frutalize, polpas de frutas"
+                width={190}
+                height={77}
+                unoptimized
+              />
             </div>
             <Navigation />
           </aside>

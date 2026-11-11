@@ -1,5 +1,7 @@
 # Evolução de produção e gestão
 
+> Em 11/11/2026, Thiago decidiu manter um único projeto Supabase. As verificações remotas devem respeitar os dados operacionais existentes. O histórico da implantação de 29/10/2026 permanece registrado abaixo.
+
 Esta branch implementa a base de software para os módulos descritos no plano técnico de 27/10/2026. O uso físico da produção depende de POP, parâmetros de máquina, regra de qualidade, instrumento e embalagem aprovados pela operação e pelo responsável técnico. Nenhum valor desses itens é criado automaticamente. Ordens legadas precisam ser vinculadas explicitamente às versões aprovadas antes de avançar.
 
 ## Funcionalidades
@@ -13,17 +15,19 @@ Devolução comercial registra o material recebido sem recolocá-lo no saldo dis
 
 ## Implantação e limites
 
-1. Criar projetos separados de desenvolvimento/homologação e backup/restauração verificados antes de migrar produção. Identificar o commit efetivamente implantado e as migrações presentes no Supabase remoto.
-2. Aplicar as migrações `20261028100000`, `20261028110000` e `20261028110100` em homologação, nessa ordem. Verificar RLS, grants, Storage privado e views com contas reais de administrador, gestor, colaborador e cliente. Ensaiar restore antes de qualquer migração em produção.
-3. Configurar `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` de homologação. Para convites, configurar **somente no servidor** `SUPABASE_SERVICE_ROLE_KEY` e `APP_ORIGIN` (origem HTTPS exata), além de permitir `${APP_ORIGIN}/auth/confirm` nas URLs de redirecionamento do Supabase Auth. Nunca colocar a service role no navegador nem no repositório.
-4. Cadastrar e aprovar POPs, equipamentos, perfis e regras de qualidade reais. Validar os fluxos em tablet e com dados sintéticos. Definir critérios de liberação com os responsáveis técnicos antes de operação física.
-5. Conferir todos os módulos e saldos no ambiente isolado. A migração de banco exige plano de restauração próprio; rollback do frontend não desfaz migrações.
+1. Identificar o commit efetivamente implantado, comparar as migrações presentes no projeto Supabase atual e verificar a disponibilidade do aplicativo. Não criar outro projeto por este plano.
+2. Ensaiar mudanças de schema e regras com os testes locais antes de aplicá-las ao projeto atual. Conferir RLS, grants, Storage privado e views por leitura remota. Testes que gravam dados ou simulam concorrência não devem usar registros fictícios no banco ativo sem escopo e reversão definidos.
+3. Configurar `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` do projeto atual. Para convites, configurar **somente no servidor** `SUPABASE_SERVICE_ROLE_KEY` e `APP_ORIGIN` (origem HTTPS exata), além de permitir `${APP_ORIGIN}/auth/confirm` nas URLs de redirecionamento do Supabase Auth. Nunca colocar a service role no navegador nem no repositório.
+4. Cadastrar e aprovar POPs, equipamentos, perfis e regras de qualidade reais. Validar os fluxos no tablet e com contas autorizadas. Definir critérios de liberação com os responsáveis técnicos antes de operação física.
+5. Conferir módulos, saldos e acessos com operações reais autorizadas. Manter backup atual e plano de recuperação; não executar restauração sobre o banco ativo para ensaio. Rollback do frontend não desfaz migrações.
 
 Em 29/10/2026, as três migrações desta evolução foram aplicadas ao projeto Supabase de desenvolvimento. Uma cópia anterior às migrações foi salva fora do Git e o procedimento de reversão está em [Implantação das migrações no Supabase](Implantacao_Supabase_2026-10-29.md). Ainda não há projeto de homologação separado, restauração ensaiada, parâmetros sanitários aprovados ou aceite em equipamento físico. A instalação técnica não certifica prontidão operacional.
 
+Em 11/11/2026, o projeto `ofemxaqzrnryrochqtrv` foi reativado após uma pausa no plano Free. O endpoint público `/api/health` voltou a responder `200` com `supabase: ok`. O histórico remoto contém as 12 migrações versionadas; uma consulta somente de leitura confirmou zero tabelas comuns no schema `public` sem RLS, as funções `production_command` e `operations_command`, e o bucket `frutalize-receipts` privado. Leituras anônimas de `production_runs` e `staff_members` foram negadas. Os 46 testes locais, lint, tipagem, build e formatação dos arquivos versionados passaram. Login autenticado, operações reais com múltiplas sessões, restauração e uso no tablet físico não foram validados neste levantamento. A decisão de projeto único não substitui esses testes nem autoriza gravar dados fictícios no banco ativo.
+
 ## Validação reproduzível
 
-Com Node 22: `npm ci`, `npm run lint`, `npm run format:check`, `npm test`, `npm run typecheck` e `npm run build`. Os testes de banco fazem replay das migrações em PGlite com dados sintéticos, incluindo autorização, idempotência, revisão, qualidade, saldo, reservas, finanças e portal. PGlite não substitui um teste de múltiplas conexões em PostgreSQL/Supabase de homologação; esse teste e o aceite em tablet permanecem como gates de implantação.
+Com Node 22: `npm ci`, `npm run lint`, `npm run format:check`, `npm test`, `npm run typecheck` e `npm run build`. Os testes de banco fazem replay das migrações em PGlite com dados sintéticos, incluindo autorização, idempotência, revisão, qualidade, saldo, reservas, finanças e portal. PGlite não substitui um teste de múltiplas conexões no PostgreSQL remoto; esse teste e o aceite em tablet permanecem pendentes até que possam ocorrer sem afetar os dados da fábrica.
 
 ## Acompanhamento de incidentes
 

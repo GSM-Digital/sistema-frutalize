@@ -46,8 +46,10 @@ A aplicação ficará disponível em `http://localhost:3000`.
 Para comparar as duas visualizações sem configurar o Supabase, abra
 `http://localhost:3000/visualizar` durante `npm run dev`. A página usa dados
 fictícios, mantém os comandos desativados e existe apenas em desenvolvimento.
-Para testar gravações reais, configure `.env.local` com as credenciais públicas
-de **homologação** e entre com uma conta autorizada. O dashboard fica em
+Para testar gravações reais, configure `.env.local` com a URL e a chave publicável
+do projeto Supabase atual e entre com uma conta autorizada. Esse projeto também
+contém os dados operacionais: não crie registros sintéticos nele sem combinar
+previamente o escopo e a reversão. O dashboard fica em
 `/dashboard/producao`; o terminal touch fica em `/terminal`.
 
 ## Variáveis de ambiente
@@ -74,7 +76,7 @@ npm run typecheck
 npm run build
 ```
 
-Os testes executam o replay completo das migrações e as regras de estoque e acesso em PostgreSQL embarcado, sem credenciais de produção. A integração com Supabase, a responsividade e o fluxo completo devem passar pelo aceite em homologação documentado antes de publicar em produção.
+Os testes executam o replay completo das migrações e as regras de estoque e acesso em PostgreSQL embarcado, sem credenciais do projeto remoto. A decisão atual é manter um único projeto Supabase; verificações remotas de leitura e aceite operacional no equipamento real devem ser registrados separadamente. Testes que alterem dados ou exijam restauração não ficam validados pelos testes locais.
 
 ## Licença
 

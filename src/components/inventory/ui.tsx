@@ -5,7 +5,7 @@ import type {
   SearchParams,
 } from "@/lib/inventory/types";
 import { movementKinds } from "@/lib/inventory/types";
-import { dateTime, quantity, shortDate } from "@/lib/inventory/format";
+import { dateTime, quantity } from "@/lib/inventory/format";
 
 export function PageHeading({
   eyebrow = "Gestão de estoque",
@@ -109,117 +109,112 @@ export function LotBadge({
     return <span className="badge badge-danger">Vencido</span>;
   return null;
 }
-export function LotsTable({
-  lots,
-  today,
+export function MovementsTable({
+  movements,
 }: {
-  lots: InventoryLot[];
-  today: string;
+  movements: InventoryMovement[];
 }) {
   return (
     <>
       <ul
-        className="lots-mobile-list"
-        aria-label="Lotes por item e local de armazenamento"
+        className="movements-mobile-list"
+        aria-label="Histórico de movimentações do estoque"
       >
-        {lots.map((lot) => (
-          <li className="lot-mobile-card" key={lot.id}>
-            <div className="lot-mobile-heading">
-              <div className="lot-mobile-identity">
-                <Link
-                  className="lot-mobile-title"
-                  href={`/dashboard/lotes/${lot.id}`}
-                >
-                  {lot.product_name}
-                </Link>
-                {!lot.is_default && (
-                  <span className="table-sub">
-                    {lot.variant_name} · {lot.sku}
-                  </span>
-                )}
-                <span className="table-sub font-mono">{lot.code}</span>
-              </div>
-              <Link
-                className="lot-mobile-action"
-                href={`/dashboard/lotes/${lot.id}`}
-                aria-label={`Consultar lote ${lot.code}`}
+        {movements.map((m) => (
+          <li className="movement-mobile-card" key={m.id}>
+            <div className="movement-mobile-top">
+              <span
+                className={`badge ${m.kind === "receipt" ? "badge-green" : m.kind === "loss" ? "badge-danger" : ""}`}
               >
-                Abrir <span aria-hidden="true">→</span>
-              </Link>
+                {movementKinds[m.kind]}
+              </span>
+              <strong className="tabular-nums">
+                {m.quantity > 0 ? "+" : ""}
+                {quantity(m.quantity, m.unit)}
+              </strong>
             </div>
-            <dl className="lot-mobile-details">
-              <div className="lot-mobile-location">
-                <dt>Local</dt>
-                <dd>{lot.location_name}</dd>
+            <Link
+              className="text-link movement-mobile-product"
+              href={`/dashboard/lotes/${m.lot_id}`}
+            >
+              {m.product_name}
+            </Link>
+            {!m.is_default && (
+              <span className="table-sub">{m.variant_name}</span>
+            )}
+            <span className="movement-mobile-code">{m.lot_code}</span>
+            <p className="movement-mobile-reason">{m.reason}</p>
+            <dl className="movement-mobile-meta">
+              <div>
+                <dt>Saldo após</dt>
+                <dd>{quantity(m.balance_after, m.unit)}</dd>
               </div>
               <div>
-                <dt>Saldo</dt>
-                <dd className="tabular-nums font-semibold">
-                  {quantity(lot.quantity, lot.unit)}
-                </dd>
+                <dt>Responsável</dt>
+                <dd>{m.actor_name}</dd>
               </div>
               <div>
-                <dt>Validade</dt>
-                <dd>
-                  {lot.expires_on ? shortDate(lot.expires_on) : "Não se aplica"}
-                </dd>
-                <LotBadge lot={lot} today={today} />
+                <dt>Registrado em</dt>
+                <dd>{dateTime(m.created_at)}</dd>
+              </div>
+              <div>
+                <dt>Operação em</dt>
+                <dd>{dateTime(m.operated_at)}</dd>
               </div>
             </dl>
           </li>
         ))}
       </ul>
-      <div className="table-scroll lots-desktop-table">
+      <div className="table-scroll movements-desktop-table">
         <table>
           <caption className="sr-only">
-            Lotes por tamanho/embalagem e local de armazenamento
+            Histórico de movimentações do estoque
           </caption>
           <thead>
             <tr>
+              <th>Movimentação</th>
               <th>Item / lote</th>
-              <th>Local</th>
-              <th>Saldo</th>
-              <th>Validade</th>
-              <th>
-                <span className="sr-only">Ações</span>
-              </th>
+              <th>Quantidade</th>
+              <th>Responsável</th>
+              <th>Registro</th>
             </tr>
           </thead>
           <tbody>
-            {lots.map((lot) => (
-              <tr key={lot.id}>
+            {movements.map((m) => (
+              <tr key={m.id}>
+                <td>
+                  <span
+                    className={`badge ${m.kind === "receipt" ? "badge-green" : m.kind === "loss" ? "badge-danger" : ""}`}
+                  >
+                    {movementKinds[m.kind]}
+                  </span>
+                  <span className="table-sub max-w-64">{m.reason}</span>
+                </td>
                 <td>
                   <Link
                     className="text-link"
-                    href={`/dashboard/lotes/${lot.id}`}
+                    href={`/dashboard/lotes/${m.lot_id}`}
                   >
-                    {lot.product_name}
+                    {m.product_name}
                   </Link>
-                  {!lot.is_default && (
-                    <span className="table-sub">
-                      {lot.variant_name} · {lot.sku}
-                    </span>
-                  )}
-                  <span className="table-sub font-mono">{lot.code}</span>
-                </td>
-                <td>{lot.location_name}</td>
-                <td className="tabular-nums whitespace-nowrap font-semibold">
-                  {quantity(lot.quantity, lot.unit)}
-                </td>
-                <td className="whitespace-nowrap">
-                  {lot.expires_on ? shortDate(lot.expires_on) : "Não se aplica"}
                   <span className="table-sub">
-                    <LotBadge lot={lot} today={today} />
+                    {!m.is_default && `${m.variant_name} · `}
+                    {m.lot_code}
                   </span>
                 </td>
-                <td>
-                  <Link
-                    className="text-link whitespace-nowrap"
-                    href={`/dashboard/lotes/${lot.id}`}
-                    aria-label={`Consultar lote ${lot.code}`}
-                  >
-                    Abrir →
-                  </Link>
+                <td className="whitespace-nowrap tabular-nums">
+                  {m.quantity > 0 ? "+" : ""}
+                  {quantity(m.quantity, m.unit)}
+                  <span className="table-sub">
+                    Saldo: {quantity(m.balance_after, m.unit)}
+                  </span>
+                </td>
+                <td>{m.actor_name}</td>
+                <td className="whitespace-nowrap text-xs leading-5">
+                  {dateTime(m.created_at)}
+                  <span className="table-sub">
+                    Operação: {dateTime(m.operated_at)}
+                  </span>
                 </td>
               </tr>
             ))}
@@ -227,70 +222,6 @@ export function LotsTable({
         </table>
       </div>
     </>
-  );
-}
-export function MovementsTable({
-  movements,
-}: {
-  movements: InventoryMovement[];
-}) {
-  return (
-    <div className="table-scroll">
-      <table>
-        <caption className="sr-only">
-          Histórico de movimentações do estoque
-        </caption>
-        <thead>
-          <tr>
-            <th>Movimentação</th>
-            <th>Item / lote</th>
-            <th>Quantidade</th>
-            <th>Responsável</th>
-            <th>Registro</th>
-          </tr>
-        </thead>
-        <tbody>
-          {movements.map((m) => (
-            <tr key={m.id}>
-              <td>
-                <span
-                  className={`badge ${m.kind === "receipt" ? "badge-green" : m.kind === "loss" ? "badge-danger" : ""}`}
-                >
-                  {movementKinds[m.kind]}
-                </span>
-                <span className="table-sub max-w-64">{m.reason}</span>
-              </td>
-              <td>
-                <Link
-                  className="text-link"
-                  href={`/dashboard/lotes/${m.lot_id}`}
-                >
-                  {m.product_name}
-                </Link>
-                <span className="table-sub">
-                  {!m.is_default && `${m.variant_name} · `}
-                  {m.lot_code}
-                </span>
-              </td>
-              <td className="whitespace-nowrap tabular-nums">
-                {m.quantity > 0 ? "+" : ""}
-                {quantity(m.quantity, m.unit)}
-                <span className="table-sub">
-                  Saldo: {quantity(m.balance_after, m.unit)}
-                </span>
-              </td>
-              <td>{m.actor_name}</td>
-              <td className="whitespace-nowrap text-xs leading-5">
-                {dateTime(m.created_at)}
-                <span className="table-sub">
-                  Operação: {dateTime(m.operated_at)}
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
   );
 }
 export function Pagination({

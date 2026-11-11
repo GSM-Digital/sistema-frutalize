@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon, type IconName } from "./icon";
+import { logout } from "@/app/dashboard/actions";
 
 type NavItem = {
   label: string;
@@ -199,6 +200,11 @@ export function Navigation() {
                   ))}
               </section>
             ))}
+            <form action={logout}>
+              <button className="mobile-nav-logout" type="submit">
+                Sair do sistema
+              </button>
+            </form>
           </div>
         </details>
       </nav>

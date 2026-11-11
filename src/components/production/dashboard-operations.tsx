@@ -33,10 +33,12 @@ export function DashboardOperations({
   initial,
   runId,
   preview = false,
+  selectedLotIds = [],
 }: {
   initial: TerminalSnapshot;
   runId?: string;
   preview?: boolean;
+  selectedLotIds?: string[];
 }) {
   const router = useRouter();
   const [snapshot, setSnapshot] = useState(initial);
@@ -564,6 +566,7 @@ export function DashboardOperations({
           <OrderConfiguration
             snapshot={snapshot}
             create
+            selectedLotIds={selectedLotIds}
             busy={disabled}
             onSubmit={(payload) => send("create", payload)}
           />

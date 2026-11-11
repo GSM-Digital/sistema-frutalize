@@ -5,11 +5,11 @@ import type { SearchParams } from "@/lib/inventory/types";
 import {
   DataNotice,
   EmptyState,
-  LotsTable,
   PageHeading,
   Pagination,
   Panel,
 } from "@/components/inventory/ui";
+import { LotsTable } from "@/components/inventory/lots-table";
 export const instant = false;
 export default async function LotsPage({
   searchParams,
@@ -104,7 +104,11 @@ export default async function LotsPage({
           )}
         </form>
         {data.length ? (
-          <LotsTable lots={data} today={today} />
+          <LotsTable
+            key={`${q}:${page}:${expiry}:${includeEmpty}`}
+            lots={data}
+            today={today}
+          />
         ) : (
           <EmptyState
             title="Nenhum lote nesta consulta"

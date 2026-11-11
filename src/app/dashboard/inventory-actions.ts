@@ -185,6 +185,98 @@ export async function registerLotOperation(
   return saved("Movimentação registrada.");
 }
 
+export type BulkLossRequest = {
+  lotId: string;
+  requestId: string;
+  quantity: number;
+};
+
+export async function removeSelectedLots(requests: BulkLossRequest[]): Promise<{
+  completedIds: string[];
+  failures: { id: string; message: string }[];
+}> {
+  const { supabase } = await requireStaff();
+  if (
+    !Array.isArray(requests) ||
+    requests.length < 1 ||
+    requests.length > 25 ||
+    new Set(requests.map((item) => item.lotId)).size !== requests.length ||
+    new Set(requests.map((item) => item.requestId)).size !== requests.length ||
+    requests.some(
+      (item) =>
+        !isUuid(item.lotId) ||
+        !isUuid(item.requestId) ||
+        !Number.isFinite(item.quantity) ||
+        item.quantity <= 0 ||
+        item.quantity > 999999999 ||
+        Number(item.quantity.toFixed(3)) !== item.quantity,
+    )
+  ) {
+    return {
+      completedIds: [],
+      failures: [
+        {
+          id: "",
+          message: "Seleção inválida. Atualize a lista e tente novamente.",
+        },
+      ],
+    };
+  }
+
+  const { data: current, error: queryError } = await supabase
+    .from("inventory_lots")
+    .select("id,quantity")
+    .in(
+      "id",
+      requests.map((item) => item.lotId),
+    );
+  if (
+    queryError ||
+    !current ||
+    current.length !== requests.length ||
+    requests.some(
+      (item) =>
+        Number(current.find((lot) => lot.id === item.lotId)?.quantity) !==
+        item.quantity,
+    )
+  ) {
+    return {
+      completedIds: [],
+      failures: [
+        {
+          id: "",
+          message:
+            "O saldo mudou ou um lote não está mais disponível. Atualize a lista antes de remover.",
+        },
+      ],
+    };
+  }
+
+  const completedIds: string[] = [];
+  const failures: { id: string; message: string }[] = [];
+  for (const item of requests) {
+    const { error } = await supabase.rpc("move_stock", {
+      p_request_id: item.requestId,
+      p_lot_id: item.lotId,
+      p_kind: "loss",
+      p_quantity: item.quantity,
+      p_reason: "",
+      p_operated_at: new Date().toISOString(),
+    });
+    if (error) {
+      failures.push({
+        id: item.lotId,
+        message:
+          error.code === "P0001"
+            ? error.message
+            : "Não foi possível baixar este lote.",
+      });
+    } else completedIds.push(item.lotId);
+  }
+  if (completedIds.length) revalidatePath("/dashboard", "layout");
+  return { completedIds, failures };
+}
+
 export async function completeProduction(
   _previous: ActionState,
   data: FormData,

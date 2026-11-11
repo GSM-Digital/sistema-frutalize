@@ -8,16 +8,32 @@ import { quantity } from "@/lib/inventory/format";
 export function OrderConfiguration({
   snapshot,
   create = false,
+  selectedLotIds = [],
   busy,
   onSubmit,
 }: {
   snapshot: TerminalSnapshot;
   create?: boolean;
+  selectedLotIds?: string[];
   busy: boolean;
   onSubmit: (payload: Record<string, Json>) => void;
 }) {
-  const [procedureId, setProcedureId] = useState("");
-  const [lines, setLines] = useState([0]);
+  const selectedProductId = snapshot.lots.find(
+    (lot) => lot.id === selectedLotIds[0],
+  )?.product_id;
+  const availableProcedures = selectedProductId
+    ? snapshot.procedures.filter(
+        (item) => item.product_id === selectedProductId,
+      )
+    : snapshot.procedures;
+  const [procedureId, setProcedureId] = useState(() =>
+    selectedLotIds.length && availableProcedures.length === 1
+      ? availableProcedures[0].id
+      : "",
+  );
+  const [lines, setLines] = useState(() =>
+    selectedLotIds.length ? selectedLotIds.map((_, index) => index) : [0],
+  );
   const procedure = snapshot.procedures.find((item) => item.id === procedureId);
   const profiles = snapshot.profiles.filter(
     (item) =>
@@ -56,13 +72,19 @@ export function OrderConfiguration({
           disabled={busy}
         >
           <option value="">Selecione</option>
-          {snapshot.procedures.map((item) => (
+          {availableProcedures.map((item) => (
             <option key={item.id} value={item.id}>
               {item.name} · Rev. {item.revision}
             </option>
           ))}
         </select>
       </div>
+      {selectedLotIds.length > 0 && availableProcedures.length === 0 && (
+        <p className="notice">
+          Não há procedimento aprovado para a fruta selecionada. A gestão
+          precisa aprovar um antes de abrir a ordem.
+        </p>
+      )}
       <div className="form-grid">
         <div className="field">
           <label htmlFor="order-profile">
@@ -109,6 +131,12 @@ export function OrderConfiguration({
       )}
       {create && (
         <>
+          {selectedLotIds.length > 0 && (
+            <p className="notice">
+              Os lotes selecionados no estoque e seus saldos atuais foram
+              preenchidos. Confira as quantidades antes de criar a ordem.
+            </p>
+          )}
           <fieldset>
             <legend>Lotes e quantidades reais de entrada</legend>
             {lines.map((line, index) => (
@@ -120,6 +148,7 @@ export function OrderConfiguration({
                   <select
                     id={`input-lot-${line}`}
                     name="lot_id"
+                    defaultValue={selectedLotIds[line] ?? ""}
                     required
                     disabled={busy}
                   >
@@ -140,6 +169,13 @@ export function OrderConfiguration({
                     <input
                       id={`input-quantity-${line}`}
                       name="quantity"
+                      defaultValue={
+                        selectedLotIds[line]
+                          ? snapshot.lots.find(
+                              (lot) => lot.id === selectedLotIds[line],
+                            )?.quantity
+                          : undefined
+                      }
                       required
                       type="number"
                       min="0.001"

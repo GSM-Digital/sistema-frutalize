@@ -24,6 +24,9 @@ export const movementKinds = {
   loss: "Perda / descarte",
   production_input: "Envio à produção",
   production_output: "Produção finalizada",
+  preparation_input: "Enviado ao preparo",
+  preparation_return: "Devolvido do preparo",
+  preparation_output: "Balde preparado",
   note: "Registro histórico",
 } as const;
 export type MovementKind = keyof typeof movementKinds;
@@ -137,7 +140,8 @@ export type InventoryLot = Lot & {
   has_variants: boolean;
   location_name: string;
   supplier_name: string;
-  origin: "supplier" | "production";
+  origin: "supplier" | "production" | "preparation";
+  preparation_batch_id: string | null;
   remaining_weight_kg: number | null;
   search_text: string;
 };
@@ -290,6 +294,16 @@ export type Database = {
       inventory_production_inputs: View<InventoryProductionInput>;
     };
     Functions: OperationsDatabaseFunctions & {
+      preparation_snapshot: { Args: Record<string, never>; Returns: Json };
+      preparation_command: {
+        Args: {
+          p_command_id: string;
+          p_batch_id: string | null;
+          p_kind: string;
+          p_payload: Json;
+        };
+        Returns: Json;
+      };
       production_terminal_snapshot: {
         Args: Record<string, never>;
         Returns: Json;

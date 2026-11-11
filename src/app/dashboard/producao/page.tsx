@@ -72,6 +72,9 @@ export default async function ProductionPage({
         title="Produção"
         description="Acompanhe e opere ordens nesta visualização administrativa. O terminal oferece a rotina touch para a fábrica."
       >
+        <Link className="btn btn-secondary" href="/dashboard/preparo">
+          Preparo de frutas
+        </Link>
         <Link
           className="btn btn-secondary"
           href="/dashboard/producao/configuracao"

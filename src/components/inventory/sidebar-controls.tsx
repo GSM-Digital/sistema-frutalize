@@ -63,6 +63,7 @@ export function SidebarControls({
   function endHover() {
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
     hoverTimer.current = null;
+    if (window.matchMedia("(min-width: 1024px)").matches) setMenuOpen(false);
   }
 
   function dismissMenu(restoreFocus = false) {
@@ -149,6 +150,9 @@ export function SidebarControls({
           </Link>
           <Link href="/terminal" onClick={() => setMenuOpen(false)}>
             Terminal Touch
+          </Link>
+          <Link href="/terminal/preparo" onClick={() => setMenuOpen(false)}>
+            Terminal Preparo
           </Link>
           <form action={logout}>
             <button type="submit">Sair</button>

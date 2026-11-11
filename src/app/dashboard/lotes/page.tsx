@@ -11,6 +11,7 @@ import {
   Panel,
 } from "@/components/inventory/ui";
 import { LotsTable } from "@/components/inventory/lots-table";
+import type { PreparationSnapshot } from "@/lib/preparation/types";
 export const instant = false;
 export default async function LotsPage({
   searchParams,
@@ -41,8 +42,20 @@ export default async function LotsPage({
       .gte("expires_on", today)
       .lte("expires_on", addDays(today, 30));
   if (expiry === "vencidos") query = query.lt("expires_on", today);
-  const { data, error, count } = await query;
-  if (error) return <DataNotice />;
+  const [{ data, error, count }, preparation] = await Promise.all([
+    query,
+    access.supabase.rpc("preparation_snapshot"),
+  ]);
+  if (error || preparation.error) return <DataNotice />;
+  const preparationData = preparation.data as unknown as PreparationSnapshot;
+  const guidedProducts = new Set(
+    preparationData.guides
+      .filter((guide) => guide.status === "approved")
+      .map((guide) => guide.productId),
+  );
+  const needsPreparation = preparationData.rawLots
+    .filter((lot) => guidedProducts.has(lot.productId))
+    .map((lot) => lot.id);
   return (
     <>
       <PageHeading
@@ -114,6 +127,7 @@ export default async function LotsPage({
             key={`${q}:${page}:${expiry}:${includeEmpty}`}
             lots={data}
             today={today}
+            needsPreparation={needsPreparation}
           />
         ) : (
           <EmptyState

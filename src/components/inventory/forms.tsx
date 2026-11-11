@@ -1170,11 +1170,13 @@ export function MovementForm({
   requestId,
   now,
   today,
+  needsPreparation = false,
 }: {
   lot: InventoryLot;
   requestId: string;
   now: string;
   today: string;
+  needsPreparation?: boolean;
 }) {
   const { state, action, pending, operationId } = useStockAction(
     registerLotOperation,
@@ -1182,7 +1184,8 @@ export function MovementForm({
   );
   const v = (key: string, fallback = "") => state.values?.[key] ?? fallback;
   const canDispatch = !lot.expires_on || lot.expires_on >= today;
-  const canProduce = canDispatch && isFruitCategory(lot.category_name);
+  const canProduce =
+    canDispatch && isFruitCategory(lot.category_name) && !needsPreparation;
   const [kind, setKind] = useState<LotOperation>(
     v(
       "kind",

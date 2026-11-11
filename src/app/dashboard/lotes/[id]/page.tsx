@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { PreparationSnapshot } from "@/lib/preparation/types";
 import { notFound } from "next/navigation";
 import { getAccess } from "@/lib/auth";
 import {
@@ -32,7 +33,7 @@ export default async function LotPage({
   if (access.status !== "ready") return null;
   const search = await searchParams;
   const { page, from, to } = listParams(search);
-  const [lotResult, movements] = await Promise.all([
+  const [lotResult, movements, preparation] = await Promise.all([
     access.supabase
       .from("inventory_lots")
       .select("*")
@@ -45,10 +46,23 @@ export default async function LotPage({
       .order("created_at", { ascending: false })
       .order("id")
       .range(from, to),
+    access.supabase.rpc("preparation_snapshot"),
   ]);
-  if (lotResult.error || movements.error) return <DataNotice />;
+  if (lotResult.error || movements.error || preparation.error)
+    return <DataNotice />;
   if (!lotResult.data) notFound();
   const lot = lotResult.data;
+  const preparationData = preparation.data as unknown as PreparationSnapshot;
+  const needsPreparation =
+    lot.origin === "supplier" &&
+    preparationData.rawLots.some(
+      (source) =>
+        source.id === lot.id &&
+        preparationData.guides.some(
+          (guide) =>
+            guide.productId === source.productId && guide.status === "approved",
+        ),
+    );
   const today = businessDate();
   const now = businessDateTime();
   const details = [
@@ -56,18 +70,28 @@ export default async function LotPage({
       ? []
       : [["Tamanho/embalagem", `${lot.variant_name} · ${lot.sku}`]]),
     ["Local físico", lot.location_name],
-    ...(lot.origin === "production"
+    ...(lot.origin === "preparation"
       ? [
-          ["Origem", "Produção interna"],
-          ["Processo de produção", lot.reference],
+          ["Origem", "Preparo de frutas"],
+          ["Lote de fruta recebido", lot.reference],
+          ["Preparo", lot.code.replace(/-\d+$/, "")],
         ]
-      : [
-          ["Fornecedor", lot.supplier_name],
-          ["Documento", lot.reference],
-          ["Lote do fornecedor", lot.supplier_lot || "Não informado"],
-        ]),
+      : lot.origin === "production"
+        ? [
+            ["Origem", "Produção interna"],
+            ["Processo de produção", lot.reference],
+          ]
+        : [
+            ["Fornecedor", lot.supplier_name],
+            ["Documento", lot.reference],
+            ["Lote do fornecedor", lot.supplier_lot || "Não informado"],
+          ]),
     [
-      lot.origin === "production" ? "Finalização" : "Recebimento",
+      lot.origin === "production"
+        ? "Finalização"
+        : lot.origin === "preparation"
+          ? "Preparo"
+          : "Recebimento",
       dateTime(lot.received_at),
     ],
     [
@@ -91,7 +115,7 @@ export default async function LotPage({
         : quantity(lot.initial_weight_kg, "kg"),
     ],
     [
-      lot.origin === "production"
+      lot.origin === "production" || lot.origin === "preparation"
         ? "Custo dos insumos"
         : "Preço total de entrada",
       money(lot.total_cost),
@@ -134,8 +158,8 @@ export default async function LotPage({
         </dl>
         <div className="border-t border-line panel-inset">
           <h3 className="text-sm font-semibold">
-            {lot.origin === "production"
-              ? "Observações da produção"
+            {lot.origin === "production" || lot.origin === "preparation"
+              ? "Observações do processo"
               : "Inspeção de qualidade"}
           </h3>
           <p className="muted mt-2 text-sm whitespace-pre-wrap leading-6">
@@ -148,11 +172,20 @@ export default async function LotPage({
         description="Envie para produção, registre uma saída externa ou dê baixa por perda."
       >
         <div className="panel-inset">
+          {needsPreparation && (
+            <p className="notice mb-4">
+              Esta fruta passa pelo preparo antes da despolpa.{" "}
+              <Link className="text-link" href="/terminal/preparo">
+                Abrir terminal de preparo
+              </Link>
+            </p>
+          )}
           <MovementForm
             lot={lot}
             requestId={crypto.randomUUID()}
             now={now}
             today={today}
+            needsPreparation={needsPreparation}
           />
         </div>
       </Panel>

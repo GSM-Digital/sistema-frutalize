@@ -261,6 +261,9 @@ export function ProductionTerminal({
           </div>
         </div>
         <div className="terminal-toolbar">
+          <Link className="btn btn-secondary" href="/terminal/preparo">
+            Preparo de frutas
+          </Link>
           <ReportTrigger className="btn btn-secondary">
             Reportar problema
           </ReportTrigger>

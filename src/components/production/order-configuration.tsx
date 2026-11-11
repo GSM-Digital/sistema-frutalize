@@ -155,7 +155,8 @@ export function OrderConfiguration({
                     <option value="">Selecione</option>
                     {snapshot.lots.map((lot) => (
                       <option key={lot.id} value={lot.id}>
-                        {lot.code} · {lot.product_name} ·{" "}
+                        {lot.code} · {lot.product_name}
+                        {lot.prepared ? " · Preparado" : ""} ·{" "}
                         {quantity(Number(lot.quantity), lot.unit)}
                       </option>
                     ))}

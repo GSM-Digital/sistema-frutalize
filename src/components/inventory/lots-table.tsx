@@ -8,6 +8,8 @@ import { quantity, shortDate } from "@/lib/inventory/format";
 import { isFruitCategory, type InventoryLot } from "@/lib/inventory/types";
 
 function LotBadge({ lot, today }: { lot: InventoryLot; today: string }) {
+  if (lot.origin === "preparation" && lot.quantity > 0)
+    return <span className="badge badge-green">Preparado para despolpa</span>;
   if (lot.quantity === 0) return <span className="badge">Sem saldo</span>;
   if (lot.expires_on && lot.expires_on < today)
     return <span className="badge badge-danger">Vencido</span>;
@@ -17,9 +19,11 @@ function LotBadge({ lot, today }: { lot: InventoryLot; today: string }) {
 export function LotsTable({
   lots,
   today,
+  needsPreparation = [],
 }: {
   lots: InventoryLot[];
   today: string;
+  needsPreparation?: string[];
 }) {
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -36,6 +40,7 @@ export function LotsTable({
     selected.every(
       (lot) =>
         isFruitCategory(lot.category_name) &&
+        !needsPreparation.includes(lot.id) &&
         (!lot.expires_on || lot.expires_on >= today) &&
         lot.product_name === selected[0].product_name,
     );
@@ -146,9 +151,15 @@ export function LotsTable({
           </button>
           {!eligibleForProduction && (
             <p className="lots-bulk-hint">
-              Escolha lotes da mesma fruta, com saldo. A data de validade é
-              opcional. Lotes vencidos ficam bloqueados.
+              {selected.some((lot) => needsPreparation.includes(lot.id))
+                ? "Esta fruta precisa passar pelo preparo antes da despolpa. Abra o terminal de preparo."
+                : "Escolha lotes da mesma fruta, com saldo. A data de validade é opcional. Lotes vencidos ficam bloqueados."}
             </p>
+          )}
+          {selected.some((lot) => needsPreparation.includes(lot.id)) && (
+            <Link className="btn btn-secondary" href="/terminal/preparo">
+              Abrir preparo de frutas
+            </Link>
           )}
         </div>
       )}

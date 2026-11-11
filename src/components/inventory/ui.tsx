@@ -88,12 +88,14 @@ export function LotBadge({
   lot,
   today,
 }: {
-  lot: Pick<InventoryLot, "quantity" | "expires_on">;
+  lot: Pick<InventoryLot, "quantity" | "expires_on" | "origin">;
   today: string;
 }) {
   if (lot.quantity === 0) return <span className="badge">Sem saldo</span>;
   if (lot.expires_on && lot.expires_on < today)
     return <span className="badge badge-danger">Vencido</span>;
+  if (lot.origin === "preparation")
+    return <span className="badge badge-green">Preparado para despolpa</span>;
   return null;
 }
 export function MovementsTable({

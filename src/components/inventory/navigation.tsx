@@ -22,7 +22,18 @@ const sections: { label?: string; mobileOnly?: boolean; items: NavItem[] }[] = [
   {
     label: "Visualizações",
     mobileOnly: true,
-    items: [{ href: "/terminal", label: "Terminal touch", icon: "production" }],
+    items: [
+      {
+        href: "/terminal",
+        label: "Terminal touch · despolpa",
+        icon: "production",
+      },
+      {
+        href: "/terminal/preparo",
+        label: "Terminal touch · preparo",
+        icon: "production",
+      },
+    ],
   },
   {
     label: "Rotina",
@@ -37,6 +48,11 @@ const sections: { label?: string; mobileOnly?: boolean; items: NavItem[] }[] = [
         href: "/dashboard/producao",
         label: "Produção",
         shortLabel: "Produção",
+        icon: "production",
+      },
+      {
+        href: "/dashboard/preparo",
+        label: "Preparo de frutas",
         icon: "production",
       },
       {

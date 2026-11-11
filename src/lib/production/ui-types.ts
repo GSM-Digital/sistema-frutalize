@@ -112,6 +112,7 @@ export type TerminalSnapshot = {
     code: string;
     product_name: string;
     product_id?: string;
+    prepared?: boolean;
     quantity: number;
     unit: string;
   }[];

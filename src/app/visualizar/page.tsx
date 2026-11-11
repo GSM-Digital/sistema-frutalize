@@ -41,6 +41,9 @@ export default async function VisualizarPage({
         >
           Terminal · fila
         </Link>
+        <Link className="btn btn-secondary" href="/visualizar/preparo">
+          Terminal · preparo
+        </Link>
         <span className="self-center text-sm text-muted">
           Dados fictícios, sem conexão com o banco. Ações desativadas.
         </span>

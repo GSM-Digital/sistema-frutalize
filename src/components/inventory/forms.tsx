@@ -325,11 +325,10 @@ export function CatalogForm({
             <option value="false">Arquivado</option>
           </Field>
           <Field
-            label="Motivo do registro ou alteração"
+            label="Motivo do registro ou alteração (opcional)"
             name="reason"
-            required
             maxLength={240}
-            value={state.values?.reason ?? (record ? "" : "Cadastro inicial")}
+            value={state.values?.reason ?? ""}
           />
         </div>
       </fieldset>

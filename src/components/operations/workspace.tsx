@@ -64,8 +64,12 @@ function Fields({
 }) {
   return (
     <>
-      {fields.map((field) =>
-        field.fields ? (
+      {fields.map((definition) => {
+        const field =
+          definition.name === "reason" && snapshot.role === "admin"
+            ? { ...definition, optional: true }
+            : definition;
+        return field.fields ? (
           <Repeated
             key={field.name}
             field={field}
@@ -130,8 +134,8 @@ function Fields({
               />
             )}
           </label>
-        ),
-      )}
+        );
+      })}
     </>
   );
 }

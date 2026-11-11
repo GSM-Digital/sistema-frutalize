@@ -72,12 +72,23 @@ export async function sendProductionCommand(
       code: "INVALID_TRANSITION",
       message: "Solicitação inválida. Recarregue o terminal.",
     };
+  const payload = { ...command.payload };
+  if (
+    access.member.role === "admin" &&
+    ["claim", "pause", "cancel", "resolve_nonconformity"].includes(
+      command.kind,
+    ) &&
+    (payload.reason == null ||
+      (typeof payload.reason === "string" && !payload.reason.trim()))
+  ) {
+    payload.reason = "Registro administrativo";
+  }
   const { data, error } = await access.supabase.rpc("production_command", {
     p_command_id: command.commandId,
     p_run_id: command.runId,
     p_expected_revision: command.expectedRevision,
     p_kind: command.kind,
-    p_payload: command.payload,
+    p_payload: payload,
   });
   if (error)
     return {
@@ -251,7 +262,8 @@ export async function saveProductionConfiguration(
       if (!["procedure", "profile", "quality"].includes(String(payload.entity)))
         throw new ValidationError("Registro inválido para revisão.");
       payload.id = id(data, "id");
-      payload.reason = string(data, "reason", true, 1000);
+      payload.reason =
+        string(data, "reason", false, 240) || "Registro administrativo";
     } else if (kind === "calibrate") {
       payload.equipment_id = id(data, "equipment_id");
       payload.reference = string(data, "reference", true, 240);

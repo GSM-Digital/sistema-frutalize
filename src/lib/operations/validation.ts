@@ -3,7 +3,7 @@ import { isUuid, ValidationError } from "@/lib/inventory/validation";
 import { operationForms, type Field } from "./forms";
 import { operationsModules, type OperationsModule } from "./types";
 
-export function parseOperation(form: FormData) {
+export function parseOperation(form: FormData, isAdmin = false) {
   const selectedModule = form.get("module") as OperationsModule;
   if (!operationsModules.includes(selectedModule))
     throw new ValidationError("Módulo inválido.");
@@ -38,7 +38,8 @@ export function parseOperation(form: FormData) {
       if (raw !== null && typeof raw !== "string")
         throw new ValidationError("Campo inválido.");
       const value = String(raw ?? "").trim();
-      if (!value && item.optional) continue;
+      if (!value && (item.optional || (isAdmin && item.name === "reason")))
+        continue;
       if (!value || value.length > 2000)
         throw new ValidationError(`Confira o campo ${item.label}.`);
       if (item.options && !item.options.some(([key]) => key === value))

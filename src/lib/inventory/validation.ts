@@ -394,7 +394,10 @@ export function deliveryInput(data: FormData) {
 }
 export function safeReturnPath(value: unknown) {
   return typeof value === "string" &&
-    /^\/(?:dashboard|terminal|gestao|portal)(?:\/[a-zA-Z0-9/-]*)?$/.test(value)
+    (value === "/suporte/relatar" ||
+      /^\/(?:dashboard|terminal|gestao|portal)(?:\/[a-zA-Z0-9/-]*)?$/.test(
+        value,
+      ))
     ? value
     : "/dashboard";
 }

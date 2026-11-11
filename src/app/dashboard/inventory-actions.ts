@@ -73,7 +73,9 @@ export async function saveCatalog(
       p_entity: entity,
       p_id: data.get("id") ? uuidField(data, "id") : null,
       p_values: values,
-      p_reason: textField(data, "reason", "Motivo", 3, 240),
+      p_reason: data.get("reason")?.toString().trim()
+        ? textField(data, "reason", "Motivo", 3, 240)
+        : "Registro administrativo",
     });
     if (error) return failure(error, data);
     catalogId = id;

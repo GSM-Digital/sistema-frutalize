@@ -1,4 +1,11 @@
 const paths = {
+  bug: [
+    "M8 7V6a4 4 0 0 1 8 0v1",
+    "M9 3 7 1M15 3l2-2",
+    "M12 7v14",
+    "M7 7h10v9a5 5 0 0 1-10 0z",
+    "M7 10 3 8V5M17 10l4-2V5M7 13H2m15 0h5M7 16l-4 2v3m14-5 4 2v3",
+  ],
   overview: ["M3 3h7v7H3z", "M14 3h7v7h-7z", "M3 14h7v7H3z", "M14 14h7v7h-7z"],
   inventory: [
     "M3 7l9-4 9 4-9 4z",

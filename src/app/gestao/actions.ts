@@ -48,9 +48,12 @@ function adminAuth() {
 }
 
 export async function submitOperation(form: FormData): Promise<OperationState> {
-  const { supabase } = await requireProductionStaff();
+  const { supabase, member } = await requireProductionStaff();
   try {
-    const { module, action, commandId, payload } = parseOperation(form);
+    const { module, action, commandId, payload } = parseOperation(
+      form,
+      member.role === "admin",
+    );
     if (module === "receiving" && action === "inspect") {
       const { data, error } = await supabase.rpc("operations_snapshot", {
         p_module: "receiving",
@@ -155,7 +158,7 @@ export async function inviteMember(form: FormData): Promise<OperationState> {
     email.length > 254 ||
     name.length < 2 ||
     name.length > 120 ||
-    reason.length < 3 ||
+    ((member.role !== "admin" || reason.length > 0) && reason.length < 3) ||
     reason.length > 240
   )
     return { error: "Confira nome, e-mail e motivo do convite." };
@@ -206,14 +209,14 @@ export async function uploadReceipt(form: FormData): Promise<OperationState> {
     !(file instanceof File) ||
     !isUuid(receipt) ||
     !isUuid(command) ||
-    reason.length < 3 ||
+    (reason.length > 0 && reason.length < 3) ||
     reason.length > 240 ||
     file.size < 1 ||
     file.size > 10 * 1024 * 1024
   )
     return {
       error:
-        "Selecione um recebimento e um arquivo JPG, PNG ou PDF de até 10 MB; informe o motivo.",
+        "Selecione um recebimento e um arquivo JPG, PNG ou PDF de até 10 MB.",
     };
   const header = new Uint8Array(await file.slice(0, 8).arrayBuffer());
   const extension =

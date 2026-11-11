@@ -401,7 +401,7 @@ export function DashboardOperations({
                         name="reason"
                         minLength={3}
                         maxLength={1000}
-                        required
+                        required={selected === "issue"}
                       />
                     </div>
                     {selected === "pause" && (
@@ -540,7 +540,7 @@ export function DashboardOperations({
                             name="reason"
                             minLength={3}
                             maxLength={1000}
-                            required
+                            required={false}
                           />
                         </div>
                         <button

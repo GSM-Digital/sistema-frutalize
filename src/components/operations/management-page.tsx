@@ -89,6 +89,9 @@ export async function ManagementPage({
           </Link>
           <div className="flex items-center gap-4">
             <span className="text-sm">{access.member.display_name}</span>
+            <Link href="/suporte/relatar" className="text-link">
+              Reportar problema
+            </Link>
             <form action={logout}>
               <button className="btn btn-secondary">Sair</button>
             </form>

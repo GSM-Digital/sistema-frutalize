@@ -257,6 +257,9 @@ export function ProductionTerminal({
           </div>
         </div>
         <div className="terminal-toolbar">
+          <Link href="/suporte/relatar" className="btn btn-secondary">
+            Reportar problema
+          </Link>
           {preview && (
             <span className="badge">Prévia fictícia · somente leitura</span>
           )}
@@ -655,7 +658,7 @@ export function ProductionTerminal({
                               name="reason"
                               minLength={3}
                               maxLength={1000}
-                              required
+                              required={snapshot.actor.role !== "admin"}
                             />
                             <button
                               className="btn btn-secondary mt-2"
@@ -800,7 +803,9 @@ export function ProductionTerminal({
                   <textarea
                     id="production-reason"
                     name="reason"
-                    required
+                    required={
+                      dialog === "issue" || snapshot.actor.role !== "admin"
+                    }
                     minLength={3}
                     maxLength={1000}
                     rows={3}

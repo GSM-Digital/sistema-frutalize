@@ -98,6 +98,7 @@ const sections: { label?: string; items: NavItem[] }[] = [
         label: "Apontamentos",
         icon: "history",
       },
+      { href: "/dashboard/suporte", label: "Suporte", icon: "bug" },
     ],
   },
 ];
@@ -494,9 +495,19 @@ export function Navigation({
               setMenuOpen(false);
           }}
         >
-          <p id="mobile-nav-panel-title" className="mobile-nav-panel-title">
-            Todas as áreas
-          </p>
+          <div className="mobile-nav-panel-heading">
+            <p id="mobile-nav-panel-title" className="mobile-nav-panel-title">
+              Todas as áreas
+            </p>
+            <Link
+              href="/suporte/relatar"
+              className="mobile-nav-report"
+              aria-label="Reportar problema"
+              onClick={() => setMenuOpen(false)}
+            >
+              <Icon name="bug" size={22} />
+            </Link>
+          </div>
           {sections.map((section, index) => (
             <section key={section.label ?? index}>
               {section.label && <h2>{section.label}</h2>}

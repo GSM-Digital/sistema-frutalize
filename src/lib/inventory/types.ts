@@ -1,3 +1,4 @@
+import type { SupportReport } from "@/lib/support/types";
 import type { OperationsDatabaseFunctions } from "@/lib/operations/types";
 
 export type Json =
@@ -245,6 +246,7 @@ type View<Row> = { Row: Row; Relationships: [] };
 export type Database = {
   public: {
     Tables: {
+      support_reports: Table<SupportReport>;
       staff_members: Table<{
         user_id: string;
         display_name: string;

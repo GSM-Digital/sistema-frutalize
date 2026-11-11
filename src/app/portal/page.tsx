@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -24,9 +25,14 @@ export default async function CustomerPortal() {
         <div>
           <h1 className="text-3xl font-semibold">Meus pedidos</h1>
         </div>
-        <form action={logout}>
-          <button className="btn btn-secondary">Sair</button>
-        </form>
+        <div className="flex flex-wrap items-center gap-3">
+          <Link href="/suporte/relatar" className="text-link">
+            Reportar problema
+          </Link>
+          <form action={logout}>
+            <button className="btn btn-secondary">Sair</button>
+          </form>
+        </div>
       </header>
       {error || !data ? (
         <p role="alert" className="notice">

@@ -91,6 +91,9 @@ export function SidebarControls({
           <Link href="/dashboard/conta" onClick={() => setMenuOpen(false)}>
             Conta
           </Link>
+          <Link href="/suporte/relatar" onClick={() => setMenuOpen(false)}>
+            Reportar problema
+          </Link>
           <form action={logout}>
             <button type="submit">Sair</button>
           </form>

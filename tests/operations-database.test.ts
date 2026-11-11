@@ -331,6 +331,53 @@ test("operations: migration replay, atomic business rules and authorization", as
   );
 
   await t.test(
+    "support queue is admin-only and audit reasons are optional only for admins",
+    async () => {
+      const id = randomUUID();
+      const submit = () =>
+        db.query(
+          "insert into support_reports(id,category,description) values ($1,'suggestion','Relato de teste')",
+          [id],
+        );
+      await user(null);
+      await assert.rejects(submit(), /permission denied/);
+      await user(randomUUID());
+      await assert.rejects(submit(), /row-level security/);
+      await user(collaborator);
+      await submit();
+      assert.equal(
+        await scalar("select count(*)::int from support_reports"),
+        0,
+      );
+      await db.query(
+        "update support_reports set status='discarded' where id=$1",
+        [id],
+      );
+      await assert.rejects(
+        command("time", "correct", { reason: "" }),
+        /reason/,
+      );
+      await user(admin);
+      assert.equal(
+        await scalar("select status from support_reports where id=$1", [id]),
+        "todo",
+      );
+      await db.query(
+        "update support_reports set status='in_progress' where id=$1",
+        [id],
+      );
+      assert.equal(
+        await scalar("select status from support_reports where id=$1", [id]),
+        "in_progress",
+      );
+      assert.equal(
+        (await command("alerts", "evaluate", { reason: "" })).ok,
+        true,
+      );
+    },
+  );
+
+  await t.test(
     "alerts use real readings and deduplicate evaluation",
     async () => {
       await command("alerts", "rule_save", {

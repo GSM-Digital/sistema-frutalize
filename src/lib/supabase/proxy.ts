@@ -8,9 +8,13 @@ export async function updateSession(request: NextRequest) {
   if (!isSupabaseConfigured()) {
     if (
       request.nextUrl.pathname === "/" ||
-      ["/dashboard", "/terminal", "/gestao", "/portal"].some((path) =>
-        request.nextUrl.pathname.startsWith(path),
-      )
+      [
+        "/dashboard",
+        "/terminal",
+        "/gestao",
+        "/portal",
+        "/suporte/relatar",
+      ].some((path) => request.nextUrl.pathname.startsWith(path))
     )
       return NextResponse.redirect(new URL("/login", request.url));
     return response;
@@ -41,9 +45,13 @@ export async function updateSession(request: NextRequest) {
   const authenticated = Boolean(data?.claims);
   const path = request.nextUrl.pathname;
 
-  const protectedPath = ["/dashboard", "/terminal", "/gestao", "/portal"].some(
-    (prefix) => path === prefix || path.startsWith(`${prefix}/`),
-  );
+  const protectedPath = [
+    "/dashboard",
+    "/terminal",
+    "/gestao",
+    "/portal",
+    "/suporte/relatar",
+  ].some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
   if (!authenticated && (path === "/" || protectedPath)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";

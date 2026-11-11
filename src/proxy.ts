@@ -14,6 +14,7 @@ export const config = {
     "/terminal/:path*",
     "/gestao/:path*",
     "/portal/:path*",
+    "/suporte/relatar",
     "/primeiro-acesso",
     "/auth/confirm",
   ],

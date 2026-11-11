@@ -400,10 +400,11 @@ export function ProductionConfigurationPanel({
                     <input type="hidden" name="entity" value={item.entity} />
                     <input type="hidden" name="id" value={item.id} />
                     <Field
-                      label="Motivo e referência da decisão"
+                      label="Motivo e referência da decisão (opcional)"
                       name="reason"
+                      required={false}
                       minLength={3}
-                      maxLength={1000}
+                      maxLength={240}
                     />
                     {item.status === "review" && (
                       <label className="flex gap-2 text-sm leading-6">

@@ -631,3 +631,41 @@
     width: 100%;
   }
 }
+
+.mobile-nav-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.mobile-nav-report {
+  display: inline-grid;
+  min-width: 44px;
+  min-height: 44px;
+  place-items: center;
+  border-radius: 0.65rem;
+  color: var(--brand);
+}
+.mobile-nav-report:hover {
+  background: #e8f1e4;
+}
+
+/* The browser's native arrow has no consistent inset across platforms. */
+select:not([multiple]):not([size]),
+select[size="1"]:not([multiple]) {
+  appearance: none;
+  padding-inline-end: 2.75rem;
+  background-image: url("/select-chevron.svg");
+  background-position: right 0.875rem center;
+  background-repeat: no-repeat;
+  background-size: 0.875rem;
+}
+
+@media (forced-colors: active) {
+  select:not([multiple]):not([size]),
+  select[size="1"]:not([multiple]) {
+    appearance: auto;
+    background-image: none;
+    padding-inline-end: 0.875rem;
+  }
+}

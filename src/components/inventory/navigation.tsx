@@ -1,4 +1,5 @@
 "use client";
+import { ReportTrigger } from "@/components/support/report-dialog";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -508,14 +509,13 @@ export function Navigation({
             </p>
             <div className="mobile-nav-panel-actions">
               <ThemeToggle />
-              <Link
-                href="/suporte/relatar"
+              <ReportTrigger
                 className="mobile-nav-report"
-                aria-label="Reportar problema"
-                onClick={() => setMenuOpen(false)}
+
+                onOpen={() => setMenuOpen(false)}
               >
                 <Icon name="bug" size={22} />
-              </Link>
+              </ReportTrigger>
             </div>
           </div>
           {sections.map((section, index) => (

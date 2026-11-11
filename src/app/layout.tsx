@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ReportDialogProvider } from "@/components/support/report-dialog";
 import { initializeTheme } from "@/lib/theme";
 import "./globals.css";
 import "./surface-styles.css";
@@ -43,7 +44,9 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: initializeTheme }} />
       </head>
-      <body>{children}</body>
+      <body>
+        <ReportDialogProvider>{children}</ReportDialogProvider>
+      </body>
     </html>
   );
 }

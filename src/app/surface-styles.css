@@ -689,3 +689,70 @@ select[size="1"]:not([multiple]) {
 .theme-toggle:hover {
   background: var(--brand-soft);
 }
+
+.report-dialog {
+  position: fixed;
+  inset: 0;
+  width: min(34rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: clamp(1rem, 4vw, 1.5rem);
+  color: var(--foreground);
+}
+.report-dialog::backdrop {
+  background: rgb(12 23 15 / 54%);
+}
+html:has(.report-dialog[open]) {
+  overflow: hidden;
+}
+.report-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.report-dialog-header h2 {
+  font-size: 1.25rem;
+  font-weight: 650;
+}
+.report-fields {
+  display: grid;
+  gap: 1rem;
+}
+.report-form {
+  display: grid;
+  gap: 1rem;
+}
+.support-filters.filter-bar {
+  padding: 0;
+  border: 0;
+  margin-bottom: 1.25rem;
+}
+.support-status-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+.edit-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.support-status-form .btn,
+.support-filters .btn,
+.support-filters select {
+  min-height: 44px;
+}
+@media (max-width: 639px) {
+  .support-filters > .field,
+  .support-status-form > .field {
+    flex: 1 1 10rem;
+  }
+  .support-filters > .btn {
+    flex: 1 0 100%;
+  }
+}

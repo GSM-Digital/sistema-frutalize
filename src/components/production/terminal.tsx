@@ -1,5 +1,6 @@
 "use client";
 
+import { ReportTrigger } from "@/components/support/report-dialog";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -257,9 +258,9 @@ export function ProductionTerminal({
           </div>
         </div>
         <div className="terminal-toolbar">
-          <Link href="/suporte/relatar" className="btn btn-secondary">
+          <ReportTrigger className="btn btn-secondary">
             Reportar problema
-          </Link>
+          </ReportTrigger>
           {preview && (
             <span className="badge">Prévia fictícia · somente leitura</span>
           )}

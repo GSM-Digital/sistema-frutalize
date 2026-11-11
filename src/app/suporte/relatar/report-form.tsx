@@ -5,7 +5,7 @@ import { reportCategories, supportImageLimit } from "@/lib/support/types";
 import { SubmitButton } from "@/components/submit-button";
 import { sendReport } from "./actions";
 
-export function ReportForm() {
+export function ReportForm({ sourcePath }: { sourcePath: string }) {
   const [state, action, pending] = useActionState(sendReport, {});
   const [fileError, setFileError] = useState("");
   const [description, setDescription] = useState("");
@@ -18,10 +18,11 @@ export function ReportForm() {
       </p>
     );
   return (
-    <form action={action} className="inventory-form space-y-4">
-      <fieldset disabled={pending} className="space-y-4">
+    <form action={action} className="inventory-form report-form">
+      <input type="hidden" name="source_path" value={sourcePath} />
+      <fieldset disabled={pending} className="report-fields">
         <label className="field">
-          Tipo de relato
+          <span className="field-label">Tipo de relato</span>
           <select
             name="category"
             value={category}
@@ -35,7 +36,7 @@ export function ReportForm() {
           </select>
         </label>
         <label className="field">
-          Descrição
+          <span className="field-label">Descrição</span>
           <textarea
             name="description"
             required
@@ -46,7 +47,7 @@ export function ReportForm() {
           />
         </label>
         <label className="field">
-          Imagens (opcional)
+          <span className="field-label">Imagens (opcional)</span>
           <input
             name="images"
             type="file"
@@ -74,7 +75,7 @@ export function ReportForm() {
           {fileError || state.error}
         </p>
       )}
-      <fieldset disabled={Boolean(fileError) || pending}>
+      <fieldset disabled={!description.trim() || Boolean(fileError) || pending}>
         <SubmitButton>Enviar relato</SubmitButton>
       </fieldset>
     </form>

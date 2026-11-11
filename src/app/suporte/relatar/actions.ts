@@ -43,6 +43,13 @@ export async function sendReport(
     description.length > 4000
   )
     return { error: "Escolha um tipo de relato e escreva a descrição." };
+  const path = form.get("source_path");
+  const sourcePath =
+    typeof path === "string" &&
+    path.length <= 500 &&
+    /^\/(dashboard|terminal|gestao|portal)(\/[a-zA-Z0-9_-]+)*\/?$/.test(path)
+      ? path
+      : null;
   const files = form
     .getAll("images")
     .filter((file): file is File => file instanceof File && file.size > 0);
@@ -83,7 +90,13 @@ export async function sendReport(
   }
   const { error } = await supabase
     .from("support_reports")
-    .insert({ id, category, description, attachments });
+    .insert({
+      id,
+      category,
+      description,
+      attachments,
+      source_path: sourcePath,
+    });
   if (error) {
     if (attachments.length)
       await bucket.remove(attachments.map((name) => `${folder}/${name}`));

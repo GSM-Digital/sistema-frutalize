@@ -2,7 +2,7 @@ import { getAccess } from "@/lib/auth";
 import { dateTime } from "@/lib/inventory/format";
 import { listParams } from "@/lib/inventory/validation";
 import { PageHeading, Pagination } from "@/components/inventory/ui";
-import { SubmitButton } from "@/components/submit-button";
+import { EditForm } from "@/components/edit-form";
 import {
   reportCategories,
   reportStatuses,
@@ -30,16 +30,18 @@ export default async function SupportPage({
   if (access.status !== "ready") return null;
   const params = await searchParams;
   const status =
-    typeof params.status === "string" &&
-    Object.hasOwn(reportStatuses, params.status)
-      ? (params.status as SupportReport["status"])
-      : "";
+    params.status === "all"
+      ? "all"
+      : typeof params.status === "string" &&
+          Object.hasOwn(reportStatuses, params.status)
+        ? (params.status as SupportReport["status"])
+        : "todo";
   const ascending = params.ordem === "asc";
   const { from, to, page } = listParams(params);
   const query = access.supabase
     .from("support_reports")
     .select("*", { count: "exact" });
-  if (status) query.eq("status", status);
+  if (status !== "all") query.eq("status", status);
   const { data, error, count } = await query
     .order("created_at", { ascending })
     .order("id", { ascending })
@@ -60,11 +62,15 @@ export default async function SupportPage({
   return (
     <>
       <PageHeading title="Suporte" />
-      <form method="get" className="filter-bar" aria-label="Filtrar relatos">
+      <form
+        method="get"
+        className="filter-bar support-filters"
+        aria-label="Filtrar relatos"
+      >
         <label className="field">
-          Situação
+          <span className="field-label">Situação</span>
           <select name="status" defaultValue={status}>
-            <option value="">Todas</option>
+            <option value="all">Todas</option>
             {Object.entries(reportStatuses).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
@@ -73,7 +79,7 @@ export default async function SupportPage({
           </select>
         </label>
         <label className="field">
-          Data de envio
+          <span className="field-label">Data de envio</span>
           <select name="ordem" defaultValue={ascending ? "asc" : "desc"}>
             <option value="desc">Mais recentes primeiro</option>
             <option value="asc">Mais antigos primeiro</option>
@@ -109,8 +115,19 @@ export default async function SupportPage({
                 <span className="badge">{reportStatuses[report.status]}</span>
               </div>
               <p className="muted text-sm [overflow-wrap:anywhere]">
-                {report.author_email || report.author_id} ·{" "}
+                <strong>
+                  {report.author_name ||
+                    report.author_email ||
+                    "Usuário não identificado"}
+                </strong>
+                {report.author_name && report.author_email
+                  ? ` · ${report.author_email}`
+                  : ""}
+                {" · "}
                 {dateTime(report.created_at)}
+              </p>
+              <p className="muted text-sm [overflow-wrap:anywhere]">
+                Página de origem: {report.source_path ?? "Não registrada"}
               </p>
               <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">
                 {report.description}
@@ -143,11 +160,19 @@ export default async function SupportPage({
                   })}
                 </ul>
               )}
-              <form
+              <EditForm
+                key={report.status}
                 action={changeReportStatus}
-                className="flex flex-wrap items-end gap-3"
+                className="support-status-form"
+                initialValues={{ status: report.status }}
+                saveLabel="Salvar situação"
               >
                 <input type="hidden" name="id" value={report.id} />
+                <input
+                  type="hidden"
+                  name="currentStatus"
+                  value={report.status}
+                />
                 <input type="hidden" name="filterStatus" value={status} />
                 <input
                   type="hidden"
@@ -156,7 +181,7 @@ export default async function SupportPage({
                 />
                 <input type="hidden" name="page" value={page} />
                 <label className="field">
-                  Alterar situação
+                  <span className="field-label">Alterar situação</span>
                   <select name="status" defaultValue={report.status}>
                     {Object.entries(reportStatuses).map(([value, label]) => (
                       <option key={value} value={value}>
@@ -165,11 +190,10 @@ export default async function SupportPage({
                     ))}
                   </select>
                 </label>
-                <SubmitButton>Salvar situação</SubmitButton>
-              </form>
+              </EditForm>
             </article>
           ))}
-          {(count ?? 0) > 25 && (
+          {((count ?? 0) > 25 || page > 1) && (
             <Pagination
               count={count ?? 0}
               page={page}

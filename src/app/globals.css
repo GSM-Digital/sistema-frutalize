@@ -364,7 +364,8 @@ textarea {
   font-size: 0.7rem;
 }
 .sidebar-account-menu a,
-.sidebar-account-menu form button {
+.sidebar-account-menu form button,
+.sidebar-account-menu button[aria-haspopup="dialog"] {
   display: block;
   width: 100%;
   border: 0;
@@ -378,7 +379,9 @@ textarea {
   cursor: pointer;
 }
 .sidebar-account-menu a:hover,
-.sidebar-account-menu a:focus-visible {
+.sidebar-account-menu a:focus-visible,
+.sidebar-account-menu button[aria-haspopup="dialog"]:hover,
+.sidebar-account-menu button[aria-haspopup="dialog"]:focus-visible {
   background: light-dark(#edf5e8, var(--dark-raised));
 }
 .sidebar-account-menu form button {
@@ -1410,7 +1413,7 @@ tbody tr:hover {
 .filter-bar {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-end;
   gap: 0.75rem;
   padding: 1.15rem 1.5rem;
   border-bottom: 1px solid light-dark(#edf0e9, var(--dark-line));
@@ -1422,12 +1425,15 @@ tbody tr:hover {
 .filter-bar select {
   display: block;
   width: 100%;
-  min-height: 42px;
+  min-height: 44px;
   padding: 0.6rem 0.75rem;
   border: 1px solid light-dark(#dfe6dc, var(--dark-line));
   border-radius: 0.6rem;
   background: var(--surface);
   font-size: 0.75rem;
+}
+.filter-bar .btn {
+  min-height: 44px;
 }
 .check-label {
   display: inline-flex;

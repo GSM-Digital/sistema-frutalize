@@ -1,5 +1,6 @@
 "use client";
 
+import { ReportTrigger } from "@/components/support/report-dialog";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -101,9 +102,9 @@ export function SidebarControls({
           <Link href="/terminal" onClick={() => setMenuOpen(false)}>
             Terminal Touch
           </Link>
-          <Link href="/suporte/relatar" onClick={() => setMenuOpen(false)}>
+          <ReportTrigger onOpen={() => setMenuOpen(false)}>
             Reportar problema
-          </Link>
+          </ReportTrigger>
           <form action={logout}>
             <button type="submit">Sair</button>
           </form>

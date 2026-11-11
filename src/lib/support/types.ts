@@ -15,6 +15,8 @@ export type SupportReport = {
   id: string;
   author_id: string;
   author_email: string;
+  author_name: string | null;
+  source_path: string | null;
   category: keyof typeof reportCategories;
   status: keyof typeof reportStatuses;
   description: string;

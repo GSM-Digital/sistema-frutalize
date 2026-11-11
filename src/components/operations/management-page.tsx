@@ -1,3 +1,4 @@
+import { ReportTrigger } from "@/components/support/report-dialog";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
@@ -89,9 +90,9 @@ export async function ManagementPage({
           </Link>
           <div className="flex items-center gap-4">
             <span className="text-sm">{access.member.display_name}</span>
-            <Link href="/suporte/relatar" className="text-link">
+            <ReportTrigger className="text-link">
               Reportar problema
-            </Link>
+            </ReportTrigger>
             <form action={logout}>
               <button className="btn btn-secondary">Sair</button>
             </form>

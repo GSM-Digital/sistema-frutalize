@@ -1,5 +1,5 @@
 import { getAccess } from "@/lib/auth";
-import { SubmitButton } from "@/components/submit-button";
+import { EditForm } from "@/components/edit-form";
 import {
   changePassword,
   requestAccountEmailChange,
@@ -92,7 +92,19 @@ export default async function AccountPage({
                 endereço.
               </p>
             )}
-            <form action={saveAccountProfile} className="account-password-form">
+            <EditForm
+              key={JSON.stringify([
+                access.member.display_name,
+                access.member.role,
+              ])}
+              initialValues={{
+                display_name: access.member.display_name,
+                role: access.member.role,
+              }}
+              action={saveAccountProfile}
+              className="account-password-form"
+              saveLabel="Salvar nome e perfil"
+            >
               <label>
                 Nome
                 <input
@@ -115,9 +127,14 @@ export default async function AccountPage({
                 Alterar seu perfil pode mudar imediatamente o acesso a esta
                 área.
               </p>
-              <SubmitButton>Salvar nome e perfil</SubmitButton>
-            </form>
-            <form action={saveAccountPhone} className="account-password-form">
+            </EditForm>
+            <EditForm
+              key={phone}
+              initialValues={{ phone }}
+              action={saveAccountPhone}
+              className="account-password-form"
+              saveLabel="Salvar telefone"
+            >
               <label>
                 Telefone
                 <input
@@ -128,9 +145,11 @@ export default async function AccountPage({
                   maxLength={30}
                 />
               </label>
-              <SubmitButton>Salvar telefone</SubmitButton>
-            </form>
-            <form
+            </EditForm>
+            <EditForm
+              key={access.user.email ?? ""}
+              initialValues={{ email: access.user.email ?? "" }}
+              saveLabel="Alterar e-mail"
               action={requestAccountEmailChange}
               className="account-password-form"
             >
@@ -145,8 +164,7 @@ export default async function AccountPage({
                   required
                 />
               </label>
-              <SubmitButton>Alterar e-mail</SubmitButton>
-            </form>
+            </EditForm>
           </div>
         </details>
       </section>
@@ -174,7 +192,12 @@ export default async function AccountPage({
                 {erro.slice(0, 200)}
               </p>
             )}
-            <form action={changePassword} className="account-password-form">
+            <EditForm
+              initialValues={{ password: "" }}
+              action={changePassword}
+              className="account-password-form"
+              saveLabel="Salvar nova senha"
+            >
               <label>
                 Senha atual
                 <input
@@ -206,8 +229,7 @@ export default async function AccountPage({
                   required
                 />
               </label>
-              <SubmitButton>Salvar nova senha</SubmitButton>
-            </form>
+            </EditForm>
             <form
               action={resetAccountPassword}
               className="account-recovery-form"

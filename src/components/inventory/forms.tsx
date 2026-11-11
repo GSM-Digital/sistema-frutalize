@@ -1,4 +1,5 @@
 "use client";
+import { EditForm } from "@/components/edit-form";
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -184,11 +185,38 @@ export function CatalogForm({
   const [state, action, pending] = useActionState(saveCatalog, {});
   const v = (key: string, fallback = "") =>
     state.values?.[key] ?? String(record?.[key] ?? fallback);
+  const initialValues = record
+    ? Object.fromEntries(
+        [
+          "name",
+          "active",
+          "category_id",
+          "requires_expiry",
+          "has_variants",
+          "product_id",
+          "sku",
+          "unit_weight_kg",
+          "cnpj",
+          "phone",
+          "contact_name",
+          "address",
+          "description",
+        ].map((key) => [key, String(record[key] ?? "")]),
+      )
+    : undefined;
   return (
-    <form
+    <EditForm
       key={state.successId ?? "initial"}
       action={action}
       className="inventory-form"
+      initialValues={initialValues}
+      pending={pending}
+      saveLabel="Salvar cadastro"
+      cancel={
+        <Link href={cancelHref} className="btn btn-secondary">
+          Fechar formulário
+        </Link>
+      }
     >
       <input type="hidden" name="entity" value={entity} />
       <input type="hidden" name="id" value={record?.id ?? ""} />
@@ -333,13 +361,7 @@ export function CatalogForm({
         </div>
       </fieldset>
       <Result state={state} />
-      <div className="flex flex-wrap gap-3">
-        <SaveButton pending={pending}>Salvar cadastro</SaveButton>
-        <Link href={cancelHref} className="btn btn-secondary">
-          Fechar formulário
-        </Link>
-      </div>
-    </form>
+    </EditForm>
   );
 }
 

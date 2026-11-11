@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ReportTrigger } from "@/components/support/report-dialog";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -26,9 +26,7 @@ export default async function CustomerPortal() {
           <h1 className="text-3xl font-semibold">Meus pedidos</h1>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <Link href="/suporte/relatar" className="text-link">
-            Reportar problema
-          </Link>
+          <ReportTrigger className="text-link">Reportar problema</ReportTrigger>
           <form action={logout}>
             <button className="btn btn-secondary">Sair</button>
           </form>

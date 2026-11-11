@@ -336,7 +336,7 @@ test("operations: migration replay, atomic business rules and authorization", as
       const id = randomUUID();
       const submit = () =>
         db.query(
-          "insert into support_reports(id,category,description) values ($1,'suggestion','Relato de teste')",
+          "insert into support_reports(id,category,description,source_path) values ($1,'suggestion','Relato de teste','/dashboard/lotes')",
           [id],
         );
       await user(null);
@@ -344,6 +344,20 @@ test("operations: migration replay, atomic business rules and authorization", as
       await user(randomUUID());
       await assert.rejects(submit(), /row-level security/);
       await user(collaborator);
+      await assert.rejects(
+        db.query(
+          "insert into support_reports(id,category,description,author_name) values ($1,'problem','Relato','Outro nome')",
+          [id],
+        ),
+        /permission denied/,
+      );
+      await assert.rejects(
+        db.query(
+          "insert into support_reports(id,category,description,source_path) values ($1,'problem','Relato','/dashboard?token=teste')",
+          [id],
+        ),
+        /check constraint/,
+      );
       await submit();
       assert.equal(
         await scalar("select count(*)::int from support_reports"),
@@ -358,6 +372,18 @@ test("operations: migration replay, atomic business rules and authorization", as
         /reason/,
       );
       await user(admin);
+      assert.equal(
+        await scalar("select author_name from support_reports where id=$1", [
+          id,
+        ]),
+        "Colaborador Teste",
+      );
+      assert.equal(
+        await scalar("select source_path from support_reports where id=$1", [
+          id,
+        ]),
+        "/dashboard/lotes",
+      );
       assert.equal(
         await scalar("select status from support_reports where id=$1", [id]),
         "todo",

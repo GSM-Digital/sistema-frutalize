@@ -60,7 +60,9 @@ export function SidebarControls() {
         }
         aria-expanded={!collapsed}
         onClick={toggle}
-        onFocus={() => setMenuOpen(true)}
+        onFocus={(event) => {
+          if (event.currentTarget.matches(":focus-visible")) setMenuOpen(true);
+        }}
         onBlur={(event) => {
           if (!event.currentTarget.parentElement?.contains(event.relatedTarget))
             setMenuOpen(false);

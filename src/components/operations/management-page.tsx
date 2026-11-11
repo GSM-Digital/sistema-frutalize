@@ -113,12 +113,7 @@ export async function ManagementPage({
       )}
       <div className="page-heading">
         <div>
-          <p className="eyebrow">Gestão Frutalize</p>
           <h1>{moduleNames[selectedModule]}</h1>
-          <p className="muted mt-2">
-            Registros reais, vinculados à sua identidade e preservados no
-            histórico.
-          </p>
         </div>
       </div>
       {error || !snapshot ? (

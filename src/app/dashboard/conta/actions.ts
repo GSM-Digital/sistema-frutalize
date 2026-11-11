@@ -3,6 +3,69 @@
 import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 
+const accountPath = "/dashboard/conta";
+const accountError = (message: string) =>
+  redirect(`${accountPath}?erro=${encodeURIComponent(message)}`);
+
+export async function saveAccountProfile(form: FormData) {
+  const { supabase, user } = await requireStaff();
+  const name = String(form.get("display_name") ?? "").trim();
+  const role = String(form.get("role") ?? "");
+  if (
+    name.length < 2 ||
+    name.length > 120 ||
+    !["admin", "manager", "collaborator"].includes(role)
+  )
+    accountError("Confira o nome e o perfil selecionado.");
+  const { error } = await supabase.rpc("operations_command", {
+    p_command_id: crypto.randomUUID(),
+    p_module: "staff",
+    p_action: "save",
+    p_data: {
+      user_id: user.id,
+      display_name: name,
+      role,
+      reason: "Atualização dos dados da própria conta",
+    },
+  });
+  if (error)
+    accountError(
+      error.message.includes("administrador ativo")
+        ? "É necessário manter pelo menos um administrador ativo."
+        : "Não foi possível salvar nome e perfil. Confira suas permissões.",
+    );
+  redirect(`${accountPath}?perfil=1`);
+}
+
+export async function saveAccountPhone(form: FormData) {
+  const { supabase } = await requireStaff();
+  const phone = String(form.get("phone") ?? "").trim();
+  if (phone.length > 30 || !/^[+\d() .-]*$/.test(phone))
+    accountError("Confira o telefone informado.");
+  const { error } = await supabase.auth.updateUser({ data: { phone } });
+  if (error) accountError("Não foi possível salvar o telefone.");
+  redirect(`${accountPath}?telefone=1`);
+}
+
+export async function requestAccountEmailChange(form: FormData) {
+  const { supabase, user } = await requireStaff();
+  const email = String(form.get("email") ?? "")
+    .trim()
+    .toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254)
+    accountError("Informe um e-mail válido.");
+  if (email === user.email?.toLowerCase())
+    accountError("Esse já é o e-mail da conta.");
+  const base = process.env.APP_ORIGIN;
+  const options =
+    base && /^https:\/\/[a-z0-9.-]+(?::\d+)?$/i.test(base)
+      ? { emailRedirectTo: `${base}/auth/email-confirm` }
+      : undefined;
+  const { error } = await supabase.auth.updateUser({ email }, options);
+  if (error) accountError("Não foi possível solicitar a alteração do e-mail.");
+  redirect(`${accountPath}?email=1`);
+}
+
 export async function changePassword(form: FormData) {
   const access = await requireStaff();
   const current = form.get("current_password");

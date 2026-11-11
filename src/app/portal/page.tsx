@@ -22,7 +22,6 @@ export default async function CustomerPortal() {
     <main className="mx-auto max-w-5xl space-y-6 p-6">
       <header className="flex items-center justify-between gap-4">
         <div>
-          <p className="eyebrow">Frutalize</p>
           <h1 className="text-3xl font-semibold">Meus pedidos</h1>
         </div>
         <form action={logout}>

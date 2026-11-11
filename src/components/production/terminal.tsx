@@ -65,6 +65,59 @@ export function ProductionTerminal({
   const [dialog, setDialog] = useState<
     "pause" | "issue" | "complete" | "create" | "cancel" | null
   >(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogDrag, setDialogDrag] = useState(0);
+  const [dialogDragging, setDialogDragging] = useState(false);
+  const dialogStart = useRef<number | null>(null);
+  const dialogContentTouchStart = useRef<number | null>(null);
+  const dialogTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function showDialog(next: NonNullable<typeof dialog>) {
+    if (dialogTimer.current) clearTimeout(dialogTimer.current);
+    setDialog(next);
+    setDialogOpen(false);
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => setDialogOpen(true)),
+    );
+  }
+  function hideDialog() {
+    if (dialogTimer.current) clearTimeout(dialogTimer.current);
+    setDialogOpen(false);
+    setDialogDrag(0);
+    dialogTimer.current = setTimeout(() => setDialog(null), 280);
+  }
+  useEffect(() => {
+    if (!dialog) return;
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const before = {
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+      overflow: body.style.overflow,
+    };
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !busy) hideDialog();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      body.style.position = before.position;
+      body.style.top = before.top;
+      body.style.width = before.width;
+      body.style.overflow = before.overflow;
+      window.removeEventListener("keydown", onKeyDown);
+      window.scrollTo(0, scrollY);
+    };
+  }, [dialog, busy]);
+  useEffect(
+    () => () => {
+      if (dialogTimer.current) clearTimeout(dialogTimer.current);
+    },
+    [],
+  );
   const inFlight = useRef(false),
     serverOffset = useRef(0);
   const storageKey = `frutalize.production.pending.${initial.actor.id}`;
@@ -148,7 +201,7 @@ export function ProductionTerminal({
         sessionStorage.removeItem(storageKey);
         setPending(null);
         if (result.ok) {
-          setDialog(null);
+          hideDialog();
           setMessage(
             command.kind === "complete"
               ? "Produção finalizada e lote registrado no estoque."
@@ -270,7 +323,7 @@ export function ProductionTerminal({
               {canManage && (
                 <button
                   className="terminal-btn terminal-btn-primary"
-                  onClick={() => setDialog("create")}
+                  onClick={() => showDialog("create")}
                   disabled={disabled}
                 >
                   Nova ordem
@@ -440,7 +493,7 @@ export function ProductionTerminal({
                             <button
                               className="terminal-btn terminal-btn-primary"
                               disabled={disabled}
-                              onClick={() => setDialog("complete")}
+                              onClick={() => showDialog("complete")}
                             >
                               Conferir finalização
                             </button>
@@ -476,7 +529,7 @@ export function ProductionTerminal({
                     onClick={() =>
                       run.operational_status === "paused"
                         ? dispatch("resume", {})
-                        : setDialog("pause")
+                        : showDialog("pause")
                     }
                   >
                     {run.operational_status === "paused"
@@ -486,7 +539,7 @@ export function ProductionTerminal({
                   <button
                     className="terminal-btn terminal-btn-muted"
                     disabled={disabled || !ownRun}
-                    onClick={() => setDialog("issue")}
+                    onClick={() => showDialog("issue")}
                   >
                     Informar problema / chamar responsável
                   </button>
@@ -494,7 +547,7 @@ export function ProductionTerminal({
                     <button
                       className="btn btn-secondary"
                       disabled={disabled}
-                      onClick={() => setDialog("cancel")}
+                      onClick={() => showDialog("cancel")}
                     >
                       Cancelar ordem
                     </button>
@@ -627,13 +680,77 @@ export function ProductionTerminal({
         </main>
       )}
       {dialog && (
-        <div className="terminal-dialog-backdrop">
+        <div
+          className="terminal-dialog-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !busy) hideDialog();
+          }}
+        >
           <section
             role="dialog"
             aria-modal="true"
             aria-labelledby="production-dialog-title"
             className="terminal-dialog"
+            style={
+              dialogOpen
+                ? {
+                    transform: `translateY(${dialogDrag}px)`,
+                    transition: dialogDragging ? "none" : undefined,
+                  }
+                : undefined
+            }
+            onTouchStart={(event) => {
+              dialogContentTouchStart.current =
+                event.currentTarget.scrollTop === 0
+                  ? (event.touches[0]?.clientY ?? null)
+                  : null;
+            }}
+            onTouchEnd={(event) => {
+              if (dialogContentTouchStart.current === null) return;
+              const distance =
+                (event.changedTouches[0]?.clientY ??
+                  dialogContentTouchStart.current) -
+                dialogContentTouchStart.current;
+              dialogContentTouchStart.current = null;
+              if (distance > 90 && event.currentTarget.scrollTop === 0 && !busy)
+                hideDialog();
+            }}
           >
+            <button
+              type="button"
+              className="terminal-dialog-handle"
+              aria-label="Deslize para baixo para fechar"
+              onPointerDown={(event) => {
+                dialogStart.current = event.clientY;
+                setDialogDragging(true);
+                event.currentTarget.setPointerCapture(event.pointerId);
+              }}
+              onPointerMove={(event) => {
+                if (dialogStart.current !== null)
+                  setDialogDrag(
+                    Math.max(0, event.clientY - dialogStart.current),
+                  );
+              }}
+              onPointerUp={(event) => {
+                if (
+                  dialogStart.current !== null &&
+                  event.clientY - dialogStart.current > 80 &&
+                  !busy
+                )
+                  hideDialog();
+                dialogStart.current = null;
+                setDialogDragging(false);
+                setDialogDrag(0);
+                event.currentTarget.releasePointerCapture(event.pointerId);
+              }}
+              onPointerCancel={() => {
+                dialogStart.current = null;
+                setDialogDragging(false);
+                setDialogDrag(0);
+              }}
+            >
+              <span aria-hidden="true" />
+            </button>
             <h2 id="production-dialog-title">
               {
                 {
@@ -743,7 +860,7 @@ export function ProductionTerminal({
             )}
             <button
               className="btn btn-secondary mt-4"
-              onClick={() => setDialog(null)}
+              onClick={hideDialog}
               disabled={busy}
             >
               Voltar

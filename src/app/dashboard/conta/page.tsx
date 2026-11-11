@@ -1,18 +1,41 @@
-import Link from "next/link";
 import { getAccess } from "@/lib/auth";
 import { SubmitButton } from "@/components/submit-button";
-import { changePassword, resetAccountPassword } from "./actions";
+import {
+  changePassword,
+  requestAccountEmailChange,
+  resetAccountPassword,
+  saveAccountPhone,
+  saveAccountProfile,
+} from "./actions";
 
 export const instant = false;
 
 export default async function AccountPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erro?: string; enviado?: string }>;
+  searchParams: Promise<{
+    erro?: string;
+    enviado?: string;
+    perfil?: string;
+    telefone?: string;
+    email?: string;
+    email_confirmado?: string;
+  }>;
 }) {
   const access = await getAccess();
   if (access.status !== "ready") return null;
-  const { erro, enviado } = await searchParams;
+  const { erro, enviado, perfil, telefone, email, email_confirmado } =
+    await searchParams;
+  const phone =
+    typeof access.user.user_metadata?.phone === "string"
+      ? access.user.user_metadata.phone
+      : "";
+  const roleLabel =
+    access.member.role === "admin"
+      ? "Administrador"
+      : access.member.role === "manager"
+        ? "Gestor"
+        : "Colaborador";
   return (
     <div className="account-page">
       <h1>Minha conta</h1>
@@ -31,17 +54,101 @@ export default async function AccountPage({
             <dd>{access.user.email ?? "Não informado"}</dd>
           </div>
           <div>
+            <dt>Telefone</dt>
+            <dd>{phone || "Não informado"}</dd>
+          </div>
+          <div>
             <dt>Perfil</dt>
-            <dd>Administrador</dd>
+            <dd>{roleLabel}</dd>
           </div>
         </dl>
-        <p className="muted">
-          Para alterar nome, e-mail ou perfil, solicite ao administrador em{" "}
-          <Link className="text-link" href="/dashboard/gestao/staff">
-            Equipe e acessos
-          </Link>
-          .
-        </p>
+        <details
+          className="account-edit-details"
+          open={Boolean(
+            erro || perfil || telefone || email || email_confirmado,
+          )}
+        >
+          <summary className="btn btn-secondary">Editar</summary>
+          <div className="account-edit-content">
+            {erro && (
+              <p role="alert" className="account-error">
+                {erro.slice(0, 200)}
+              </p>
+            )}
+            {(perfil || telefone) && (
+              <p role="status" className="account-success">
+                Dados da conta atualizados.
+              </p>
+            )}
+            {email_confirmado && (
+              <p role="status" className="account-success">
+                Confirmação recebida. Se o provedor solicitar duas confirmações,
+                conclua também o link enviado ao outro endereço.
+              </p>
+            )}
+            {email && (
+              <p role="status" className="account-success">
+                Confira os e-mails de confirmação para concluir a alteração do
+                endereço.
+              </p>
+            )}
+            <form action={saveAccountProfile} className="account-password-form">
+              <label>
+                Nome
+                <input
+                  name="display_name"
+                  defaultValue={access.member.display_name}
+                  minLength={2}
+                  maxLength={120}
+                  required
+                />
+              </label>
+              <label>
+                Perfil / permissões
+                <select name="role" defaultValue={access.member.role} required>
+                  <option value="admin">Administrador</option>
+                  <option value="manager">Gestor</option>
+                  <option value="collaborator">Colaborador</option>
+                </select>
+              </label>
+              <p className="muted">
+                Alterar seu perfil pode mudar imediatamente o acesso a esta
+                área.
+              </p>
+              <SubmitButton>Salvar nome e perfil</SubmitButton>
+            </form>
+            <form action={saveAccountPhone} className="account-password-form">
+              <label>
+                Telefone
+                <input
+                  name="phone"
+                  type="tel"
+                  autoComplete="tel"
+                  defaultValue={phone}
+                  maxLength={30}
+                />
+              </label>
+              <SubmitButton>Salvar telefone</SubmitButton>
+            </form>
+            <form
+              action={requestAccountEmailChange}
+              className="account-password-form"
+            >
+              <label>
+                E-mail
+                <input
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  defaultValue={access.user.email ?? ""}
+                  maxLength={254}
+                  required
+                />
+              </label>
+              <SubmitButton>Alterar e-mail</SubmitButton>
+            </form>
+          </div>
+        </details>
       </section>
       <section className="panel account-panel" aria-label="Segurança da conta">
         <details

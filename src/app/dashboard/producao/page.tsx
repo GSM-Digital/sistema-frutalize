@@ -97,10 +97,7 @@ export default async function ProductionPage({
           </Link>
         ))}
       </nav>
-      <Panel
-        title="Ordens recentes"
-        description="Contagem e lista das últimas 50 ordens, da mais recente para a mais antiga."
-      >
+      <Panel title="">
         {visibleRuns.length === 0 ? (
           <EmptyState
             title={
@@ -124,7 +121,6 @@ export default async function ProductionPage({
                 <li className="production-mobile-card" key={run.id}>
                   <div className="production-mobile-card-heading">
                     <div>
-                      <span className="eyebrow">Ordem de produção</span>
                       <h3>{run.code}</h3>
                     </div>
                     <span

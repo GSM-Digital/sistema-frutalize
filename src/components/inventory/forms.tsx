@@ -1,5 +1,5 @@
 "use client";
-import { useActionState, useId, useState } from "react";
+import { useActionState, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -396,6 +396,21 @@ export function ReceiptForm({
   const [pickerTarget, setPickerTarget] = useState<
     { kind: "item"; index: number } | { kind: "supplier" } | null
   >(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerDrag, setPickerDrag] = useState(0);
+  const [pickerDragging, setPickerDragging] = useState(false);
+  const pickerDragStart = useRef<number | null>(null);
+  const pickerContentTouchStart = useRef<number | null>(null);
+  const pickerCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closePicker = () => {
+    if (pickerCloseTimer.current) clearTimeout(pickerCloseTimer.current);
+    setPickerOpen(false);
+    setPickerDrag(0);
+    pickerCloseTimer.current = setTimeout(() => {
+      setPickerTarget(null);
+      setPickerStep("choice");
+    }, 280);
+  };
   const [pickerStep, setPickerStep] = useState<"choice" | "existing" | "new">(
     "choice",
   );
@@ -416,8 +431,7 @@ export function ReceiptForm({
       if (result.success && result.catalogId) {
         setSupplierId(result.catalogId);
         router.refresh();
-        setPickerTarget(null);
-        setPickerStep("choice");
+        closePicker();
       }
       return result;
     },
@@ -485,13 +499,44 @@ export function ReceiptForm({
   const openPicker = (
     target: { kind: "item"; index: number } | { kind: "supplier" },
   ) => {
+    if (pickerCloseTimer.current) clearTimeout(pickerCloseTimer.current);
     setPickerTarget(target);
+    setPickerOpen(false);
     setPickerStep("choice");
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => setPickerOpen(true)),
+    );
   };
-  const closePicker = () => {
-    setPickerTarget(null);
-    setPickerStep("choice");
-  };
+  useEffect(() => {
+    if (!pickerTarget) return;
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const before = {
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+    };
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closePicker();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      body.style.position = before.position;
+      body.style.top = before.top;
+      body.style.width = before.width;
+      window.scrollTo(0, scrollY);
+    };
+  }, [pickerTarget]);
+  useEffect(
+    () => () => {
+      if (pickerCloseTimer.current) clearTimeout(pickerCloseTimer.current);
+    },
+    [],
+  );
   const totalCost = items.reduce((total, item) => {
     const value = Number(item.total_cost.replace(",", "."));
     return total + (Number.isFinite(value) ? value : 0);
@@ -843,7 +888,7 @@ export function ReceiptForm({
 
       {pickerTarget && (
         <div
-          className="receipt-picker-backdrop"
+          className={`receipt-picker-backdrop${pickerOpen ? " receipt-picker-backdrop-open" : ""}`}
           role="presentation"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) closePicker();
@@ -851,13 +896,70 @@ export function ReceiptForm({
         >
           <section
             className="receipt-picker-dialog"
+            style={
+              pickerOpen
+                ? {
+                    transform: `translateY(${pickerDrag}px)`,
+                    transition: pickerDragging ? "none" : undefined,
+                  }
+                : undefined
+            }
             role="dialog"
             aria-modal="true"
             aria-labelledby="receipt-picker-title"
+            onTouchStart={(event) => {
+              pickerContentTouchStart.current =
+                event.currentTarget.scrollTop === 0
+                  ? (event.touches[0]?.clientY ?? null)
+                  : null;
+            }}
+            onTouchEnd={(event) => {
+              if (pickerContentTouchStart.current === null) return;
+              const distance =
+                (event.changedTouches[0]?.clientY ??
+                  pickerContentTouchStart.current) -
+                pickerContentTouchStart.current;
+              pickerContentTouchStart.current = null;
+              if (distance > 90 && event.currentTarget.scrollTop === 0)
+                closePicker();
+            }}
           >
+            <button
+              type="button"
+              className="receipt-picker-handle"
+              aria-label="Deslize para baixo para fechar"
+              onPointerDown={(event) => {
+                pickerDragStart.current = event.clientY;
+                setPickerDragging(true);
+                event.currentTarget.setPointerCapture(event.pointerId);
+              }}
+              onPointerMove={(event) => {
+                if (pickerDragStart.current !== null)
+                  setPickerDrag(
+                    Math.max(0, event.clientY - pickerDragStart.current),
+                  );
+              }}
+              onPointerUp={(event) => {
+                if (
+                  pickerDragStart.current !== null &&
+                  event.clientY - pickerDragStart.current > 80
+                )
+                  closePicker();
+                pickerDragStart.current = null;
+                setPickerDragging(false);
+                setPickerDrag(0);
+                event.currentTarget.releasePointerCapture(event.pointerId);
+              }}
+              onPointerCancel={() => {
+                pickerDragStart.current = null;
+                setPickerDragging(false);
+                setPickerDrag(0);
+              }}
+            >
+              <span aria-hidden="true" />
+            </button>
             <header>
               <div>
-                <span className="eyebrow">Adicionar ao recebimento</span>
                 <h2 id="receipt-picker-title">
                   {pickerTarget.kind === "item"
                     ? "Adicionar item"

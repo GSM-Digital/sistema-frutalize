@@ -6,7 +6,11 @@ import { logout } from "@/app/dashboard/actions";
 
 const storageKey = "frutalize-sidebar-collapsed";
 
-export function SidebarControls() {
+export function SidebarControls({
+  account,
+}: {
+  account: { name: string; email: string; role: string };
+}) {
   const [collapsed, setCollapsed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -73,6 +77,17 @@ export function SidebarControls() {
       </button>
       {menuOpen && (
         <div className="sidebar-account-menu">
+          <div className="sidebar-account-info" aria-label="Usuário conectado">
+            <strong>{account.name}</strong>
+            <span>{account.email}</span>
+            <small>
+              {account.role === "admin"
+                ? "Administrador"
+                : account.role === "manager"
+                  ? "Gestor"
+                  : "Colaborador"}
+            </small>
+          </div>
           <Link href="/dashboard/conta" onClick={() => setMenuOpen(false)}>
             Conta
           </Link>

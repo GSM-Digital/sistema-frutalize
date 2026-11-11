@@ -73,27 +73,27 @@ export default async function VisualizarPage({
                 unoptimized
               />
             </div>
-            <Navigation stockAlerts={{ expiring: 2, expired: 3 }} />
-            <SidebarControls />
+            <Navigation
+              stockAlerts={{ expiring: 2, expired: 3 }}
+              account={{
+                name: "Administrador Frutalize",
+                email: "admin@frutalize.example",
+                role: "admin",
+              }}
+            />
+            <SidebarControls
+              account={{
+                name: "Administrador Frutalize",
+                email: "admin@frutalize.example",
+                role: "admin",
+              }}
+            />
           </aside>
           <div className="app-body">
-            <header className="app-header">
-              <div>
-                <span className="header-dot" aria-hidden="true" /> Unidade
-                Frutalize
-              </div>
-              <span>Administrador(a) de exemplo</span>
-            </header>
             <main className="app-content">
               <div className="page-heading">
                 <div>
-                  <p className="eyebrow">
-                    Dashboard administrativo · Prévia local
-                  </p>
                   <h1>Ordem {previewSnapshot.runs[0].code}</h1>
-                  <p className="muted mt-2">
-                    Acompanhamento e operação em painéis administrativos.
-                  </p>
                 </div>
               </div>
               <DashboardOperations

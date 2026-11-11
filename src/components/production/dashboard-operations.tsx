@@ -162,11 +162,7 @@ export function DashboardOperations({
     >
       <div className="dashboard-heading">
         <div>
-          <p className="eyebrow">Operação administrativa</p>
           <h2>{run ? `Ordem ${run.code}` : "Criar ordem de produção"}</h2>
-          <p className="muted">
-            Os registros usam a mesma ordem e as mesmas regras do terminal.
-          </p>
         </div>
         <button
           className="btn btn-secondary"

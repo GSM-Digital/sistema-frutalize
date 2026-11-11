@@ -139,8 +139,10 @@ function StockBadges({
 
 export function Navigation({
   stockAlerts = { expiring: 0, expired: 0 },
+  account,
 }: {
   stockAlerts?: StockAlerts;
+  account: { name: string; email: string; role: string };
 }) {
   const pathname = usePathname();
   const [openPath, setOpenPath] = useState<string | null>(null);
@@ -498,6 +500,22 @@ export function Navigation({
           {sections.map((section, index) => (
             <section key={section.label ?? index}>
               {section.label && <h2>{section.label}</h2>}
+              {section.label === "Controle" && (
+                <div
+                  className="mobile-nav-account"
+                  aria-label="Usuário conectado"
+                >
+                  <strong>{account.name}</strong>
+                  <span>{account.email}</span>
+                  <small>
+                    {account.role === "admin"
+                      ? "Administrador"
+                      : account.role === "manager"
+                        ? "Gestor"
+                        : "Colaborador"}
+                  </small>
+                </div>
+              )}
               {section.items
                 .filter((item) => item.href)
                 .map((item) => (

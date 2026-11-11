@@ -180,13 +180,19 @@ textarea {
   margin-top: 2.4rem;
 }
 @media (min-width: 1024px) {
+  .sidebar {
+    z-index: 60;
+  }
   .sidebar .main-nav {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
     padding-right: 0.25rem;
-    scrollbar-width: thin;
+    scrollbar-width: none;
+  }
+  .sidebar .main-nav::-webkit-scrollbar {
+    display: none;
   }
 }
 .nav-section-title {
@@ -289,15 +295,32 @@ textarea {
   position: absolute;
   z-index: 70;
   bottom: 0;
-  left: 100%;
+  left: calc(100% - 0.25rem);
   display: grid;
-  width: 170px;
+  width: 240px;
   gap: 0.25rem;
   border: 1px solid var(--line);
   border-radius: 0.75rem;
   padding: 0.4rem;
   background: white;
   box-shadow: 0 12px 30px #1f391f20;
+}
+.sidebar-account-info {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 0.65rem 0.8rem 0.8rem;
+  color: #748071;
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.sidebar-account-info strong {
+  color: #273b28;
+  font-size: 0.84rem;
+}
+.sidebar-account-info small {
+  font-size: 0.7rem;
 }
 .sidebar-account-menu a,
 .sidebar-account-menu button {
@@ -402,7 +425,8 @@ textarea {
   gap: 0.4rem;
   font-weight: 600;
 }
-.account-password-form input {
+.account-password-form input,
+.account-password-form select {
   width: 100%;
   min-height: 48px;
   border: 1px solid var(--line);
@@ -412,13 +436,22 @@ textarea {
 .account-error {
   color: #a33029;
 }
-.account-password-details > summary {
+.account-password-details > summary,
+.account-edit-details > summary {
   display: inline-flex;
   list-style: none;
   cursor: pointer;
 }
-.account-password-details > summary::-webkit-details-marker {
+.account-password-details > summary::-webkit-details-marker,
+.account-edit-details > summary::-webkit-details-marker {
   display: none;
+}
+.account-edit-content {
+  margin-top: 1.25rem;
+}
+.account-edit-content .account-password-form + .account-password-form {
+  border-top: 1px solid var(--line);
+  padding-top: 1.25rem;
 }
 .account-password-content {
   margin-top: 1.25rem;
@@ -508,7 +541,7 @@ textarea {
   margin-bottom: 1.7rem;
 }
 .page-heading h1 {
-  margin-top: 0.5rem;
+  margin-top: 0;
   color: #1c2b1c;
   font-size: clamp(1.7rem, 2.7vw, 2.25rem);
   line-height: 1.15;
@@ -1581,6 +1614,24 @@ tbody tr:hover {
   background: #fff;
   box-shadow: 0 24px 70px rgb(23 40 25 / 24%);
   padding: 1.25rem;
+  transform: translateY(32px);
+  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.receipt-picker-handle {
+  display: grid;
+  width: 100%;
+  min-height: 32px;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  touch-action: none;
+  cursor: grab;
+}
+.receipt-picker-handle span {
+  width: 44px;
+  height: 5px;
+  border-radius: 99px;
+  background: #aab5a7;
 }
 .receipt-picker-dialog > header {
   display: flex;
@@ -2054,6 +2105,7 @@ tbody tr:hover {
     border-radius: 1rem 1rem 0 0;
     padding: 1rem;
     padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    transform: translateY(100%);
   }
   .receipt-picker-choices {
     grid-template-columns: minmax(0, 1fr);
@@ -3379,6 +3431,24 @@ tbody tr:hover {
   background: #fff;
   padding: clamp(1.25rem, 3vw, 2rem);
   box-shadow: 0 30px 90px rgba(0, 0, 0, 0.24);
+  transform: translateY(32px);
+  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.terminal-dialog-handle {
+  display: grid;
+  width: 100%;
+  min-height: 34px;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  touch-action: none;
+  cursor: grab;
+}
+.terminal-dialog-handle span {
+  width: 44px;
+  height: 5px;
+  border-radius: 99px;
+  background: #aab5a7;
 }
 .terminal-dialog h2 {
   margin-top: 0.5rem;
@@ -3444,6 +3514,18 @@ tbody tr:hover {
   }
 }
 @media (max-width: 680px) {
+  .terminal-dialog-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+  .terminal-dialog {
+    width: 100%;
+    max-height: 88dvh;
+    overflow-y: auto;
+    border-radius: 1.2rem 1.2rem 0 0;
+    padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
+    transform: translateY(100%);
+  }
   .terminal-topbar,
   .terminal-order-header {
     gap: 0.8rem;
@@ -3630,6 +3712,14 @@ tbody tr:hover {
     padding-right: 0.55rem;
     padding-left: 0.55rem;
   }
+  .sidebar-collapsed .main-nav {
+    gap: 0.45rem;
+    margin-top: 1rem;
+    padding-right: 0;
+  }
+  .sidebar-collapsed .nav-section-items {
+    gap: 0.05rem;
+  }
   .sidebar-collapsed .brand {
     justify-content: center;
     padding: 0;
@@ -3654,7 +3744,7 @@ tbody tr:hover {
   }
   .sidebar-collapsed .main-nav .nav-item {
     position: relative;
-    min-height: 48px;
+    min-height: 42px;
   }
   .sidebar-collapsed .main-nav .nav-item .stock-alerts {
     position: absolute;

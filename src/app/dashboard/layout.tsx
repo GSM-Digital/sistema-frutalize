@@ -18,7 +18,6 @@ export default async function DashboardLayout({
     return (
       <main className="mx-auto flex min-h-screen max-w-xl items-center px-5">
         <section className="panel p-7">
-          <p className="eyebrow">Sistema Frutalize</p>
           <h1 className="mt-3 text-2xl font-semibold">
             {access.status === "forbidden"
               ? "Acesso aguardando liberação"
@@ -71,24 +70,23 @@ export default async function DashboardLayout({
             unoptimized
           />
         </Link>
-        <Navigation stockAlerts={stockAlerts} />
-        <SidebarControls />
+        <Navigation
+          stockAlerts={stockAlerts}
+          account={{
+            name: access.member.display_name,
+            email: access.user.email ?? "",
+            role: access.member.role,
+          }}
+        />
+        <SidebarControls
+          account={{
+            name: access.member.display_name,
+            email: access.user.email ?? "",
+            role: access.member.role,
+          }}
+        />
       </aside>
       <div className="app-body">
-        <header className="app-header">
-          <div>
-            <span className="header-dot" aria-hidden="true" />
-            Unidade Frutalize
-          </div>
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="hidden min-w-0 text-right sm:block">
-              <p className="truncate text-sm font-semibold max-w-64">
-                {access.member.display_name}
-              </p>
-              <p className="muted text-xs">Administrador</p>
-            </div>
-          </div>
-        </header>
         <main id="conteudo" className="app-content">
           {children}
         </main>

@@ -17,7 +17,6 @@ export default async function FirstAccess({
   return (
     <main className="mx-auto flex min-h-screen max-w-lg items-center p-6">
       <section className="panel w-full p-7">
-        <p className="eyebrow">Frutalize</p>
         <h1 className="mt-2 text-2xl font-semibold">Defina sua senha</h1>
         <p className="muted mt-3 text-sm">
           Use pelo menos 12 caracteres, com maiúscula, minúscula, número e

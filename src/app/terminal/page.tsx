@@ -18,7 +18,6 @@ export default async function TerminalPage({
     return (
       <main className="mx-auto flex min-h-screen max-w-xl items-center px-5">
         <section className="panel p-7">
-          <p className="eyebrow">Terminal Frutalize</p>
           <h1 className="mt-3 text-2xl font-semibold">
             Acesso aguardando liberação
           </h1>

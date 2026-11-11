@@ -90,9 +90,6 @@ export default async function DashboardLayout({
         <main id="conteudo" className="app-content layout-stack">
           {children}
         </main>
-        <footer className="app-footer">
-          Sistema Frutalize <span>Horário de Brasília · Operação online</span>
-        </footer>
       </div>
     </div>
   );

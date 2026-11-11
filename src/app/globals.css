@@ -562,16 +562,6 @@ textarea {
   padding-inline: var(--page-gutter);
   margin-inline: auto;
 }
-.app-footer {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  border-top: 1px solid var(--line);
-  padding: 1rem var(--page-gutter);
-  color: light-dark(#8a9485, var(--dark-muted));
-  font-size: 0.625rem;
-}
 .skip-link {
   position: fixed;
   z-index: 50;

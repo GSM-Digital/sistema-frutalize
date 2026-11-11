@@ -88,15 +88,13 @@ export async function sendReport(
     }
     attachments.push(name);
   }
-  const { error } = await supabase
-    .from("support_reports")
-    .insert({
-      id,
-      category,
-      description,
-      attachments,
-      source_path: sourcePath,
-    });
+  const { error } = await supabase.from("support_reports").insert({
+    id,
+    category,
+    description,
+    attachments,
+    source_path: sourcePath,
+  });
   if (error) {
     if (attachments.length)
       await bucket.remove(attachments.map((name) => `${folder}/${name}`));

@@ -60,13 +60,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </span>
           </div>
 
-          <p className="text-sm font-semibold tracking-[0.16em] text-[#236b3c] uppercase">
+          <p className="text-sm font-semibold tracking-[0.16em] text-brand uppercase">
             Acesso interno
           </p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-[#172117]">
+          <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-foreground">
             Bem-vindo de volta
           </h2>
-          <p className="mt-3 leading-7 text-[#667166]">
+          <p className="mt-3 leading-7 text-muted">
             Entre com o e-mail e a senha cadastrados pelo administrador.
           </p>
 
@@ -77,11 +77,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               value={safeReturnPath(retorno)}
             />
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-[#273327]">
+              <span className="mb-2 block text-sm font-semibold text-foreground">
                 E-mail
               </span>
               <input
-                className="h-12 w-full rounded-xl border border-[#d5ddd2] bg-white px-4 text-base text-[#172117] shadow-sm transition placeholder:text-[#9aa49a] hover:border-[#b7c4b5] focus:border-[#236b3c] focus:outline-none"
+                className="h-12 w-full rounded-xl border border-line bg-surface px-4 text-base text-foreground shadow-sm transition placeholder:text-muted hover:border-brand focus:border-brand focus:outline-none"
                 name="email"
                 type="email"
                 autoComplete="email"
@@ -92,11 +92,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-[#273327]">
+              <span className="mb-2 block text-sm font-semibold text-foreground">
                 Senha
               </span>
               <input
-                className="h-12 w-full rounded-xl border border-[#d5ddd2] bg-white px-4 text-base text-[#172117] shadow-sm transition placeholder:text-[#9aa49a] hover:border-[#b7c4b5] focus:border-[#236b3c] focus:outline-none"
+                className="h-12 w-full rounded-xl border border-line bg-surface px-4 text-base text-foreground shadow-sm transition placeholder:text-muted hover:border-brand focus:border-brand focus:outline-none"
                 name="password"
                 type="password"
                 autoComplete="current-password"
@@ -114,7 +114,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             {typeof erro === "string" ? (
               <p
                 role="alert"
-                className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                className="rounded-xl border border-danger-line bg-danger-bg px-4 py-3 text-sm text-danger"
               >
                 {erro.slice(0, 240)}
               </p>
@@ -153,7 +153,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </div>
           </form>
 
-          <p className="mt-7 text-center text-sm leading-6 text-[#788278]">
+          <p className="mt-7 text-center text-sm leading-6 text-muted">
             Esqueceu a senha? Solicite a redefinição ao administrador.
           </p>
           <p className="mt-3 text-center text-sm">

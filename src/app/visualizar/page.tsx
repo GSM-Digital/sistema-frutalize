@@ -20,7 +20,7 @@ export default async function VisualizarPage({
   return (
     <div>
       <nav
-        className="flex flex-wrap gap-2 border-b border-green-900/10 bg-white p-4"
+        className="flex flex-wrap gap-2 border-b border-line bg-surface p-4"
         aria-label="Prévia local"
       >
         <Link
@@ -41,7 +41,7 @@ export default async function VisualizarPage({
         >
           Terminal · fila
         </Link>
-        <span className="self-center text-sm text-green-900/70">
+        <span className="self-center text-sm text-muted">
           Dados fictícios, sem conexão com o banco. Ações desativadas.
         </span>
       </nav>

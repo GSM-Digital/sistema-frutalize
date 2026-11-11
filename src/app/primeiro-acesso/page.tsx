@@ -48,7 +48,7 @@ export default async function FirstAccess({
             />
           </label>
           {erro && (
-            <p role="alert" className="text-red-700">
+            <p role="alert" className="text-danger">
               {erro.slice(0, 200)}
             </p>
           )}

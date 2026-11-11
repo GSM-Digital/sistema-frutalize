@@ -132,7 +132,7 @@ export default async function LotPage({
             </div>
           ))}
         </dl>
-        <div className="border-t border-[#dfe6dc] p-5 sm:p-6">
+        <div className="border-t border-line p-5 sm:p-6">
           <h3 className="text-sm font-semibold">
             {lot.origin === "production"
               ? "Observações da produção"

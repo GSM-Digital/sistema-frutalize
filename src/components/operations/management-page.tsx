@@ -84,7 +84,7 @@ export async function ManagementPage({
     >
       {surface === "standalone" && (
         <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <Link className="text-xl font-bold text-green-900" href="/gestao">
+          <Link className="text-xl font-bold text-brand" href="/gestao">
             Frutalize
           </Link>
           <div className="flex items-center gap-4">

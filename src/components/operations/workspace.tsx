@@ -89,7 +89,7 @@ function Fields({
               <select
                 name={`${prefix}${field.name}`}
                 required={!field.optional}
-                className="w-full rounded-lg border border-slate-300 bg-white p-3"
+                className="w-full rounded-lg border border-line bg-surface p-3"
                 onChange={(event) => onValue?.(field.name, event.target.value)}
               >
                 <option value="">Selecione…</option>
@@ -130,7 +130,7 @@ function Fields({
                 inputMode={field.type === "number" ? "decimal" : undefined}
                 required={!field.optional}
                 maxLength={2000}
-                className="w-full rounded-lg border border-slate-300 bg-white p-3"
+                className="w-full rounded-lg border border-line bg-surface p-3"
               />
             )}
           </label>
@@ -151,13 +151,13 @@ function Repeated({
   const [count, setCount] = useState(1);
   const name = `${prefix}${field.name}`;
   return (
-    <fieldset className="space-y-4 rounded-lg border border-slate-200 p-4 sm:col-span-2">
+    <fieldset className="space-y-4 rounded-lg border border-line p-4 sm:col-span-2">
       <legend className="px-2 font-semibold">{field.label}</legend>
       <input type="hidden" name={`${name}.__count`} value={count} />
       {Array.from({ length: count }, (_, index) => (
         <div
           key={index}
-          className="grid gap-3 border-b border-slate-100 pb-4 sm:grid-cols-2"
+          className="grid gap-3 border-b border-line pb-4 sm:grid-cols-2"
         >
           <Fields
             fields={field.fields!}
@@ -259,7 +259,7 @@ function CommandForm({
     }
   }
   return (
-    <details className="rounded-xl border border-slate-200 bg-white p-5">
+    <details className="rounded-xl border border-line bg-surface p-5">
       <summary className="cursor-pointer font-semibold">
         {definition.title}
       </summary>
@@ -303,7 +303,7 @@ function CommandForm({
             </label>
           ))}
           {definition.critical && (
-            <label className="flex items-center gap-3 rounded border border-amber-300 bg-amber-50 p-3 sm:col-span-2">
+            <label className="flex items-center gap-3 rounded border border-warning-line bg-warning-bg p-3 sm:col-span-2">
               <input name="confirm" type="checkbox" required />
               Conferi os dados e confirmo esta operação.
             </label>
@@ -316,7 +316,7 @@ function CommandForm({
           </p>
         )}
         {state.error && (
-          <p role="alert" className="text-sm text-red-700">
+          <p role="alert" className="text-sm text-danger">
             {state.error}
           </p>
         )}
@@ -371,7 +371,7 @@ function SpecialForm({
     }
   }
   return (
-    <details className="rounded-xl border border-slate-200 bg-white p-5">
+    <details className="rounded-xl border border-line bg-surface p-5">
       <summary className="cursor-pointer font-semibold">
         {kind === "invite"
           ? "Convidar pessoa por e-mail"
@@ -421,7 +421,7 @@ function SpecialForm({
           </label>
         )}
         {state.error && (
-          <p role="alert" className="text-red-700 sm:col-span-2">
+          <p role="alert" className="text-danger sm:col-span-2">
             {state.error}
             {state.id && ` Referência para vínculo: ${state.id}`}
           </p>

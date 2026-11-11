@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Icon, type IconName } from "./icon";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { logout } from "@/app/dashboard/actions";
 
 type NavItem = {
@@ -13,12 +14,13 @@ type NavItem = {
   planned?: boolean;
 };
 
-const sections: { label?: string; items: NavItem[] }[] = [
+const sections: { label?: string; mobileOnly?: boolean; items: NavItem[] }[] = [
   {
     items: [{ href: "/dashboard", label: "Início", icon: "overview" }],
   },
   {
     label: "Visualizações",
+    mobileOnly: true,
     items: [{ href: "/terminal", label: "Terminal touch", icon: "production" }],
   },
   {
@@ -294,69 +296,74 @@ export function Navigation({
     { href: "/dashboard", label: "Início", icon: "overview" },
     { href: "/dashboard/producao", label: "Produção", icon: "production" },
     { href: "/dashboard/lotes", label: "Estoque", icon: "inventory" },
-    { href: "/terminal", label: "Terminal", icon: "production" },
   ];
   const shortcutIndex = shortcuts.findIndex((item) => isActive(item.href!));
-  const activeIndex = menuOpen || shortcutIndex < 0 ? 4 : shortcutIndex;
+  const moreIndex = shortcuts.length;
+  const activeIndex = menuOpen || shortcutIndex < 0 ? moreIndex : shortcutIndex;
   return (
     <>
       <nav className="main-nav" aria-label="Menu principal">
-        {sections.map((section, sectionIndex) => (
-          <section className="nav-section" key={section.label ?? sectionIndex}>
-            {section.label && (
-              <p className="nav-section-title">{section.label}</p>
-            )}
-            <div className="nav-section-items">
-              {section.items.map((item) => {
-                if (!item.href) {
+        {sections
+          .filter((section) => !section.mobileOnly)
+          .map((section, sectionIndex) => (
+            <section
+              className="nav-section"
+              key={section.label ?? sectionIndex}
+            >
+              {section.label && (
+                <p className="nav-section-title">{section.label}</p>
+              )}
+              <div className="nav-section-items">
+                {section.items.map((item) => {
+                  if (!item.href) {
+                    return (
+                      <span
+                        key={item.label}
+                        className="nav-item nav-item-planned"
+                        aria-disabled="true"
+                        title={`${item.label}: em breve`}
+                      >
+                        <span aria-hidden="true" className="nav-icon">
+                          <Icon name={item.icon} />
+                        </span>
+                        <span className="nav-item-label">{item.label}</span>
+                        <small>Em breve</small>
+                      </span>
+                    );
+                  }
+                  const active = isActive(item.href);
                   return (
-                    <span
-                      key={item.label}
-                      className="nav-item nav-item-planned"
-                      aria-disabled="true"
-                      title={`${item.label}: em breve`}
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      aria-label={
+                        item.href === "/dashboard/lotes" &&
+                        (stockAlerts.expiring || stockAlerts.expired)
+                          ? `${item.label}: ${stockAlerts.expiring} lotes próximos do vencimento e ${stockAlerts.expired} vencidos`
+                          : item.label
+                      }
+                      title={item.label}
+                      aria-current={active ? "page" : undefined}
+                      className={`nav-item${active ? " nav-active" : ""}`}
                     >
                       <span aria-hidden="true" className="nav-icon">
                         <Icon name={item.icon} />
                       </span>
-                      <span className="nav-item-label">{item.label}</span>
-                      <small>Em breve</small>
-                    </span>
+                      <span className="nav-item-label nav-label-full">
+                        {item.label}
+                      </span>
+                      <span className="nav-item-label nav-label-short">
+                        {item.shortLabel ?? item.label}
+                      </span>
+                      {item.href === "/dashboard/lotes" && (
+                        <StockBadges alerts={stockAlerts} />
+                      )}
+                    </Link>
                   );
-                }
-                const active = isActive(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    aria-label={
-                      item.href === "/dashboard/lotes" &&
-                      (stockAlerts.expiring || stockAlerts.expired)
-                        ? `${item.label}: ${stockAlerts.expiring} lotes próximos do vencimento e ${stockAlerts.expired} vencidos`
-                        : item.label
-                    }
-                    title={item.label}
-                    aria-current={active ? "page" : undefined}
-                    className={`nav-item${active ? " nav-active" : ""}`}
-                  >
-                    <span aria-hidden="true" className="nav-icon">
-                      <Icon name={item.icon} />
-                    </span>
-                    <span className="nav-item-label nav-label-full">
-                      {item.label}
-                    </span>
-                    <span className="nav-item-label nav-label-short">
-                      {item.shortLabel ?? item.label}
-                    </span>
-                    {item.href === "/dashboard/lotes" && (
-                      <StockBadges alerts={stockAlerts} />
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        ))}
+                })}
+              </div>
+            </section>
+          ))}
       </nav>
       <nav className="mobile-nav" aria-label="Menu móvel">
         <span
@@ -385,7 +392,7 @@ export function Navigation({
         <button
           ref={moreButton}
           type="button"
-          className={`mobile-nav-link mobile-nav-more${activeIndex === 4 ? " mobile-nav-active" : ""}`}
+          className={`mobile-nav-link mobile-nav-more${activeIndex === moreIndex ? " mobile-nav-active" : ""}`}
           aria-expanded={menuOpen}
           aria-controls="mobile-more-sheet"
           onClick={() => {
@@ -499,14 +506,17 @@ export function Navigation({
             <p id="mobile-nav-panel-title" className="mobile-nav-panel-title">
               Todas as áreas
             </p>
-            <Link
-              href="/suporte/relatar"
-              className="mobile-nav-report"
-              aria-label="Reportar problema"
-              onClick={() => setMenuOpen(false)}
-            >
-              <Icon name="bug" size={22} />
-            </Link>
+            <div className="mobile-nav-panel-actions">
+              <ThemeToggle />
+              <Link
+                href="/suporte/relatar"
+                className="mobile-nav-report"
+                aria-label="Reportar problema"
+                onClick={() => setMenuOpen(false)}
+              >
+                <Icon name="bug" size={22} />
+              </Link>
+            </div>
           </div>
           {sections.map((section, index) => (
             <section key={section.label ?? index}>

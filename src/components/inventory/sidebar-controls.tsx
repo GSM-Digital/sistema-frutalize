@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { logout } from "@/app/dashboard/actions";
 
 const storageKey = "frutalize-sidebar-collapsed";
@@ -77,19 +78,28 @@ export function SidebarControls({
       </button>
       {menuOpen && (
         <div className="sidebar-account-menu">
-          <div className="sidebar-account-info" aria-label="Usuário conectado">
-            <strong>{account.name}</strong>
-            <span>{account.email}</span>
-            <small>
-              {account.role === "admin"
-                ? "Administrador"
-                : account.role === "manager"
-                  ? "Gestor"
-                  : "Colaborador"}
-            </small>
+          <div className="sidebar-account-heading">
+            <div
+              className="sidebar-account-info"
+              aria-label="Usuário conectado"
+            >
+              <strong>{account.name}</strong>
+              <span>{account.email}</span>
+              <small>
+                {account.role === "admin"
+                  ? "Administrador"
+                  : account.role === "manager"
+                    ? "Gestor"
+                    : "Colaborador"}
+              </small>
+            </div>
+            <ThemeToggle />
           </div>
           <Link href="/dashboard/conta" onClick={() => setMenuOpen(false)}>
             Conta
+          </Link>
+          <Link href="/terminal" onClick={() => setMenuOpen(false)}>
+            Terminal Touch
           </Link>
           <Link href="/suporte/relatar" onClick={() => setMenuOpen(false)}>
             Reportar problema

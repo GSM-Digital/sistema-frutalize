@@ -139,10 +139,7 @@ function Steps() {
         liberação da linha e finalização, com a finalização por último.
       </p>
       {rows.map((id, index) => (
-        <div
-          className="rounded-xl border border-[#d9e1d4] p-4 space-y-3"
-          key={id}
-        >
+        <div className="rounded-xl border border-line p-4 space-y-3" key={id}>
           <div className="flex items-center justify-between">
             <strong className="text-sm">Instrução {index + 1}</strong>
             {rows.length > 1 && (
@@ -218,10 +215,7 @@ function Parameters() {
     <fieldset className="space-y-4">
       <legend>Parâmetros da máquina</legend>
       {rows.map((id, index) => (
-        <div
-          className="rounded-xl border border-[#d9e1d4] p-4 space-y-3"
-          key={id}
-        >
+        <div className="rounded-xl border border-line p-4 space-y-3" key={id}>
           <div className="flex items-center justify-between">
             <strong className="text-sm">Parâmetro {index + 1}</strong>
             {rows.length > 1 && (
@@ -325,7 +319,7 @@ export function ProductionConfigurationPanel({
           {versions.map((item) => (
             <article
               key={`${item.entity}-${item.id}`}
-              className="rounded-xl border border-[#d9e1d4] p-4"
+              className="rounded-xl border border-line p-4"
             >
               <p className="eyebrow">{item.label}</p>
               <h3 className="mt-2 font-semibold">

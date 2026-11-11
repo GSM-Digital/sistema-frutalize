@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { removeSelectedLots } from "@/app/dashboard/inventory-actions";
 import { quantity, shortDate } from "@/lib/inventory/format";
-import type { InventoryLot } from "@/lib/inventory/types";
+import { isFruitCategory, type InventoryLot } from "@/lib/inventory/types";
 
 function LotBadge({ lot, today }: { lot: InventoryLot; today: string }) {
   if (lot.quantity === 0) return <span className="badge">Sem saldo</span>;
@@ -35,7 +35,7 @@ export function LotsTable({
     selected.length > 0 &&
     selected.every(
       (lot) =>
-        lot.category_name === "Frutas recebidas" &&
+        isFruitCategory(lot.category_name) &&
         (!lot.expires_on || lot.expires_on >= today) &&
         lot.product_name === selected[0].product_name,
     );
@@ -146,8 +146,8 @@ export function LotsTable({
           </button>
           {!eligibleForProduction && (
             <p className="lots-bulk-hint">
-              Para produzir, escolha lotes da mesma fruta, com saldo e dentro da
-              validade.
+              Escolha lotes da mesma fruta, com saldo. A data de validade é
+              opcional. Lotes vencidos ficam bloqueados.
             </p>
           )}
         </div>

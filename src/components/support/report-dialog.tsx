@@ -88,6 +88,21 @@ function ReportDialog({
       className="report-dialog panel"
       aria-labelledby="report-dialog-title"
       onClose={onClose}
+      onClick={(event) => {
+        if (!state.success || event.target !== event.currentTarget) return;
+
+        // The native backdrop also targets the dialog, as does its padding.
+        const dialog = event.currentTarget;
+        const { top, right, bottom, left } = dialog.getBoundingClientRect();
+        if (
+          event.clientX < left ||
+          event.clientX > right ||
+          event.clientY < top ||
+          event.clientY > bottom
+        ) {
+          dialog.close();
+        }
+      }}
     >
       {state.success ? (
         <div className="report-confirmation">

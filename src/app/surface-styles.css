@@ -775,18 +775,13 @@ html:has(.report-dialog[open]) {
   flex-wrap: wrap;
   gap: 0.75rem;
 }
-.support-status-form .btn,
-.support-filters .btn,
-.support-filters select {
+.support-status-form .btn {
   min-height: 44px;
 }
 @media (max-width: 639px) {
   .support-filters > .field,
   .support-status-form > .field {
     flex: 1 1 10rem;
-  }
-  .support-filters > .btn {
-    flex: 1 0 100%;
   }
 }
 

@@ -1,3 +1,4 @@
+import { FilterForm } from "@/components/filter-form";
 import Link from "next/link";
 import { getAccess } from "@/lib/auth";
 import { addDays, businessDate, listParams } from "@/lib/inventory/validation";
@@ -61,7 +62,12 @@ export default async function LotsPage({
         title="Posição do estoque"
         description="Cada saldo mantém a unidade informada no recebimento."
       >
-        <form className="filter-bar" action="/dashboard/lotes" method="get">
+        <FilterForm
+          action="/dashboard/lotes"
+          label="Filtrar lotes"
+          values={{ q, validade: expiry, zerados: includeEmpty ? "1" : "" }}
+          page={page}
+        >
           <div className="filter-search">
             <label htmlFor="lot-search" className="sr-only">
               Buscar item, SKU, lote, fornecedor ou local
@@ -94,15 +100,15 @@ export default async function LotsPage({
             />
             Incluir sem saldo
           </label>
-          <button className="btn btn-secondary" type="submit">
-            Filtrar
-          </button>
           {(q || expiry || includeEmpty) && (
-            <Link className="text-link text-sm" href="/dashboard/lotes">
+            <Link
+              className="filter-clear text-link text-sm"
+              href="/dashboard/lotes"
+            >
               Limpar
             </Link>
           )}
-        </form>
+        </FilterForm>
         {data.length ? (
           <LotsTable
             key={`${q}:${page}:${expiry}:${includeEmpty}`}

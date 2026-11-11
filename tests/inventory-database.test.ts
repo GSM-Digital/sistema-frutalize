@@ -36,6 +36,7 @@ test("inventory migration and database authorization", async (t) => {
     "20261021025215_terminal_touch_workflow.sql",
     "20261021030453_expose_terminal_workflow_in_production_view.sql",
     "20261021032108_production_operator_pin.sql",
+    "20261111052511_accept_current_fruit_category_for_production.sql",
   ]) {
     let migration = await readFile(
       new URL(`../supabase/migrations/${file}`, import.meta.url),
@@ -545,6 +546,15 @@ test("inventory migration and database authorization", async (t) => {
       );
       await user(admin);
       await assert.rejects(move("external_dispatch", 1), /vencidos/);
+      await assert.rejects(
+        db.query("select start_production($1,$2,$3,$4)", [
+          randomUUID(),
+          lot,
+          1,
+          new Date().toISOString(),
+        ]),
+        /vencidos/,
+      );
       await move("loss", 1, "Produto vencido");
       assert.equal(
         await scalar(
@@ -861,6 +871,51 @@ test("inventory migration and database authorization", async (t) => {
           outputData,
         ]),
         /já foi finalizada/,
+      );
+    },
+  );
+  await t.test(
+    "fruit lots in the current category can start production without an expiry date",
+    async () => {
+      const fruitCategory = await save("categories", null, { name: "Frutas" });
+      const tamarind = await save("products", null, {
+        name: "Fruta Tamarindo",
+        category_id: fruitCategory,
+        requires_expiry: false,
+      });
+      const tamarindVariant = await scalar(
+        "select id from item_variants where product_id = $1 and is_default",
+        [tamarind],
+      );
+      const sourceLot = await receipt({
+        variant_id: tamarindVariant,
+        quantity: 5,
+        unit: "pct",
+        expires_on: null,
+        expiry_source: "not_applicable",
+      });
+      assert.equal(
+        await scalar("select expires_on from lots where id = $1", [sourceLot]),
+        null,
+      );
+      const order = await scalar("select start_production($1,$2,$3,$4)", [
+        randomUUID(),
+        sourceLot,
+        2,
+        new Date().toISOString(),
+      ]);
+      assert.equal(
+        await scalar(
+          "select source_lot_id from production_inputs where production_run_id = $1",
+          [order],
+        ),
+        sourceLot,
+      );
+      assert.equal(
+        Number(
+          await scalar("select quantity from lots where id = $1", [sourceLot]),
+        ),
+        3,
       );
     },
   );

@@ -1,3 +1,4 @@
+import { FilterForm } from "@/components/filter-form";
 import { getAccess } from "@/lib/auth";
 import { dateTime } from "@/lib/inventory/format";
 import { listParams } from "@/lib/inventory/validation";
@@ -62,10 +63,12 @@ export default async function SupportPage({
   return (
     <>
       <PageHeading title="Suporte" />
-      <form
-        method="get"
+      <FilterForm
+        action={path}
         className="filter-bar support-filters"
-        aria-label="Filtrar relatos"
+        label="Filtrar relatos"
+        values={{ status, ordem: ascending ? "asc" : "desc" }}
+        page={page}
       >
         <label className="field">
           <span className="field-label">Situação</span>
@@ -85,8 +88,7 @@ export default async function SupportPage({
             <option value="asc">Mais antigos primeiro</option>
           </select>
         </label>
-        <button className="btn btn-secondary">Filtrar</button>
-      </form>
+      </FilterForm>
       {params.salvo && (
         <p className="form-success" role="status">
           Situação atualizada.
@@ -127,7 +129,20 @@ export default async function SupportPage({
                 {dateTime(report.created_at)}
               </p>
               <p className="muted text-sm [overflow-wrap:anywhere]">
-                Página de origem: {report.source_path ?? "Não registrada"}
+                Página de origem:{" "}
+                {report.source_path ? (
+                  <a
+                    href={report.source_path}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-link underline underline-offset-2"
+                  >
+                    {report.source_path}
+                    <span className="sr-only"> (abre em uma nova aba)</span>
+                  </a>
+                ) : (
+                  "Não registrada"
+                )}
               </p>
               <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">
                 {report.description}

@@ -33,6 +33,12 @@ export const lotOperations = {
   loss: "Registrar perda / descarte",
 } as const;
 export type LotOperation = keyof typeof lotOperations;
+
+export function isFruitCategory(name: string): boolean {
+  const normalized = name.trim().toLowerCase();
+  return normalized === "frutas" || normalized === "frutas recebidas";
+}
+
 export const externalDestinations = {
   supplier_return: "Devolução ao fornecedor",
   donation: "Doação",

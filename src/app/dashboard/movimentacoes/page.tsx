@@ -1,3 +1,4 @@
+import { FilterForm } from "@/components/filter-form";
 import Link from "next/link";
 import { getAccess } from "@/lib/auth";
 import { listParams } from "@/lib/inventory/validation";
@@ -52,10 +53,11 @@ export default async function MovementsPage({
         title="Livro de movimentações"
         description="Ordenado pela data real do registro. Horários de Brasília."
       >
-        <form
-          className="filter-bar"
+        <FilterForm
           action="/dashboard/movimentacoes"
-          method="get"
+          label="Filtrar movimentações"
+          values={{ q, tipo: kind }}
+          page={page}
         >
           <div className="filter-search">
             <label className="sr-only" htmlFor="movement-search">
@@ -70,26 +72,28 @@ export default async function MovementsPage({
               placeholder="Produto, lote, responsável ou motivo…"
             />
           </div>
-          <label className="sr-only" htmlFor="movement-kind">
-            Tipo de movimento
-          </label>
-          <select id="movement-kind" name="tipo" defaultValue={kind}>
-            <option value="">Todos os tipos</option>
-            {Object.entries(movementKinds).map(([key, label]) => (
-              <option value={key} key={key}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <button className="btn btn-secondary" type="submit">
-            Filtrar
-          </button>
+          <div>
+            <label className="sr-only" htmlFor="movement-kind">
+              Tipo de movimento
+            </label>
+            <select id="movement-kind" name="tipo" defaultValue={kind}>
+              <option value="">Todos os tipos</option>
+              {Object.entries(movementKinds).map(([key, label]) => (
+                <option value={key} key={key}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
           {(q || kind) && (
-            <Link className="text-link text-sm" href="/dashboard/movimentacoes">
+            <Link
+              className="filter-clear text-link text-sm"
+              href="/dashboard/movimentacoes"
+            >
               Limpar
             </Link>
           )}
-        </form>
+        </FilterForm>
         {data.length ? (
           <MovementsTable movements={data} />
         ) : (

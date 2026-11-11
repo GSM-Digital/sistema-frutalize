@@ -13,6 +13,7 @@ import {
 import { money } from "@/lib/inventory/format";
 import {
   externalDestinations,
+  isFruitCategory,
   lotOperations,
   units,
   type ActionState,
@@ -1181,7 +1182,7 @@ export function MovementForm({
   );
   const v = (key: string, fallback = "") => state.values?.[key] ?? fallback;
   const canDispatch = !lot.expires_on || lot.expires_on >= today;
-  const canProduce = canDispatch && lot.category_name === "Frutas recebidas";
+  const canProduce = canDispatch && isFruitCategory(lot.category_name);
   const [kind, setKind] = useState<LotOperation>(
     v(
       "kind",
@@ -1269,8 +1270,8 @@ export function MovementForm({
       )}
       {canDispatch && !canProduce && (
         <p className="muted text-sm">
-          Somente lotes da categoria Frutas recebidas podem iniciar uma produção
-          de polpa.
+          Este lote está na categoria {lot.category_name}. Somente lotes de
+          frutas podem iniciar uma produção de polpa.
         </p>
       )}
       <Result state={state} />

@@ -1436,8 +1436,11 @@ tbody tr:hover {
   background: var(--surface);
   font-size: 0.75rem;
 }
-.filter-bar .btn {
+.filter-clear,
+.filter-bar .check-label {
+  display: inline-flex;
   min-height: 44px;
+  align-items: center;
 }
 .check-label {
   display: inline-flex;

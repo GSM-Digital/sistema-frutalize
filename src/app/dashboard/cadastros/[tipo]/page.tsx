@@ -1,3 +1,4 @@
+import { FilterForm } from "@/components/filter-form";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAccess } from "@/lib/auth";
@@ -112,7 +113,19 @@ export default async function CatalogPage({
         title="Cadastros da fábrica"
         description="Consulte, edite ou arquive sem apagar registros anteriores."
       >
-        <form className="filter-bar" method="get" action={path}>
+        <FilterForm
+          key={path}
+          action={path}
+          label="Buscar cadastros"
+          values={{
+            q,
+            editar: record?.id ?? "",
+            novo: showForm && !record ? "1" : "",
+          }}
+          page={page}
+        >
+          {record && <input type="hidden" name="editar" value={record.id} />}
+          {showForm && !record && <input type="hidden" name="novo" value="1" />}
           <div className="filter-search">
             <label className="sr-only" htmlFor="catalog-search">
               Buscar por nome
@@ -126,15 +139,12 @@ export default async function CatalogPage({
               placeholder="Buscar por nome…"
             />
           </div>
-          <button className="btn btn-secondary" type="submit">
-            Buscar
-          </button>
           {q && (
-            <Link className="text-link text-sm" href={path}>
+            <Link className="filter-clear text-link text-sm" href={path}>
               Limpar
             </Link>
           )}
-        </form>
+        </FilterForm>
         {rows.length ? (
           <div className="table-scroll">
             <table>

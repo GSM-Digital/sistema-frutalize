@@ -102,7 +102,46 @@ const sections: { label?: string; items: NavItem[] }[] = [
   },
 ];
 
-export function Navigation() {
+type StockAlerts = { expiring: number; expired: number };
+
+function StockBadges({
+  alerts,
+  mobile = false,
+}: {
+  alerts: StockAlerts;
+  mobile?: boolean;
+}) {
+  if (!alerts.expiring && !alerts.expired) return null;
+  return (
+    <span
+      className={mobile ? "stock-alerts stock-alerts-mobile" : "stock-alerts"}
+      aria-label={`${alerts.expiring} lotes próximos do vencimento; ${alerts.expired} lotes vencidos`}
+    >
+      {alerts.expiring > 0 && (
+        <span
+          className="stock-alert-badge stock-alert-badge-expiring"
+          title={`${alerts.expiring} lotes vencem em até 30 dias`}
+        >
+          {alerts.expiring}
+        </span>
+      )}
+      {alerts.expired > 0 && (
+        <span
+          className="stock-alert-badge stock-alert-badge-expired"
+          title={`${alerts.expired} lotes vencidos`}
+        >
+          {alerts.expired}
+        </span>
+      )}
+    </span>
+  );
+}
+
+export function Navigation({
+  stockAlerts = { expiring: 0, expired: 0 },
+}: {
+  stockAlerts?: StockAlerts;
+}) {
   const pathname = usePathname();
   const [openPath, setOpenPath] = useState<string | null>(null);
   const menuOpen = openPath === pathname;
@@ -285,6 +324,13 @@ export function Navigation() {
                   <Link
                     key={item.href}
                     href={item.href}
+                    aria-label={
+                      item.href === "/dashboard/lotes" &&
+                      (stockAlerts.expiring || stockAlerts.expired)
+                        ? `${item.label}: ${stockAlerts.expiring} lotes próximos do vencimento e ${stockAlerts.expired} vencidos`
+                        : item.label
+                    }
+                    title={item.label}
                     aria-current={active ? "page" : undefined}
                     className={`nav-item${active ? " nav-active" : ""}`}
                   >
@@ -297,6 +343,9 @@ export function Navigation() {
                     <span className="nav-item-label nav-label-short">
                       {item.shortLabel ?? item.label}
                     </span>
+                    {item.href === "/dashboard/lotes" && (
+                      <StockBadges alerts={stockAlerts} />
+                    )}
                   </Link>
                 );
               })}
@@ -312,7 +361,12 @@ export function Navigation() {
             aria-current={isActive(item.href!) ? "page" : undefined}
             className={`mobile-nav-link${isActive(item.href!) ? " mobile-nav-active" : ""}`}
           >
-            <Icon name={item.icon} />
+            <span className="mobile-nav-icon-wrap">
+              <Icon name={item.icon} />
+              {item.href === "/dashboard/lotes" && (
+                <StockBadges alerts={stockAlerts} mobile />
+              )}
+            </span>
             <span>{item.label}</span>
           </Link>
         ))}
@@ -451,6 +505,14 @@ export function Navigation() {
                 ))}
             </section>
           ))}
+          <Link
+            href="/dashboard/conta"
+            className="mobile-nav-panel-link"
+            onClick={() => setMenuOpen(false)}
+          >
+            <Icon name="users" />
+            <span>Conta</span>
+          </Link>
           <form action={logout}>
             <button className="mobile-nav-logout" type="submit">
               Sair do sistema

@@ -3,6 +3,7 @@ import Image from "next/image";
 import { connection } from "next/server";
 import { getAccess } from "@/lib/auth";
 import { Navigation } from "@/components/inventory/navigation";
+import { SidebarControls } from "@/components/inventory/sidebar-controls";
 import { logout } from "./actions";
 
 export const instant = false;
@@ -36,13 +37,22 @@ export default async function DashboardLayout({
         </section>
       </main>
     );
+  const { data: overview } = await access.supabase.rpc("inventory_overview");
+  const stockAlerts = {
+    expiring: Number(overview?.[0]?.expiring_count ?? 0),
+    expired: Number(overview?.[0]?.expired_count ?? 0),
+  };
   return (
     <div className="app-shell">
       <a href="#conteudo" className="skip-link">
         Ir para o conteúdo
       </a>
       <aside className="sidebar">
-        <Link href="/dashboard" className="brand">
+        <Link
+          href="/dashboard"
+          className="brand"
+          aria-label="Frutalize, ir ao início"
+        >
           <Image
             className="brand-logo"
             src="/frutalize-logo.svg"
@@ -52,16 +62,17 @@ export default async function DashboardLayout({
             priority
             unoptimized
           />
+          <Image
+            className="brand-mark"
+            src="/icon.svg"
+            alt=""
+            width={42}
+            height={42}
+            unoptimized
+          />
         </Link>
-        <Navigation />
-        <div className="sidebar-footer">
-          <span className="badge badge-green">Uso interno</span>
-          <p>
-            Uma operação mais organizada,
-            <br />
-            do recebimento ao estoque.
-          </p>
-        </div>
+        <Navigation stockAlerts={stockAlerts} />
+        <SidebarControls />
       </aside>
       <div className="app-body">
         <header className="app-header">
@@ -76,11 +87,6 @@ export default async function DashboardLayout({
               </p>
               <p className="muted text-xs">Administrador</p>
             </div>
-            <form action={logout}>
-              <button type="submit" className="btn btn-secondary">
-                Sair
-              </button>
-            </form>
           </div>
         </header>
         <main id="conteudo" className="app-content">

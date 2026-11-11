@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { DashboardOperations } from "@/components/production/dashboard-operations";
 import { ProductionTerminal } from "@/components/production/terminal";
 import { Navigation } from "@/components/inventory/navigation";
+import { SidebarControls } from "@/components/inventory/sidebar-controls";
 import { previewRunId, previewSnapshot } from "@/lib/production/preview";
 
 export const instant = false;
@@ -63,8 +64,17 @@ export default async function VisualizarPage({
                 height={77}
                 unoptimized
               />
+              <Image
+                className="brand-mark"
+                src="/icon.svg"
+                alt=""
+                width={42}
+                height={42}
+                unoptimized
+              />
             </div>
-            <Navigation />
+            <Navigation stockAlerts={{ expiring: 2, expired: 3 }} />
+            <SidebarControls />
           </aside>
           <div className="app-body">
             <header className="app-header">

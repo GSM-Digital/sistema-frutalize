@@ -161,6 +161,9 @@ textarea {
   width: 190px;
   height: auto;
 }
+.brand-mark {
+  display: none;
+}
 .sidebar-label {
   margin: 2.8rem 0.75rem 0.8rem;
   color: #899384;
@@ -249,6 +252,163 @@ textarea {
   font-size: 0.65rem;
   line-height: 1.8;
   color: #8b9385;
+}
+.sidebar-controls {
+  position: relative;
+  margin-top: auto;
+  padding: 0.6rem 0.25rem 0;
+  border-top: 1px solid var(--line);
+}
+.sidebar-toggle {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  gap: 0.8rem;
+  border: 0;
+  border-radius: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  color: #526652;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+.sidebar-toggle:hover,
+.sidebar-toggle:focus-visible {
+  background: #edf5e8;
+}
+.sidebar-toggle > span:first-child {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+.sidebar-account-menu {
+  position: absolute;
+  z-index: 70;
+  bottom: 0;
+  left: 100%;
+  display: grid;
+  width: 170px;
+  gap: 0.25rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  padding: 0.4rem;
+  background: white;
+  box-shadow: 0 12px 30px #1f391f20;
+}
+.sidebar-account-menu a,
+.sidebar-account-menu button {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-radius: 0.5rem;
+  padding: 0.7rem 0.8rem;
+  background: transparent;
+  color: #263c28;
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+.sidebar-account-menu a:hover,
+.sidebar-account-menu a:focus-visible {
+  background: #edf5e8;
+}
+.sidebar-account-menu button {
+  color: #a33029;
+  font-weight: 700;
+}
+.sidebar-account-menu button:hover,
+.sidebar-account-menu button:focus-visible {
+  background: #fff2f0;
+}
+.stock-alerts {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.2rem;
+}
+.stock-alert-badge {
+  display: inline-grid;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  place-items: center;
+  border-radius: 999px;
+  padding: 0 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.stock-alert-badge-expiring {
+  background: #efc74c;
+  color: #493908;
+}
+.stock-alert-badge-expired {
+  background: #d9534f;
+  color: #fff;
+}
+.home-greeting {
+  margin: 0 0 2.3rem;
+  color: #1d2c1c;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-weight: 650;
+  letter-spacing: -0.04em;
+}
+.account-page {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 760px;
+}
+.account-page > h1 {
+  color: #1d2c1c;
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-weight: 650;
+}
+.account-panel {
+  padding: 1.5rem;
+}
+.account-panel h2 {
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  font-weight: 650;
+}
+.account-details {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.account-details div {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 0.5rem;
+}
+.account-details dt {
+  color: #74806f;
+}
+.account-details dd {
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+.account-password-form {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+.account-password-form label {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+.account-password-form input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  padding: 0.7rem 0.85rem;
+}
+.account-error {
+  color: #a33029;
 }
 .app-body {
   min-width: 0;
@@ -3435,5 +3595,60 @@ tbody tr:hover {
   *::after {
     transition: none !important;
     animation: none !important;
+  }
+}
+@media (min-width: 1024px) {
+  .app-shell {
+    transition: grid-template-columns 0.22s ease;
+  }
+  .app-shell.sidebar-collapsed {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+  .sidebar-collapsed .sidebar {
+    padding-right: 0.55rem;
+    padding-left: 0.55rem;
+  }
+  .sidebar-collapsed .brand {
+    justify-content: center;
+    padding: 0;
+  }
+  .sidebar-collapsed .brand-logo {
+    display: none;
+  }
+  .sidebar-collapsed .brand-mark {
+    display: block;
+  }
+  .sidebar-collapsed .nav-section-title,
+  .sidebar-collapsed .nav-item-label,
+  .sidebar-collapsed .nav-item small,
+  .sidebar-collapsed .sidebar-toggle-label {
+    display: none;
+  }
+  .sidebar-collapsed .main-nav .nav-item,
+  .sidebar-collapsed .sidebar-toggle {
+    justify-content: center;
+    padding-right: 0.2rem;
+    padding-left: 0.2rem;
+  }
+  .sidebar-collapsed .main-nav .nav-item {
+    position: relative;
+    min-height: 48px;
+  }
+  .sidebar-collapsed .main-nav .nav-item .stock-alerts {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    gap: 0;
+  }
+  .sidebar-collapsed .stock-alert-badge {
+    min-width: 0.9rem;
+    height: 0.9rem;
+    padding: 0 0.12rem;
+    font-size: 0.55rem;
+  }
+}
+@media (max-width: 1023px) {
+  .sidebar-controls {
+    display: none;
   }
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useOverlayFocus } from "@/components/use-overlay-focus";
 import { ReportTrigger } from "@/components/support/report-dialog";
 import Link from "next/link";
 import Image from "next/image";
@@ -86,6 +87,8 @@ export function ProductionTerminal({
     setDialogDrag(0);
     dialogTimer.current = setTimeout(() => setDialog(null), 280);
   }
+  const overlay = useRef<HTMLDivElement>(null);
+  useOverlayFocus(overlay, Boolean(dialog));
   useEffect(() => {
     if (!dialog) return;
     const scrollY = window.scrollY;
@@ -685,7 +688,8 @@ export function ProductionTerminal({
       )}
       {dialog && (
         <div
-          className="terminal-dialog-backdrop"
+          ref={overlay}
+          className={`terminal-dialog-backdrop${dialogOpen ? " terminal-dialog-backdrop-open" : ""}`}
           onMouseDown={(event) => {
             if (event.target === event.currentTarget && !busy) hideDialog();
           }}
@@ -693,6 +697,7 @@ export function ProductionTerminal({
           <section
             role="dialog"
             aria-modal="true"
+            tabIndex={-1}
             aria-labelledby="production-dialog-title"
             className="terminal-dialog"
             style={

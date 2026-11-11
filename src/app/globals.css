@@ -332,7 +332,7 @@ textarea {
   bottom: 0;
   left: calc(100% - 0.25rem);
   display: grid;
-  width: 240px;
+  width: 278px;
   gap: 0.25rem;
   border: 1px solid var(--line);
   border-radius: 0.75rem;
@@ -364,8 +364,7 @@ textarea {
   font-size: 0.7rem;
 }
 .sidebar-account-menu a,
-.sidebar-account-menu form button,
-.sidebar-account-menu button[aria-haspopup="dialog"] {
+.sidebar-account-menu form button {
   display: block;
   width: 100%;
   border: 0;
@@ -379,9 +378,7 @@ textarea {
   cursor: pointer;
 }
 .sidebar-account-menu a:hover,
-.sidebar-account-menu a:focus-visible,
-.sidebar-account-menu button[aria-haspopup="dialog"]:hover,
-.sidebar-account-menu button[aria-haspopup="dialog"]:focus-visible {
+.sidebar-account-menu a:focus-visible {
   background: light-dark(#edf5e8, var(--dark-raised));
 }
 .sidebar-account-menu form button {
@@ -1649,7 +1646,6 @@ tbody tr:hover {
   display: grid;
   place-items: center;
   overflow-y: auto;
-  background: rgb(26 37 26 / 48%);
   padding: 1rem;
 }
 .receipt-picker-dialog {
@@ -3351,7 +3347,6 @@ tbody tr:hover {
   display: grid;
   place-items: center;
   overflow-y: auto;
-  background: rgba(13, 25, 15, 0.78);
   padding: 1rem;
 }
 .terminal-pin-dialog {
@@ -3469,7 +3464,6 @@ tbody tr:hover {
   inset: 0;
   display: grid;
   place-items: center;
-  background: rgba(17, 28, 18, 0.58);
   padding: 1rem;
 }
 .terminal-dialog {

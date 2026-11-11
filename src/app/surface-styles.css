@@ -101,12 +101,17 @@
     display: block;
     width: 100%;
     border: 0;
-    background: rgba(20, 35, 22, 0.38);
+    opacity: 0;
     visibility: hidden;
     pointer-events: none;
+    transition:
+      opacity 180ms ease,
+      visibility 0s linear 180ms;
   }
   .mobile-nav-backdrop-open {
+    opacity: 1;
     visibility: visible;
+    transition-delay: 0s;
     pointer-events: auto;
   }
   .mobile-nav-panel {
@@ -701,9 +706,6 @@ select[size="1"]:not([multiple]) {
   padding: clamp(1rem, 4vw, 1.5rem);
   color: var(--foreground);
 }
-.report-dialog::backdrop {
-  background: rgb(12 23 15 / 54%);
-}
 html:has(.report-dialog[open]) {
   overflow: hidden;
 }
@@ -754,5 +756,81 @@ html:has(.report-dialog[open]) {
   }
   .support-filters > .btn {
     flex: 1 0 100%;
+  }
+}
+
+/* Consistent background treatment for navigation sheets and dialogs. */
+:root {
+  --overlay-tint: light-dark(rgb(12 23 15 / 30%), rgb(0 0 0 / 40%));
+  --overlay-filter: blur(7px);
+}
+
+.mobile-nav-backdrop,
+.sidebar-account-backdrop,
+.receipt-picker-backdrop::before,
+.terminal-dialog-backdrop::before,
+.terminal-pin-backdrop,
+.report-dialog::backdrop {
+  background: var(--overlay-tint);
+  -webkit-backdrop-filter: var(--overlay-filter);
+  backdrop-filter: var(--overlay-filter);
+}
+
+.receipt-picker-backdrop::before,
+.terminal-dialog-backdrop::before {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 180ms ease;
+  content: "";
+}
+.receipt-picker-backdrop-open::before,
+.terminal-dialog-backdrop-open::before {
+  opacity: 1;
+}
+
+.sidebar-account-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding: 0.15rem 0.15rem 0 0;
+}
+
+@media (min-width: 1024px) {
+  html {
+    scrollbar-gutter: stable;
+  }
+  html:has(.sidebar-controls-open) {
+    overflow: hidden;
+  }
+  .sidebar-controls-open {
+    z-index: 65;
+  }
+  .sidebar-controls-open .sidebar-toggle {
+    position: relative;
+    z-index: 1;
+    background: var(--surface);
+  }
+  .sidebar-account-backdrop {
+    position: fixed;
+    z-index: 0;
+    inset: 0;
+    border: 0;
+    cursor: default;
+    animation: reveal-overlay 180ms ease both;
+  }
+}
+
+.report-dialog[open]::backdrop {
+  animation: reveal-overlay 180ms ease both;
+}
+
+@keyframes reveal-overlay {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

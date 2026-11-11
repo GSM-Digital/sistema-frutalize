@@ -1,4 +1,5 @@
 "use client";
+import { useOverlayFocus } from "@/components/use-overlay-focus";
 import { EditForm } from "@/components/edit-form";
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
@@ -528,6 +529,8 @@ export function ReceiptForm({
       requestAnimationFrame(() => setPickerOpen(true)),
     );
   };
+  const overlay = useRef<HTMLDivElement>(null);
+  useOverlayFocus(overlay, Boolean(pickerTarget));
   useEffect(() => {
     if (!pickerTarget) return;
     const scrollY = window.scrollY;
@@ -909,6 +912,7 @@ export function ReceiptForm({
 
       {pickerTarget && (
         <div
+          ref={overlay}
           className={`receipt-picker-backdrop${pickerOpen ? " receipt-picker-backdrop-open" : ""}`}
           role="presentation"
           onMouseDown={(event) => {
@@ -927,6 +931,7 @@ export function ReceiptForm({
             }
             role="dialog"
             aria-modal="true"
+            tabIndex={-1}
             aria-labelledby="receipt-picker-title"
             onTouchStart={(event) => {
               pickerContentTouchStart.current =

@@ -1,5 +1,7 @@
 "use client";
 
+import { Icon } from "./icon";
+import { useOverlayFocus } from "@/components/use-overlay-focus";
 import { ReportTrigger } from "@/components/support/report-dialog";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -15,6 +17,9 @@ export function SidebarControls({
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const controls = useRef<HTMLDivElement>(null);
+  const toggleButton = useRef<HTMLButtonElement>(null);
+  useOverlayFocus(controls, menuOpen, false);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -23,8 +28,16 @@ export function SidebarControls({
       .querySelector(".app-shell")
       ?.classList.toggle("sidebar-collapsed", saved);
     const frame = window.requestAnimationFrame(() => setCollapsed(saved));
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    function closeOnMobile() {
+      if (desktop.matches) return;
+      if (hoverTimer.current) clearTimeout(hoverTimer.current);
+      setMenuOpen(false);
+    }
+    desktop.addEventListener("change", closeOnMobile);
     return () => {
       window.cancelAnimationFrame(frame);
+      desktop.removeEventListener("change", closeOnMobile);
       if (hoverTimer.current) clearTimeout(hoverTimer.current);
       document
         .querySelector(".app-shell")
@@ -42,6 +55,7 @@ export function SidebarControls({
   }
 
   function startHover() {
+    if (menuOpen) return;
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
     hoverTimer.current = setTimeout(() => setMenuOpen(true), 1000);
   }
@@ -49,16 +63,38 @@ export function SidebarControls({
   function endHover() {
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
     hoverTimer.current = null;
+  }
+
+  function dismissMenu(restoreFocus = false) {
+    endHover();
+    if (restoreFocus) toggleButton.current?.focus();
     setMenuOpen(false);
   }
 
   return (
     <div
-      className="sidebar-controls"
+      ref={controls}
+      className={`sidebar-controls${menuOpen ? " sidebar-controls-open" : ""}`}
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && menuOpen) {
+          event.preventDefault();
+          dismissMenu(true);
+        }
+      }}
       onMouseEnter={startHover}
       onMouseLeave={endHover}
     >
+      {menuOpen && (
+        <button
+          type="button"
+          className="sidebar-account-backdrop"
+          aria-label="Fechar menu"
+          tabIndex={-1}
+          onClick={() => dismissMenu()}
+        />
+      )}
       <button
+        ref={toggleButton}
         type="button"
         className="sidebar-toggle"
         aria-label={
@@ -78,7 +114,11 @@ export function SidebarControls({
         <span className="sidebar-toggle-label">Menu</span>
       </button>
       {menuOpen && (
-        <div className="sidebar-account-menu">
+        <div
+          className="sidebar-account-menu"
+          role="group"
+          aria-label="Opções da conta"
+        >
           <div className="sidebar-account-heading">
             <div
               className="sidebar-account-info"
@@ -94,7 +134,15 @@ export function SidebarControls({
                     : "Colaborador"}
               </small>
             </div>
-            <ThemeToggle />
+            <div className="sidebar-account-actions">
+              <ThemeToggle />
+              <ReportTrigger
+                className="mobile-nav-report"
+                onOpen={() => dismissMenu()}
+              >
+                <Icon name="bug" size={22} />
+              </ReportTrigger>
+            </div>
           </div>
           <Link href="/dashboard/conta" onClick={() => setMenuOpen(false)}>
             Conta
@@ -102,9 +150,6 @@ export function SidebarControls({
           <Link href="/terminal" onClick={() => setMenuOpen(false)}>
             Terminal Touch
           </Link>
-          <ReportTrigger onOpen={() => setMenuOpen(false)}>
-            Reportar problema
-          </ReportTrigger>
           <form action={logout}>
             <button type="submit">Sair</button>
           </form>

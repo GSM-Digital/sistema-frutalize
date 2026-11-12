@@ -389,6 +389,23 @@
   }
 }
 @media (max-width: 767px) {
+  .prep-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .prep-header > div:first-child {
+    min-width: 0;
+  }
+  .prep-header-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .prep-header-actions > * {
+    flex: 1 1 120px;
+    min-width: 0;
+  }
   .prep-overview,
   .prep-active {
     grid-template-columns: 1fr;

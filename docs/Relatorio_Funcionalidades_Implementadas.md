@@ -1,7 +1,7 @@
 # Relatório de funcionalidades implementadas — Sistema Frutalize
 
-**Data do levantamento:** 09/11/2026  
-**Base:** branch `main`, commit `2a601c7`, do repositório `sistema-frutalize`  
+**Data do levantamento:** 12/11/2026
+**Base:** branch `main`, commit `ff15b16`, do repositório `sistema-frutalize`
 **Escopo:** funcionalidades presentes no código e nas migrações versionadas. A existência no repositório não comprova que as migrações foram aplicadas ao Supabase de produção nem que o deploy está ativo.
 
 ## 1. Visão geral
@@ -86,6 +86,20 @@ Em `/terminal`:
 - `/visualizar`, disponível **somente em desenvolvimento**, mostra o dashboard de uma ordem, o terminal com ordem aberta e a fila do terminal.
 - Usa dados fictícios, não consulta o Supabase e mantém comandos desativados. Serve para inspecionar as interfaces; não valida gravações nem permissões reais.
 
+### 4.2 Terminal de preparo de frutas
+
+- `/terminal/preparo` oferece uma tela touch independente para a etapa entre recebimento e despolpa; `/dashboard/preparo` administra guias versionados e acompanha lotes de preparo.
+- O lote recebido é reservado quando o preparo começa. A equipe se identifica individualmente por PIN, pode pausar e retomar, e a conclusão registra quantidade processada, número de baldes e destino físico. Quantidade não preparada retorna ao lote de origem.
+- Cada balde gera um lote intermediário rastreável até o recebimento. Quando há guia aprovado, a ordem de produção aceita esses lotes preparados para despolpa. O preparo não cria polpa nem converte automaticamente sacos, baldes e peso.
+- Guias são escritos e aprovados pela fábrica. A aplicação não fornece instruções sanitárias ou parâmetros operacionais. A implantação não registra automaticamente saldos ou preparações legadas; a conciliação física é manual.
+
+## 4.3 Navegação, tema e relatos de suporte
+
+- O menu da conta contém tema claro/escuro, conta, acesso ao terminal de produção, acesso ao terminal de preparo, relato de problema/sugestão e saída. A navegação é adaptada a toque e telas menores.
+- O formulário de relato guarda tipo, descrição e página de origem e aceita até cinco imagens PNG/JPG/WebP, limitadas em conjunto a 3,5 MiB. As imagens ficam em bucket privado.
+- Administradores triagem relatos em `/dashboard/suporte`, com filtros e estados **A fazer**, **Em andamento**, **Concluído** e **Descartado**. A página apresenta autoria, origem e links assinados para anexos.
+- O tema escolhido fica no armazenamento local do navegador; ele não exige migração de banco.
+
 ## 5. Módulos de gestão
 
 No dashboard, as rotas seguem `/dashboard/gestao/<módulo>`. O conteúdo também está disponível em `/gestao/<módulo>` para os papéis autorizados.
@@ -145,15 +159,15 @@ No dashboard, as rotas seguem `/dashboard/gestao/<módulo>`. O conteúdo também
 - O esquema versionado em `supabase/migrations/` cobre estoque, produção, gestão, permissões e Storage privado. Comandos sensíveis são executados por funções SQL com validação de papel, identificadores de intenção e transações. Segundo o registro de implantação de 29/10/2026, as três migrações finais foram aplicadas ao projeto Supabase de desenvolvimento; o estado atual desse projeto não foi revalidado para este relatório.
 - Registros de produção, qualidade, movimentação e gestão preservam autoria e histórico; correções relevantes usam estorno ou compensação em vez de apagar o evento original.
 - `/api/health` verifica se a aplicação está configurada e se o endpoint de saúde do Supabase Auth responde.
-- A CI do GitHub executa instalação, lint, formatação, testes, tipagem, build e verificação HTTP sem sessão em pushes à `main` e pull requests.
+- A CI do GitHub executa instalação, lint, formatação, testes, tipagem, build e verificação HTTP sem sessão em pushes à `main` e pull requests. A execução do commit `ff15b16` concluiu todos esses passos com sucesso em 11/11/2026.
 
 ## 8. Dependências e limites de implantação
 
-- Em outro projeto ou ambiente, comparar o histórico do banco e aplicar as migrações pendentes na ordem do repositório, com backup e ensaio de restauração. As três migrações finais são `20261028100000_production_commands.sql`, `20261028110000_operations_management.sql` e `20261028110100_private_receipt_storage.sql`. A implantação no projeto de desenvolvimento está documentada; a restauração completa da cópia ainda não foi ensaiada.
+- Antes de usar os novos módulos, o administrador deve comparar o histórico remoto com todos os arquivos versionados e aplicar as migrações pendentes em ordem, com backup e plano de reversão. Este checkout contém migrações posteriores às três de outubro para relatos, contexto de suporte, preparo e aprovação dos guias. O estado remoto atual não foi consultado neste levantamento; siga [o guia atualizado de integração do banco](Integracao_BD_Administrador.md).
 - Configurar `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Convites e bloqueio no Auth exigem `SUPABASE_SERVICE_ROLE_KEY` no servidor e `APP_ORIGIN`; o retorno `/auth/confirm` deve ser permitido no Supabase Auth. Para ativar o Turnstile opcional, configurar em conjunto site key, segredo e hostname esperado.
 - Vincular usuários reais e aprovar procedimentos, equipamentos, parâmetros, embalagens, calibrações e critérios de qualidade antes de operar a produção física.
 - O sistema depende de conexão online. Os testes de banco usam PGlite e dados sintéticos; é necessária validação no Supabase de homologação, incluindo permissões, concorrência e uso em tablet.
-- Este relatório descreve o código versionado e incorpora o registro histórico de implantação em desenvolvimento. Não confirma o estado atual do banco remoto, o deploy ativo, dados reais cadastrados ou aceite técnico/sanitário.
+- Este relatório descreve o código versionado e a execução de CI. Não confirma que as novas migrações estejam aplicadas no Supabase, que o deploy do commit esteja ativo, que os guias operacionais reais estejam aprovados ou que houve aceite no terminal físico.
 
 ## 9. Referências no repositório
 

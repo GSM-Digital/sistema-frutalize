@@ -18,6 +18,7 @@
    - `20261111193237_preparation_guide_edit_and_pin_check.sql`
 
    Elas dependem do schema de estoque e produção anterior. Se qualquer migração anterior estiver pendente, aplique o conjunto completo em sequência desde a primeira versão ausente; não execute somente esses cinco arquivos isoladamente.
+
 3. Confirmar suporte: tabela `public.support_reports`, políticas RLS de envio e triagem administrativa, colunas de autoria/origem, estados `todo`, `in_progress`, `done` e `discarded`, bucket privado `frutalize-support` e políticas de imagem. O bucket limita uploads a PNG/JPEG/WebP e 3,5 MiB. O envio fica disponível a membros ativos e clientes vinculados; a triagem está restrita ao administrador.
 4. Confirmar preparo: tabelas `preparation_guides`, `preparation_batches` e `preparation_workers`; funções `preparation_snapshot` e `preparation_command`; coluna `lots.preparation_batch_id`; movimentos `preparation_input`, `preparation_return` e `preparation_output`; view `inventory_lots` atualizada; verificação que impede enviar fruta crua à despolpa quando existe guia aprovado. A migração cria a localização **Área de despolpa** se ainda não existir.
 5. Conferir que a migração não exige lançamento manual de estoque legado: ela não inventa conversões, quantidades, pesos, baldes, datas ou participantes. Para frutas já descascadas antes da implantação, o responsável pelo estoque precisa reconciliar fisicamente cada lote e registrar apenas valores confirmados. Não registrar automaticamente os sacos mencionados no relato sem conferir os dados reais.

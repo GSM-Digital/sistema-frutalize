@@ -163,11 +163,11 @@ No dashboard, as rotas seguem `/dashboard/gestao/<módulo>`. O conteúdo também
 
 ## 8. Dependências e limites de implantação
 
-- Antes de usar os novos módulos, o administrador deve comparar o histórico remoto com todos os arquivos versionados e aplicar as migrações pendentes em ordem, com backup e plano de reversão. Este checkout contém migrações posteriores às três de outubro para relatos, contexto de suporte, preparo e aprovação dos guias. O estado remoto atual não foi consultado neste levantamento; siga [o guia atualizado de integração do banco](Integracao_BD_Administrador.md).
+- Em 12/11/2026, a página de migrações do Supabase de produção mostrou as 17 versões do repositório, inclusive as migrações de relatos e preparo; não havia migração pendente. `/api/health` respondeu HTTP 200 com aplicação e Supabase disponíveis. A evidência e os passos ainda necessários antes da operação física constam no [guia de integração do banco](Integracao_BD_Administrador.md).
 - Configurar `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Convites e bloqueio no Auth exigem `SUPABASE_SERVICE_ROLE_KEY` no servidor e `APP_ORIGIN`; o retorno `/auth/confirm` deve ser permitido no Supabase Auth. Para ativar o Turnstile opcional, configurar em conjunto site key, segredo e hostname esperado.
 - Vincular usuários reais e aprovar procedimentos, equipamentos, parâmetros, embalagens, calibrações e critérios de qualidade antes de operar a produção física.
 - O sistema depende de conexão online. Os testes de banco usam PGlite e dados sintéticos; é necessária validação no Supabase de homologação, incluindo permissões, concorrência e uso em tablet.
-- Este relatório descreve o código versionado e a execução de CI. Não confirma que as novas migrações estejam aplicadas no Supabase, que o deploy do commit esteja ativo, que os guias operacionais reais estejam aprovados ou que houve aceite no terminal físico.
+- Este relatório descreve o código versionado, a execução de CI e a confirmação remota de migrações e saúde em 12/11/2026. Não confirma que os guias operacionais reais estejam aprovados ou que houve aceite no terminal físico.
 
 ## 9. Referências no repositório
 

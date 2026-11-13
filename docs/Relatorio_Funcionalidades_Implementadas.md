@@ -1,178 +1,191 @@
 # Relatório de funcionalidades implementadas — Sistema Frutalize
 
-**Data do levantamento:** 12/11/2026
-**Base:** branch `main`, commit `ff15b16`, do repositório `sistema-frutalize`
-**Escopo:** funcionalidades presentes no código e nas migrações versionadas. A existência no repositório não comprova que as migrações foram aplicadas ao Supabase de produção nem que o deploy está ativo.
+**Atualizado em:** 13/11/2026
+
+**Base de código:** branch `main`, commit `e2837ef`
+
+**Repositório:** `GSM-Digital/sistema-frutalize`
+**Escopo:** funcionalidades presentes no código e nas migrações versionadas. O status de implantação e os limites de aceite estão separados da descrição funcional.
 
 ## 1. Visão geral
 
-O sistema é uma aplicação web em português do Brasil, construída com Next.js, React e Supabase. Opera com autenticação por e-mail e senha, dados de estoque, produção, gestão interna e consulta de pedidos por cliente. Valores monetários usam real brasileiro e datas operacionais são apresentadas no horário de Brasília.
+O Sistema Frutalize é uma aplicação web em português do Brasil, construída com Next.js, React e Supabase. Cobre autenticação, estoque, recebimento, preparo de frutas, produção, gestão administrativa, suporte e consulta de pedidos por clientes. As telas administrativas e operacionais são separadas, mesmo quando trabalham sobre as mesmas ordens e dados. Valores monetários usam real brasileiro; datas operacionais são apresentadas no horário de Brasília.
 
-As superfícies estão separadas:
+| Área                       | Rotas                                 | Finalidade e acesso                                                            |
+| -------------------------- | ------------------------------------- | ------------------------------------------------------------------------------ |
+| Dashboard                  | `/dashboard` e subrotas               | Estoque, cadastros, produção e gestão; administrador ativo.                    |
+| Terminal de produção       | `/terminal`                           | Execução touch de ordens de produção; equipe ativa, conforme o papel.          |
+| Terminal de preparo        | `/terminal/preparo`                   | Preparo de frutas entre o recebimento e a despolpa; equipe ativa autorizada.   |
+| Gestão independente        | `/gestao` e `/gestao/[module]`        | Módulos acessíveis conforme o papel, sem trocar de superfície para o terminal. |
+| Portal                     | `/portal`                             | Consulta de pedidos e expedições próprios por cliente vinculado.               |
+| Visualização demonstrativa | `/visualizar` e `/visualizar/preparo` | Prévia local, somente em desenvolvimento, sem gravações no Supabase.           |
 
-| Área          | Rota                    | Uso                                                             | Acesso no código                                                          |
-| ------------- | ----------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Dashboard     | `/dashboard` e subrotas | Administração, estoque, produção e gestão                       | Administrador ativo                                                       |
-| Terminal      | `/terminal`             | Execução de ordens de produção                                  | Equipe ativa; ações específicas dependem do papel e da ordem              |
-| Gestão direta | `/gestao/[module]`      | Mesmo conteúdo dos módulos de gestão, sem o layout do dashboard | Administrador; gestor em equipe/apontamentos; colaborador em apontamentos |
-| Portal        | `/portal`               | Consulta de pedidos próprios                                    | Cliente autenticado e vinculado                                           |
+## 2. Autenticação, conta e permissões
 
-Os módulos de gestão dentro e fora do dashboard reutilizam o mesmo componente e os mesmos formulários; as rotas de documentos preservam a área de origem. O menu do dashboard contém um atalho identificado para o terminal touch, e o terminal oferece retorno ao dashboard para administradores. Cada visualização mantém seu layout e suas ações.
+- Login e sessão com Supabase Auth; rotas protegidas redirecionam para autenticação e limitam o retorno a caminhos internos permitidos.
+- Primeiro acesso e recuperação permitem definir senha com validação de comprimento e composição; a sessão é encerrada após a troca.
+- Cloudflare Turnstile é opcional. Quando configurado integralmente, a validação ocorre no servidor; configuração parcial bloqueia o envio.
+- `staff_members` associa identidade, nome, papel e estado ativo. Páginas, ações e funções de banco revalidam acesso. O bloqueio da equipe impede novas operações autorizadas.
+- Administradores podem vincular usuários Auth existentes, convidar pessoas quando a chave administrativa estiver configurada, ajustar papel, bloquear ou reativar com motivo e auditoria. A remoção do último administrador ativo é impedida.
+- A página `/dashboard/conta` exibe dados e perfil, permite editar informações de conta, trocar senha e configurar o PIN operacional individual exigido pelo terminal de preparo.
+- O menu da conta oferece tema claro/escuro, conta, relato, atalhos para os dois terminais e saída. O tema escolhido é guardado no navegador.
+- RLS, grants e funções SQL restringem consultas e alterações. Custos e dados administrativos não são expostos aos operadores no terminal.
 
-## 2. Identidade, acesso e proteção
+## 3. Dashboard, cadastros e inventário
 
-- Login por e-mail e senha via Supabase Auth. Cloudflare Turnstile é opcional: quando as três variáveis de configuração estão presentes, a validação ocorre no servidor; uma configuração parcial bloqueia o envio.
-- Primeiro acesso por link de convite ou recuperação, com definição de senha forte e encerramento da sessão após a troca.
-- Vínculo de usuários e papéis em `staff_members`, com bloqueio por `active`. O banco revalida autorização nas operações; a interface também restringe páginas e ações.
-- Cadastro de pessoa já existente no Auth, convite por e-mail quando a chave administrativa do servidor está configurada, bloqueio e reativação. O sistema impede remover o último administrador ativo.
-- Ao bloquear ou reativar, o vínculo no banco é atualizado. Quando há `SUPABASE_SERVICE_ROLE_KEY`, a ação também tenta aplicar o bloqueio no Supabase Auth; uma falha nessa etapa é informada ao operador.
-- RLS, grants e funções de banco limitam acesso a tabelas, snapshots e comandos. O terminal não recebe custos de estoque/produção para operadores.
-- Rotas protegidas direcionam usuários sem sessão ao login. O retorno após login é limitado a caminhos internos permitidos.
+### 3.1 Painel inicial e navegação
 
-## 3. Dashboard administrativo
-
-### 3.1 Página inicial
-
-- Indicadores de itens ativos, lotes com saldo, lotes a vencer em 30 dias e lotes vencidos.
-- Atalhos para recebimento, acompanhamento da produção, pedido/expedição e lançamentos financeiros.
-- Acesso aos módulos de estoque, produção, finanças, vendas, equipe, cadastros e auditoria.
-- Lista de movimentações recentes e alerta visual quando há lote vencido com saldo.
+- `/dashboard` apresenta indicadores de itens ativos, lotes com saldo, lotes a vencer em 30 dias e lotes vencidos, além de movimentações recentes e atalhos para tarefas frequentes.
+- O menu administrativo oferece navegação para estoque, recebimentos, cadastros, produção, gestão, suporte e conta. A navegação e os componentes são adaptados a celular e tablet; é possível recolher o menu lateral.
+- `/dashboard/gestao/[module]` mantém o layout do dashboard. `/gestao/[module]` mostra o conteúdo autorizado do módulo em sua própria superfície. A navegação não redireciona automaticamente uma tela para a outra.
+- `/terminal` e `/terminal/preparo` são rotas próprias, com layouts operacionais touch. Links entre áreas são explícitos.
 
 ### 3.2 Cadastros
 
 Em `/dashboard/cadastros` e `/dashboard/cadastros/[tipo]`:
 
-- Itens de estoque, apresentações/tamanhos e embalagens, fornecedores, locais de armazenamento e categorias.
-- Criação, edição, busca, paginação e arquivamento sem apagar o histórico vinculado.
-- Apresentações com SKU e peso unitário opcional; saldos separados quando o item tem variantes.
-- Motivo obrigatório nas alterações e registro de dados anteriores/posteriores na auditoria.
+- Produtos e categorias, variantes/apresentações e SKUs, fornecedores, locais de armazenamento e dados de embalagem.
+- Busca, filtros, paginação, criação e edição conforme o tipo de registro.
+- Arquivamento preserva o histórico e os vínculos existentes.
+- Alterações administrativas exigem motivo e guardam comparação dos dados anteriores e posteriores.
 
-### 3.3 Recebimento e estoque
+### 3.3 Recebimentos, lotes e movimentos
 
-- `/dashboard/recebimentos/novo`: registro de uma entrega com fornecedor, referência, data/hora e vários itens. Cada item informa apresentação, local, lote, validade e origem da validade, unidade, quantidade, peso líquido, custo e observações de inspeção. É possível cadastrar fornecedor ou item durante o preenchimento.
-- Recebimento gravado de forma atômica e idempotente, com entrada imediata no saldo. O custo e o peso são registrados sem inventar conversões entre unidades.
-- `/dashboard/lotes`: consulta de saldos por item, apresentação e local; busca por produto/SKU/lote/fornecedor/local; filtros de validade e lotes sem saldo; paginação.
-- `/dashboard/lotes/[id]`: rastreabilidade, detalhes e histórico do lote; ações de envio para produção, saída externa e perda/descarte. A saída externa registra destino. Perdas recebem classificação automática conforme a validade.
-- `/dashboard/movimentacoes`: livro de movimentos com busca, filtro por tipo e data real de registro; data operacional pode ser informada separadamente.
-- Restrições de banco contra saldo negativo, quantidades fracionárias em unidades inteiras e saída de lote vencido. Operações que falham revertem saldo e histórico juntos.
+- `/dashboard/recebimentos/novo` registra recebimento com fornecedor, referência, data e múltiplos itens. Cada item pode incluir variante, local, número de lote, validade e origem da validade, unidade, quantidade, peso líquido, custo e observações de inspeção.
+- É possível cadastrar alguns itens e fornecedores durante o recebimento. A entrada de estoque e o registro de recebimento são atômicos e idempotentes.
+- `/dashboard/lotes` permite buscar e filtrar saldos por produto, variante, SKU, lote, fornecedor e local, validade e disponibilidade.
+- `/dashboard/lotes/[id]` apresenta dados, origem e histórico do lote, com ações autorizadas para produção, saída externa e perda/descarte.
+- `/dashboard/movimentacoes` oferece livro de entradas, saídas, ajustes e outros movimentos, com filtros e datas registradas.
+- Restrições de banco impedem saldo negativo, quantidades fracionárias para unidades inteiras e saídas de lotes vencidos. Falhas revertem a operação e o respectivo movimento em conjunto.
+- Quantidade, peso e unidade são dados distintos; o sistema não infere conversões não cadastradas.
 
-### 3.4 Produção no dashboard
+## 4. Produção
 
-- `/dashboard/producao`: últimas 50 ordens com situação operacional, início, número de insumos e lote de saída; abas **Em andamento**, **Encerradas** e **Todas**. A lista possui apresentação adaptada a celular e computador.
-- `/dashboard/producao/nova`: criação de ordem na interface administrativa, com seleção de procedimento, perfil, regra de qualidade e lotes de origem.
-- `/dashboard/producao/[id]`: detalhe administrativo com datas, insumos consumidos, custo total dos insumos, lote e quantidade produzida. Permite assumir/configurar a ordem, confirmar instruções, registrar medições, pausar, retomar, informar problema, cancelar e finalizar conforme o estado da ordem.
-- Dashboard e terminal consultam as mesmas ordens e enviam comandos às mesmas funções de banco. O dashboard apresenta painéis administrativos e custos; o terminal apresenta o fluxo touch da fábrica.
-- `/dashboard/producao/configuracao`: cadastro de equipamentos/instrumentos, embalagens, procedimentos, perfis de máquina, parâmetros e regras de qualidade; registro de calibração.
-- Procedimentos, perfis e regras têm revisão, envio para análise, aprovação e retirada. Versões usadas por uma ordem são congeladas para preservar a rastreabilidade.
+### 4.1 Gestão de produção no dashboard
 
-### 3.5 Histórico
+- `/dashboard/producao` lista ordens recentes com situação, horário de início, quantidade de insumos e lote de saída; oferece visões de ordens em andamento, encerradas e todas.
+- `/dashboard/producao/nova` cria ordem com procedimento, perfil, regra de qualidade e um ou mais lotes de origem.
+- `/dashboard/producao/[id]` mostra o detalhe administrativo, insumos, custos, lote de saída e histórico. Permite os comandos administrativos disponíveis conforme o estado da ordem: assumir/configurar, confirmar instruções, registrar medições, pausar, retomar, informar problema, cancelar e finalizar.
+- `/dashboard/producao/configuracao` mantém equipamentos/instrumentos, embalagens, procedimentos, perfis e regras de qualidade, com revisões, estados de análise/aprovação/retirada e calibrações.
+- A ordem conserva as versões das instruções e dos critérios usados, mesmo quando configurações são atualizadas posteriormente.
 
-- `/dashboard/historico`: histórico global de alterações de cadastro, com responsável, momento, motivo e comparação entre valores anteriores e posteriores; paginação.
-
-## 4. Terminal de produção
+### 4.2 Terminal Touch de produção
 
 Em `/terminal`:
 
-- Fila de ordens ativas, criação de ordem por papel autorizado, configuração com procedimento/perfil/regra aprovados e seleção de múltiplos lotes de entrada. Fila e ações têm interface adaptada para toque em celular e tablet.
-- Operador assume a ordem com a própria identidade. A tela apresenta uma instrução por vez, com fase e passo, e exige confirmação para avançar.
-- Registro de medições de qualidade e conferência conforme regra aprovada e instrumento calibrado; falha gera desvio e bloqueia a liberação quando a regra assim exige.
-- Pausa segura, retomada, comunicação de problema, resolução de não conformidade, cancelamento por papel autorizado e conferência final antes de criar o lote acabado.
-- Cronometria baseada no servidor, estado de conexão, atualização manual e opção de trocar operador/sair.
-- Cada comando usa identificador idempotente e revisão esperada. Reenvios e conflitos de revisão são tratados sem repetir consumo ou sobrescrever um passo confirmado.
-- Finalização atômica preserva a genealogia dos lotes de entrada e do lote de saída. Custos não aparecem na interface operacional.
+- Fila operacional e criação de ordens conforme papel e configurações aprovadas.
+- Interface adaptada ao toque, com comandos claros, instrução atual e confirmação passo a passo.
+- Identidade individual do operador, cronômetro com referência de servidor, pausa e retomada, troca de operador, estado de conexão e atualização manual.
+- Medições de qualidade associadas à especificação e ao instrumento calibrado; desvios são registrados e podem bloquear a liberação conforme a regra aprovada.
+- Comunicação e resolução de problemas, cancelamento restrito por papel e confirmação antes de finalizar.
+- Comandos usam identificador de intenção e revisão esperada para que reenvios e conflitos não repitam consumo nem sobrescrevam etapas confirmadas.
+- A finalização registra atomicamente o produto de saída e a genealogia dos lotes consumidos. O terminal não exibe custos.
 
-### 4.1 Prévia local das visualizações
+### 4.3 Preparo de frutas antes da despolpa
 
-- `/visualizar`, disponível **somente em desenvolvimento**, mostra o dashboard de uma ordem, o terminal com ordem aberta e a fila do terminal.
-- Usa dados fictícios, não consulta o Supabase e mantém comandos desativados. Serve para inspecionar as interfaces; não valida gravações nem permissões reais.
+- `/terminal/preparo` é o terminal touch próprio da área de preparo; `/dashboard/preparo` administra guias e consulta preparos registrados.
+- Um lote de fruta recebido tem uma quantidade reservada ao iniciar o preparo. Participantes se identificam com PIN individual; o sistema registra sessões de trabalho, pausas e retomadas.
+- Na conclusão, registram-se quantidade efetivamente preparada, número de baldes e destino/local físico. A quantidade reservada que não foi processada volta ao saldo do lote de origem.
+- Cada balde resulta em lote intermediário separado, vinculado à fruta recebida e ao preparo. Com guia aprovado para a fruta, a despolpa aceita os lotes preparados correspondentes; não aceita a fruta crua nesse caso.
+- Guias são versionados e podem ser preparados em rascunho/prévia; a operação real exige aprovação. O cancelamento é restrito e pede identificação, justificativa e confirmação de que nenhum material foi processado.
+- O sistema não transforma automaticamente sacos, baldes, unidades e quilogramas, não calcula rendimento presumido e não cria polpa como resultado do preparo.
+- A aplicação não fornece POP, receita ou instrução sanitária padrão. O conteúdo dos guias e os critérios operacionais devem vir da fábrica e dos responsáveis técnicos.
 
-### 4.2 Terminal de preparo de frutas
+### 4.4 Visualizações de demonstração
 
-- `/terminal/preparo` oferece uma tela touch independente para a etapa entre recebimento e despolpa; `/dashboard/preparo` administra guias versionados e acompanha lotes de preparo.
-- O lote recebido é reservado quando o preparo começa. A equipe se identifica individualmente por PIN, pode pausar e retomar, e a conclusão registra quantidade processada, número de baldes e destino físico. Quantidade não preparada retorna ao lote de origem.
-- Cada balde gera um lote intermediário rastreável até o recebimento. Quando há guia aprovado, a ordem de produção aceita esses lotes preparados para despolpa. O preparo não cria polpa nem converte automaticamente sacos, baldes e peso.
-- Guias são escritos e aprovados pela fábrica. A aplicação não fornece instruções sanitárias ou parâmetros operacionais. A implantação não registra automaticamente saldos ou preparações legadas; a conciliação física é manual.
-
-## 4.3 Navegação, tema e relatos de suporte
-
-- O menu da conta contém tema claro/escuro, conta, acesso ao terminal de produção, acesso ao terminal de preparo, relato de problema/sugestão e saída. A navegação é adaptada a toque e telas menores.
-- O formulário de relato guarda tipo, descrição e página de origem e aceita até cinco imagens PNG/JPG/WebP, limitadas em conjunto a 3,5 MiB. As imagens ficam em bucket privado.
-- Administradores triagem relatos em `/dashboard/suporte`, com filtros e estados **A fazer**, **Em andamento**, **Concluído** e **Descartado**. A página apresenta autoria, origem e links assinados para anexos.
-- O tema escolhido fica no armazenamento local do navegador; ele não exige migração de banco.
+- `/visualizar` e `/visualizar/preparo` permitem inspecionar telas com dados fictícios durante desenvolvimento.
+- As prévias não consultam nem alteram o Supabase e não comprovam permissões, integrações ou aceite físico.
 
 ## 5. Módulos de gestão
 
-No dashboard, as rotas seguem `/dashboard/gestao/<módulo>`. O conteúdo também está disponível em `/gestao/<módulo>` para os papéis autorizados.
+O conteúdo aparece dentro do dashboard em `/dashboard/gestao/<módulo>` e nas rotas independentes `/gestao/<módulo>`, conforme papel e autorização. As duas superfícies usam o mesmo conteúdo funcional sem uma redirecionar para a outra.
 
 ### 5.1 Inventário físico — `inventory`
 
-- Abertura de contagem por local e lançamento da quantidade contada de cada lote.
-- Aprovação das diferenças com movimento compensatório; quando há diferença, aprovador distinto do contador.
-- Detecção de alteração de saldo durante a contagem, exigindo nova conferência.
-- Compensação de movimentos permitidos com motivo, preservando o registro original. Recebimento, produção e expedição usam seus fluxos específicos.
+- Abre contagem por local e registra quantidades observadas por lote.
+- Aprova diferenças por movimentos compensatórios. Quando há diferença, contador e aprovador devem ser pessoas distintas.
+- Detecta mudanças no saldo durante a contagem e pede nova conferência.
+- Compensa movimentos permitidos com motivo, preservando o evento original.
 
-### 5.2 Inspeções e documentos — `receiving`
+### 5.2 Recebimento, inspeção e documentos — `receiving`
 
-- Criação de versões de checklist com perguntas obrigatórias ou opcionais dos tipos sim/não, número e texto.
-- Inspeção vinculada ao recebimento, com respostas, decisão de aceite/rejeição e observações.
-- Envio e consulta de PDF, PNG e JPEG em bucket privado, com autorização verificada antes do download; limite de 10 MiB definido na migração de Storage.
-- A inspeção não cria automaticamente quarentena nem retira retroativamente o lote do saldo. Material rejeitado exige destinação registrada em fluxo próprio.
+- Mantém modelos versionados de checklist com respostas sim/não, numéricas ou textuais, obrigatórias ou opcionais.
+- Registra inspeção do recebimento, respostas, decisão de aceite/rejeição e observações.
+- Anexos JPEG, PNG e PDF ficam em bucket privado, com limite de 10 MiB e controle de acesso.
+- Uma inspeção rejeitada não cria automaticamente quarentena nem altera saldos antigos; a destinação do material precisa ser registrada em fluxo apropriado.
 
-### 5.3 Equipe e acessos — `staff`
+### 5.3 Equipe — `staff`
 
-- Vínculo de identidade existente do Supabase Auth, nome e papel; convite de primeiro acesso quando o serviço administrativo está configurado.
-- Bloqueio e reativação com motivo e trilha de auditoria; proteção do último administrador ativo.
+- Vincula identidade, nome e papel de administrador, gestor ou colaborador.
+- Convida novos usuários se o serviço administrativo de servidor estiver configurado.
+- Registra bloqueio e reativação com motivo; protege o último administrador ativo.
 
 ### 5.4 Alertas e temperaturas — `alerts`
 
-- Regras de estoque mínimo, validade, limite de temperatura e ausência de leitura, com escopo por item/categoria/local conforme o tipo.
-- Registro manual de temperatura com horário, local e instrumento.
-- Avaliação das regras sob comando do usuário e registro de resolução de alerta.
-- Limites de temperatura dependem da definição e aprovação técnica da fábrica; não são presumidos pelo software.
+- Regras configuráveis de estoque mínimo, validade, limites de temperatura e ausência de leitura, com escopo por item/categoria/local conforme o tipo.
+- Registra temperatura, momento, local e instrumento informado.
+- Avalia regras sob comando e registra resolução de alerta.
+- O software não presume limites de temperatura; a fábrica deve definir e aprovar os valores.
 
 ### 5.5 Financeiro — `finance`
 
-- Cadastro de contas de caixa/banco e títulos a pagar ou receber, com competência, vencimento, valor e origem opcional em recebimento, produção ou pedido.
-- Registro de pagamento/recebimento parcial ou total, estorno de baixa e conciliação com referência externa.
-- Histórico e controles contra duplicidade. A baixa é um registro administrativo; não movimenta dinheiro em banco.
+- Contas internas de caixa/banco e títulos a pagar ou receber, com valor, competência, vencimento e vínculo opcional a recebimento, produção ou pedido.
+- Baixas parciais ou totais, estorno de baixa e conciliação por referência externa, com histórico e controles de duplicidade.
+- O módulo registra informação administrativa; não inicia transações bancárias nem confirma saldo bancário real.
 
-### 5.6 Pedidos e expedição — `commercial`
+### 5.6 Comercial, pedidos e expedição — `commercial`
 
-- Cadastro de clientes e vínculo opcional com usuário do portal; catálogo comercial ligado à apresentação fabril, preço e unidade de venda.
-- Criação de pedidos com múltiplos itens; reserva por lote válido sem alterar o saldo físico.
-- Cancelamento com liberação de reservas; expedição atômica que baixa os lotes reservados e preserva a rastreabilidade.
-- Registro de devolução comercial segregada, sem recolocar automaticamente o produto no saldo disponível.
+- Cadastro de clientes e associação opcional a uma conta do portal.
+- Catálogo comercial ligado a variante fabril, preço e unidade de venda.
+- Pedidos com múltiplos itens e reserva de lotes válidos sem alterar imediatamente o saldo físico.
+- Cancelamento libera reservas; expedição atômica baixa lotes reservados e mantém rastreabilidade.
+- Devoluções são registradas separadamente e não retornam automaticamente ao estoque disponível.
 
-### 5.7 Apontamentos de atividade — `time`
+### 5.7 Apontamento de atividade — `time`
 
-- Registro pessoal de início, pausa, retorno e fim com horário e observações.
-- Correção de horário com motivo e preservação do histórico.
-- É um apontamento operacional: não substitui ponto eletrônico oficial nem calcula remuneração.
+- Registro pessoal de início, pausa, retorno e fim, com observação.
+- Correção de horário exige motivo e preserva o histórico.
+- O apontamento não substitui ponto eletrônico oficial e não calcula remuneração.
 
-## 6. Portal do cliente
+## 6. Suporte e relatos
 
-- `/portal`: cliente vinculado consulta seus pedidos, itens, expedições e devoluções permitidos pelo banco.
-- Consulta apenas; não há checkout, pagamento, criação de pedido pelo cliente nem exposição de custos e dados de fornecedores.
+- O formulário abre pelo menu da conta ou por atalhos em outras áreas. Registra problema, sugestão ou outro tipo, descrição e rota de origem.
+- Aceita até cinco imagens PNG/JPG/WebP, com limite conjunto de 3,5 MiB. Os arquivos ficam em bucket privado.
+- Clientes vinculados e membros ativos autorizados podem enviar relato; a triagem é administrativa.
+- `/dashboard/suporte` apresenta autoria, data, página de origem, descrição e links temporários para anexos; permite filtrar por situação e data.
+- Estados disponíveis: **A fazer**, **Em andamento**, **Concluído** e **Descartado**.
+- RLS restringe leitura e atualização dos relatos e acesso aos anexos.
 
-## 7. Persistência, auditoria e operação
+## 7. Portal do cliente
 
-- O esquema versionado em `supabase/migrations/` cobre estoque, produção, gestão, permissões e Storage privado. Comandos sensíveis são executados por funções SQL com validação de papel, identificadores de intenção e transações. Segundo o registro de implantação de 29/10/2026, as três migrações finais foram aplicadas ao projeto Supabase de desenvolvimento; o estado atual desse projeto não foi revalidado para este relatório.
-- Registros de produção, qualidade, movimentação e gestão preservam autoria e histórico; correções relevantes usam estorno ou compensação em vez de apagar o evento original.
-- `/api/health` verifica se a aplicação está configurada e se o endpoint de saúde do Supabase Auth responde.
-- A CI do GitHub executa instalação, lint, formatação, testes, tipagem, build e verificação HTTP sem sessão em pushes à `main` e pull requests. A execução do commit `ff15b16` concluiu todos esses passos com sucesso em 11/11/2026.
+- `/portal` mostra os pedidos, itens, expedições e devoluções do cliente vinculado, de acordo com a autorização do banco.
+- A tela é de consulta: não cria pedidos, não realiza checkout ou pagamento e não expõe custos ou dados de fornecedores.
+- Oferece relato de problema e saída da conta.
 
-## 8. Dependências e limites de implantação
+## 8. Persistência, integridade e auditoria
 
-- Em 12/11/2026, a página de migrações do Supabase de produção mostrou as 17 versões do repositório, inclusive as migrações de relatos e preparo; não havia migração pendente. `/api/health` respondeu HTTP 200 com aplicação e Supabase disponíveis. A evidência e os passos ainda necessários antes da operação física constam no [guia de integração do banco](Integracao_BD_Administrador.md).
-- Configurar `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Convites e bloqueio no Auth exigem `SUPABASE_SERVICE_ROLE_KEY` no servidor e `APP_ORIGIN`; o retorno `/auth/confirm` deve ser permitido no Supabase Auth. Para ativar o Turnstile opcional, configurar em conjunto site key, segredo e hostname esperado.
-- Vincular usuários reais e aprovar procedimentos, equipamentos, parâmetros, embalagens, calibrações e critérios de qualidade antes de operar a produção física.
-- O sistema depende de conexão online. Os testes de banco usam PGlite e dados sintéticos; é necessária validação no Supabase de homologação, incluindo permissões, concorrência e uso em tablet.
-- Este relatório descreve o código versionado, a execução de CI e a confirmação remota de migrações e saúde em 12/11/2026. Não confirma que os guias operacionais reais estejam aprovados ou que houve aceite no terminal físico.
+- Migrações em `supabase/migrations/` versionam estoque, autenticação e funções auxiliares, produção, módulos administrativos, anexos privados, suporte e preparo de frutas.
+- Operações críticas usam transações e funções SQL com validação de papel, estado, saldo, concorrência e identificador idempotente.
+- RLS e grants limitam tabelas e Storage; custos e dados de gestão não são passados para a interface operacional.
+- Auditoria registra autoria, motivo e alterações relevantes. Correções de movimentos usam compensações ou estornos para manter o histórico.
+- `/api/health` indica disponibilidade da aplicação e da conexão de saúde do Supabase.
+- CI do GitHub executa instalação, lint, verificação de formatação, testes, tipagem, build e resposta HTTP sem sessão.
 
-## 9. Referências no repositório
+## 9. Situação verificada e itens ainda pendentes
 
-- [Rotas da aplicação](../src/app/), [menus do dashboard](../src/components/inventory/navigation.tsx) e [regras de acesso](../src/lib/auth.ts).
-- [Formulários de gestão](../src/lib/operations/forms.ts), [área compartilhada de gestão](../src/components/operations/management-page.tsx), [operações no dashboard](../src/components/production/dashboard-operations.tsx), [terminal](../src/components/production/terminal.tsx) e [prévia local](../src/app/visualizar/page.tsx).
-- [Migrações do Supabase](../supabase/migrations/) e [testes automatizados](../tests/).
-- [Guia de integração do banco](Integracao_BD_Administrador.md) e [evolução de produção e gestão](Evolucao_Producao_Gestao.md).
-- [Estado do plano técnico](Estado_Plano_Tecnico.md) e [registro da implantação no Supabase](Implantacao_Supabase_2026-10-29.md).
+- Em 12/11/2026, o painel do projeto Supabase `ofemxaqzrnryrochqtrv`, branch `main`/`PRODUCTION`, mostrava as **17 migrações** versionadas neste repositório, incluindo as cinco de suporte e preparo. Não havia migração pendente naquele momento.
+- Na mesma data, `/api/health` respondeu HTTP 200 com `app: ok` e `supabase: ok`.
+- A execução de CI do commit `e2837ef` concluiu lint, formatação, testes, tipagem, build e verificação HTTP sem sessão com sucesso em 12/11/2026.
+- A verificação remota confirma as versões registradas e conectividade naquele momento; não comprova o aceite de todos os fluxos com contas reais ou no equipamento físico.
+- Antes de operar o preparo, ainda é necessário cadastrar e aprovar guias reais, cada operador configurar seu PIN e a fábrica validar os locais/destinos e o fluxo em terminal físico.
+- Frutas que já estavam descascadas precisam de conferência física e reconciliação com quantidades reais; a migração não inventa pesos, baldes, datas, participantes ou conversões.
+- Produção física depende de procedimentos, limites de qualidade, equipamentos e calibrações definidos e aprovados pelos responsáveis técnicos.
+- O sistema depende de conexão online. Testes locais em PGlite com dados sintéticos não substituem validação controlada de concorrência e autorização no PostgreSQL remoto.
+- Foram abertas issues para acompanhar aceites: [#3 interface mobile-first](https://github.com/GSM-Digital/sistema-frutalize/issues/3), [#4 menu e separação dos terminais](https://github.com/GSM-Digital/sistema-frutalize/issues/4), [#5 relatos e triagem](https://github.com/GSM-Digital/sistema-frutalize/issues/5) e [#6 configuração e aceite operacional do preparo](https://github.com/GSM-Digital/sistema-frutalize/issues/6).
+
+## 10. Referências
+
+- [Rotas da aplicação](../src/app/), [navegação](../src/components/inventory/navigation.tsx) e [regras de autorização](../src/lib/auth.ts).
+- [Tipos e comandos de gestão](../src/lib/operations/types.ts), [terminal de produção](../src/components/production/terminal.tsx) e [terminal de preparo](../src/components/production/preparation-terminal.tsx).
+- [Relatos de suporte](../src/components/support/report-dialog.tsx), [migrações do Supabase](../supabase/migrations/) e [testes automatizados](../tests/).
+- [Guia de integração para o administrador](Integracao_BD_Administrador.md), [guia de preparo de frutas](Preparo_de_Frutas.md), [estado do plano técnico](Estado_Plano_Tecnico.md) e [evolução de produção e gestão](Evolucao_Producao_Gestao.md).

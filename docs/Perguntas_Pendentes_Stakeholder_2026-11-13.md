@@ -51,3 +51,7 @@ Também combinar responsáveis e evidências para estes aceites antes de declara
 ## Instrução para o próximo agente
 
 Ao iniciar uma nova análise, leia também `docs/Estado_Plano_Tecnico.md`, `docs/Preparo_de_Frutas.md` e a análise de lacunas que motivou este registro. Faça as perguntas ainda abertas ao stakeholder e atualize este arquivo com respostas, data e contexto. Não reabra os itens L06 e L07 como perguntas já respondidas, e não transforme qualquer decisão que exija validação técnica em regra operacional sem a aprovação correspondente.
+
+### Prompt para encaminhar ao agente responsável pelo stakeholder
+
+> Analise `docs/Perguntas_Pendentes_Stakeholder_2026-11-13.md` e consulte o stakeholder sobre as perguntas operacionais que ainda estão em aberto. Não pergunte novamente as decisões já confirmadas: integrar a foto da nota ao recebimento e registrar as respostas de suporte dentro do sistema. Preserve as perguntas que dependem do responsável técnico/equipamentos reais; não invente parâmetros nem aprove procedimentos em nome do stakeholder. Registre cada resposta neste documento com data e contexto, marque explicitamente os tópicos ainda sem resposta e devolva um resumo das decisões que liberam implementação e dos aceites físicos que continuam pendentes.
